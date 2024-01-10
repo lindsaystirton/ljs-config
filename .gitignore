@@ -1,0 +1,9 @@
+ljs-config*.el
+/auto-save-list/
+/custom.el
+/elpa/
+/forge-database.sqlite
+/old/
+/places
+/recentf
+/transient/

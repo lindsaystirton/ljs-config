@@ -1,0 +1,71 @@
+#+TITLE: ljs-config Appearance
+#+OPTIONS: toc:nil num:nil ^:nil
+
+This file is part of the [[file:ljs-config.org][Lindsay Stirton's Emacs Configurations]].
+
+* ljs-config-appearance
+
+** Startup
+
+Basic setting preferences, including size and positioning of emacs frames. 
+
+#+srcname: ljs-config-appearance-startup
+#+begin_src emacs-lisp 
+ (use-package emacs
+  :config
+  (setq inhibit-startup-message t)
+  (add-to-list 'initial-frame-alist '(top . 0))
+  (add-to-list 'initial-frame-alist '(left . 0))
+  (add-to-list 'initial-frame-alist '(width . 85))
+  (add-to-list 'initial-frame-alist '(height . 54))
+  (scroll-bar-mode -1)
+  (tool-bar-mode -1)
+  (tooltip-mode -1)
+  (set-fringe-mode 10)
+  (setq visible-bell t)
+  (electric-indent-mode 1))
+#+end_src
+
+
+** Themes
+
+Using Prot's ef-themes. Someone on Reddit said, "ef-themes is the
+smiling rainbow chick to modus-theme's serious spectacled chick." The
+following code toggles between `ef-melissa-dark' and
+`ef-melissa-light' depending on Mac OS's System Appearance state. To
+do so, enter M-x ef-themes-toggle.
+
+
+
+ #+srcname: ljs-config-appearance-themes
+#+begin_src emacs-lisp
+   (use-package modus-themes
+     :init
+     (load-theme 'modus-vivendi t))
+#+end_src
+
+
+** Doom modeline
+
+ #+srcname: ljs-config-appearance-doom-modeline
+#+begin_src emacs-lisp
+
+   (use-package doom-modeline
+     :init
+     (require 'all-the-icons)
+     :config
+     (setq doom-modeline-major-mode-icon t)
+     (setq doom-modeline-buffer-state-icon t)
+     :custom ((doom-modeline-height 10)))
+     (doom-modeline-mode 1)
+     (setq doom-modeline-icon t)
+     (setq doom-modeline-major-mode-icon t)
+     (setq doom-modeline-height 10)
+#+end_src
+
+
+#+source: message-line
+#+begin_src emacs-lisp
+  (message "ljs-config-appearance loaded.")
+#+end_src
+

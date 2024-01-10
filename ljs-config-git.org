@@ -1,0 +1,37 @@
+#+TITLE: ljs-config Git
+#+OPTIONS: toc:nil num:nil ^:nil
+
+This file is part of the [[file:ljs-config.org][Lindsay Stirton's Emacs Configurations]].
+
+* Git Configuration
+
+** Configure Magit
+#+srcname: ljs-config-git-magit
+#+begin_src emacs-lisp
+  (use-package magit
+   :ensure t
+   :commands magit-status
+   :bind (("C-x g" . magit-status))
+   :config
+   (setq magit-last-seen-setup-instructions "1.4.0"))
+#+end_src
+
+** Configure Forge
+#+srcname: ljs-config-git-forge
+#+begin_src emacs-lisp
+  (use-package forge
+   :ensure t
+   :after magit
+   :config
+   (setq forge-user "Lindsay James Stirton"
+	forge-topic-list-limit '(60 . 0)
+	forge-pull-notifications nil
+	forge-issue-sort 'priority
+	forge-database-file (concat user-emacs-directory "forge-database.sqlite")))
+#+end_src
+
+
+#+source: message-line
+#+begin_src emacs-lisp
+  (message "ljs-config-git.el loaded.")
+#+end_src
