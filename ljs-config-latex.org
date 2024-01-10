@@ -1,0 +1,220 @@
+#+TITLE: ljs-config-LaTeX
+#+OPTIONS: toc:nil H:2 num:nil ^:nil
+
+This is part of the [[file:ljs-config.org][LJS-Config]]. This file was (even more than the
+others) pretty much copied from Kieran Healy's
+[[https://github.com/kjhealy/emacs-starter-kit][emacs starter-kit for
+the social sciences]]. I have made some effort to implement use-package. 
+
+* Starter Kit LaTeX
+  Support for editing LaTeX.
+
+** Load Support Packages
+*** Prettify Math in Buffers
+#+source: latex-pretty-symbols 
+#+begin_src emacs-lisp
+  (use-package latex-pretty-symbols
+  :ensure t)
+#+end_src
+
+*** Load RefTeX
+#+srcname: reftex-support
+#+begin_src emacs-lisp 
+(use-package reftex
+  :ensure t
+  :commands (reftex-mode turn-on-reftex reftex-citation reftex-index-phrase-mode)
+  :hook ((LaTeX-mode . turn-on-reftex)
+         (pandoc-mode . turn-on-reftex)
+         (org-mode . org-mode-reftex-setup))
+  :config
+  (setq reftex-enable-partial-scans t
+        reftex-save-parse-info t
+        reftex-use-multiple-selection-buffers t
+        reftex-plug-into-AUCTeX t)
+
+  (defun org-mode-reftex-setup ()
+    (load-library "reftex")
+    (when (and (buffer-file-name)
+               (file-exists-p (buffer-file-name)))
+      (reftex-parse-all))
+    (define-key org-mode-map (kbd "C-c (") 'reftex-citation))
+
+  (setq reftex-cite-format
+        '((?\C-m . "\\cite[]{%l}")
+          (?t . "\\textcite{%l}")
+          (?a . "\\autocite[]{%l}")
+          (?p . "\\parencite{%l}")
+          (?f . "\\footcite[][]{%l}")
+          (?F . "\\fullcite[]{%l}")
+          (?P . "[@%l]")
+          (?T . "@%l [p. ]")
+          (?x . "[]{%l}")
+          (?X . "{%l}")))
+
+  (setq font-latex-match-reference-keywords
+        '(("cite" "[{")
+          ("cites" "[{}]")
+          ("footcite" "[{")
+          ("footcites" "[{")
+          ("parencite" "[{")
+          ("textcite" "[{")
+          ("fullcite" "[{")
+          ("citetitle" "[{")
+          ("citetitles" "[{")
+          ("headlessfullcite" "[{")))
+
+  (setq reftex-cite-prompt-optional-args nil
+        reftex-cite-cleanup-optional-args t))
+#+end_src
+
+*** Load ebib
+    ebib is a bibtex database manager that works inside emacs. It can
+    talk to org-mode. See [[http://ebib.sourceforge.net/][the ebib project page]] for more. When Ebib is
+    loaded, you can run it with =M-x ebib=.
+  
+#+source: ebib-load
+#+begin_src emacs-lisp
+ (use-package ebib
+  :ensure t
+  :commands (ebib)
+  :init
+  (setq ebib-preload-bib-files '("/Users/ljs46/Documents/bibs/masterbib.bib"))
+  :hook (LaTeX-mode . (lambda ()
+                        (local-set-key "\C-cb" 'ebib-insert-bibtex-key))))
+
+#+end_src
+
+
+** Configure AucTeX
+
+*** Automatic Parsing
+#+source: autoparse
+#+begin_src emacs-lisp
+(use-package tex
+  :ensure auctex
+  :defer t
+  :config
+  (setq TeX-parse-self t) ; Enable parse on load.
+  (setq TeX-auto-save t) ; Enable parse on save.
+)
+#+end_src
+
+*** Use pdfLaTeX
+   - Take this out to compile to DVI, instead.
+#+srcname: pdf-mode
+#+begin_src emacs-lisp 
+(use-package tex
+  :hook (LaTeX-mode . TeX-PDF-mode)
+)
+#+end_src
+
+**** Configure Biber
+   - Allow AucTeX to use biber as well as/instead of bibtex.
+#+source: setup-biber
+#+begin_src emacs-lisp
+(use-package tex
+  :config
+  (defun TeX-run-Biber (name command file)
+    "Create a process for NAME using COMMAND to format FILE with Biber." 
+    (let ((process (TeX-run-command name command file)))
+      (setq TeX-sentinel-function 'TeX-Biber-sentinel)
+      (if TeX-process-asynchronous
+          process
+        (TeX-synchronous-sentinel name file process))))
+
+  (defun TeX-Biber-sentinel (process name)
+    "Cleanup TeX output buffer after running Biber."
+    (goto-char (point-max))
+    (cond
+     ;; Check whether Biber reports any warnings or errors.
+     ((re-search-backward (concat
+                           "^(There \\(?:was\\|were\\) \\([0-9]+\\) "
+                           "\\(warnings?\\|error messages?\\))") nil t)
+      ;; Tell the user their number so that she sees whether the
+      ;; situation is getting better or worse.
+      (message (concat "Biber finished with %s %s. "
+                       "Type `%s' to display output.")
+               (match-string 1) (match-string 2)
+               (substitute-command-keys
+                "\\\\[TeX-recenter-output-buffer]")))
+     (t
+      (message (concat "Biber finished successfully. "
+                       "Run LaTeX again to get citations right."))))
+    (setq TeX-command-next TeX-command-default))
+
+  (eval-after-load "tex"
+    '(add-to-list 'TeX-command-list '("Biber" "biber %s" TeX-run-Biber nil t :help "Run Biber"))
+  )
+)
+#+end_src
+
+**** Use Biblatex key template by default in bib files
+#+source: bibtex-dialect
+#+begin_src emacs-lisp :tangle no
+(use-package bibtex
+  :config
+  (setq bibtex-dialect "BibTeX")
+)
+#+end_src
+
+**** Use '-' as the separator in auto-generated bibtex keys
+   - We use this (rather than the underscore character) for compatibility with Pandoc.
+#+source: bibtex-key-separator
+#+begin_src emacs-lisp :tangle no
+(use-package bibtex
+  :config
+  (setq bibtex-autokey-titleword-separator "_")
+  (setq bibtex-autokey-year-title-separator ":_")
+)
+#+end_src
+
+**** Use latexmk for compilation by default
+#+srcname: latemkdefault
+#+begin_src emacs-lisp
+(use-package tex
+  :config
+  (eval-after-load "tex"
+    '(add-to-list 'TeX-command-list '("latexmk" "latexmk -synctex=1 -shell-escape -pdf %s" TeX-run-TeX nil t :help "Process file with latexmk"))
+  )
+  (eval-after-load "tex"
+    '(add-to-list 'TeX-command-list '("xelatexmk" "latexmk -synctex=1 -shell-escape -xelatex %s" TeX-run-TeX nil t :help "Process file with xelatexmk"))
+  )
+  (add-hook 'TeX-mode-hook '(lambda () (setq TeX-command-default "latexmk")))
+)
+#+end_src
+
+**** Set a Path to Executables (optional)
+   - The location of the LaTeX executables is system dependent.
+     AUCTeX calls everything through a shell, so you may
+     or may not need this.  This source-code block is turned off by
+     default as it should be added to the user's personal
+     configuration as needed.
+#+srcname: set-exec-path
+#+begin_src emacs-lisp :tangle no
+(use-package exec-path-from-shell
+  :if (memq window-system '(mac ns x))
+  :config
+  (exec-path-from-shell-initialize)
+)
+#+end_src
+
+
+*** Configure Org-babel
+#+name: org-babel-configuration
+#+begin_src emacs-lisp
+(use-package org
+  :config
+  ;; Add LaTeX to the list of languages Org-babel will recognize
+  (require 'ob-latex)
+
+  ;; Add LaTeX to a list of languages that raise noweb-type errors
+  (add-to-list 'org-babel-noweb-error-langs "latex")
+)
+#+end_src
+
+*** Message
+#+name: message-config
+#+begin_src emacs-lisp
+;; Message
+(message "ljs-config-LaTeX loaded.")
+#+end_src
