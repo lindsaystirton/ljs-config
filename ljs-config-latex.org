@@ -1,4 +1,4 @@
-#+TITLE: ljs-config-LaTeX
+#+TITLE: LJS Config LaTeX
 #+OPTIONS: toc:nil H:2 num:nil ^:nil
 
 This is part of the [[file:ljs-config.org][LJS-Config]]. This file was (even more than the

@@ -440,25 +440,37 @@ project is not in elpa.
 The following files contain the remainder of the core of the core
 ljs-config.  All of the code in this section should be loaded.
 
+*** LJS Config Defuns
+LJS Config function definitions in [[file:ljs-config-defuns][ljs-comfig-defuns]].
+#+srcname: ljs-config-load-defuns
+#+begin_src emacs-lisp
+(ljs-config-load "./ljs-config/ljs-config-defuns.org")
+#+end_src
 
 *** LJS Config Appearance
+[[file:ljs-config-appearance.org][ljs-config-appearance]].
 #+srcname: ljs-config-load-appearance
 #+begin_src emacs-lisp
   (ljs-config-load "./ljs-config/ljs-config-appearance.org")
 #+end_src
 
 *** LJS Config LaTeX
+Located in [[file:ljs-config-latex.org][ljs-config-latex]]
+
 #+srcname: ljs-config-load-latex
 #+begin_src emacs-lisp
   (ljs-config-load "./ljs-config/ljs-config-latex.org")
 #+end_src
 
-#+source: message-line
+*** Starter Kit Stats
+Located in [[file:ljs-config-stats.org][ljs-config-stats]]
+
 #+begin_src emacs-lisp
-  (message "ljs-config main file loaded.")
+  (ljs-config-load "./ljs-config/ljs-config-stats.org")
 #+end_src
 
 *** LJS Config Git
+Located in [[file:ljs-config-git.org][ljs-config-git]]
 #+srcname: ljs-config-load-appearance
 #+begin_src emacs-lisp
   (ljs-config-load "./ljs-config/ljs-config-git.org")
