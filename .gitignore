@@ -7,4 +7,7 @@ ljs-config*.el
 /places
 /recentf
 /transient/
+<<<<<<< HEAD
 *.org~
+=======
+>>>>>>> origin/main

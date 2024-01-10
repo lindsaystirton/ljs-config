@@ -397,6 +397,15 @@ ARCHIVE is the string name of the package archive.")
 #+end_src
 
 
+*** hash keybinding
+
+Putting this here for now. Eventually we will have ljs-org-bindings. 
+
+#+srcname: ljs-config-osX-workaround
+#+begin_src emacs-lisp 
+ (global-set-key (kbd "M-3") '(lambda () (interactive) (insert "#")))
+#+end_src
+
 
 
 *** Work around OS X bug
@@ -440,6 +449,7 @@ project is not in elpa.
 The following files contain the remainder of the core of the core
 ljs-config.  All of the code in this section should be loaded.
 
+
 *** LJS Config Defuns
 LJS Config function definitions in [[file:ljs-config-defuns][ljs-comfig-defuns]].
 #+srcname: ljs-config-load-defuns
@@ -453,6 +463,7 @@ LJS Config function definitions in [[file:ljs-config-defuns][ljs-comfig-defuns]]
 #+begin_src emacs-lisp
   (ljs-config-load "./ljs-config/ljs-config-appearance.org")
 #+end_src
+
 
 *** LJS Config LaTeX
 Located in [[file:ljs-config-latex.org][ljs-config-latex]]
@@ -471,12 +482,27 @@ Located in [[file:ljs-config-stats.org][ljs-config-stats]]
 
 *** LJS Config Git
 Located in [[file:ljs-config-git.org][ljs-config-git]]
-#+srcname: ljs-config-load-appearance
+
+#+srcname: ljs-config-load-git
 #+begin_src emacs-lisp
   (ljs-config-load "./ljs-config/ljs-config-git.org")
 #+end_src
+
+
+*** LJS Config Org
+Located in [[file:ljs-config-org.org][ljs-config-org]]
+
+#+srcname: ljs-config-load-org
+#+begin_src emacs-lisp
+  (ljs-config-load "./ljs-config/ljs-config-org.org")
+#+end_src
+
+
+
 
 #+source: message-line
 #+begin_src emacs-lisp
   (message "ljs-config main file loaded.")
 #+end_src
+
+*** 

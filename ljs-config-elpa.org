@@ -19,6 +19,9 @@ easier to manage and update your Emacs configuration.
   (use-package doom-modeline)
   (use-package ebib)
   (use-package ess)
+  (use-package all-the-icons)
+  (use-package cl-lib)
+  (use-package doom-modeline)
   (use-package exec-path-from-shell)
   (use-package flycheck)
   (use-package flyspell)
@@ -27,14 +30,14 @@ easier to manage and update your Emacs configuration.
   (use-package latex-pretty-symbols)
   (use-package magit)
   (use-package modus-themes)
+  (use-package org-bullets)
   (use-package rainbow-delimiters)
   (use-package reftex)
   (use-package smartparens)
   (use-package thingatpt)
+  (use-package smartparens)
+  (use-package ess)
 #+end_src
-
-
-
 
 
 #+srcname: ljs-config-elpa-install-packages

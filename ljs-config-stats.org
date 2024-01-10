@@ -15,12 +15,9 @@ This file provides settings for ESS and R.
 
  ** Load ESS 
 
-(use-package ess
-  :config
-  ;; smart-underscore and ess-smart-S-assign-key have been removed in ESS 19.04
-  ;; so we need to set them up manually
-  (bind-key "_" #'ess-insert-assign ess-r-mode-map)
-  (bind-key "_" #'ess-insert-assign inferior-ess-r-mode-map))
+#+source: load-ess
+#+begin_src emacs-lisp
+(use-package ess)
 #+end_src
 
 
@@ -143,6 +140,7 @@ This is useful for when you have buffers with many similar names, as when there 
   :config
   (setq uniquify-buffer-name-style 'post-forward-angle-brackets))
 #+end_src
+
 ** lintr and flycheck
 [[https://github.com/jimhester/lintr][lintr]] checks your R code for style and syntax errors. It's an R library that integrates with [[http://www.flycheck.org][flycheck]]. You must install lintr from R. Flycheck can also check code in many other languages. You will need to install linters for them separately as well. See the flycheck documentation for details.
 
@@ -151,6 +149,64 @@ This is useful for when you have buffers with many similar names, as when there 
   (add-hook 'after-init-hook #'global-flycheck-mode)
     (add-hook 'ess-mode-hook
               (lambda () (flycheck-mode t)))
-
 #+end_src
 
+** Rainbow delimiters in R
+#+begin_src emacs-lisp
+(add-hook 'ess-mode-hook #'rainbow-delimiters-mode)
+#+end_src
+
+
+
+
+* Stan Mode Configurations
+
+** Install and Configure Stan Mode
+#+srcname: ljs-config-stan-mode
+#+begin_src emacs-lisp 
+  (use-package stan-mode
+    :ensure t)
+#+end_src
+
+** Install and Configure stan-snippets
+#+srcname: ljs-config-stan-snippets
+#+begin_src emacs-lisp 
+  (use-package stan-snippets
+    :ensure t)
+#+end_src
+
+** Install and Configure Flycheck for Stan
+#+srcname: ljs-config-flycheck-stan
+#+begin_src emacs-lisp 
+  (use-package flycheck-stan
+    :ensure t
+    :after stan-mode
+    :hook (stan-mode . flycheck-stan-setup))
+#+end_src
+
+** Configure Imenu for Stan
+#+srcname: ljs-config-imenu-stan
+#+begin_src emacs-lisp 
+  (add-hook 'stan-mode-hook
+            (lambda ()
+              (setq-local imenu-generic-expression '((nil "^\\s-*\\(\\w+\\)\\s-*=" 1)))))
+#+end_src
+
+** Configure Key Bindings for Stan Commands
+#+srcname: ljs-config-key-bindings-stan
+#+begin_src emacs-lisp 
+  (add-hook 'stan-mode-hook
+            (lambda ()
+              (local-set-key (kbd "C-c C-c") 'stan-compile)))
+#+end_src
+
+** Associate .stan files with Stan Mode
+#+srcname: ljs-config-associate-stan-files
+#+begin_src emacs-lisp
+  (add-to-list 'auto-mode-alist '("\\.stan\\'" . stan-mode))
+#+end_src
+
+** Rainbow delimiters in Stan-mode
+#+begin_src emacs-lisp
+(add-hook 'stan-mode-hook #'rainbow-delimiters-mode)
+#+end_src
