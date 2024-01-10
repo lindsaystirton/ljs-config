@@ -13,9 +13,11 @@ easier to manage and update your Emacs configuration.
 
 #+srcname: ljs-config-elpa-download-packages
 #+begin_src emacs-lisp
+  (use-package auctex)
   (use-package all-the-icons)
   (use-package cl-lib)
   (use-package doom-modeline)
+  (use-package ebib)
   (use-package exec-path-from-shell)
   (use-package flycheck)
   (use-package flyspell)
@@ -24,6 +26,7 @@ easier to manage and update your Emacs configuration.
   (use-package magit)
   (use-package modus-themes)
   (use-package rainbow-delimiters)
+  (use-package refbib)
   (use-package smartparens)
   (use-package ess)
 #+end_src

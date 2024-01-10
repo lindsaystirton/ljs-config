@@ -7,3 +7,4 @@ ljs-config*.el
 /places
 /recentf
 /transient/
+*.org~

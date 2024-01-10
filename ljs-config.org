@@ -447,6 +447,17 @@ ljs-config.  All of the code in this section should be loaded.
   (ljs-config-load "./ljs-config/ljs-config-appearance.org")
 #+end_src
 
+*** LJS Config LaTeX
+#+srcname: ljs-config-load-latex
+#+begin_src emacs-lisp
+  (ljs-config-load "./ljs-config/ljs-config-latex.org")
+#+end_src
+
+#+source: message-line
+#+begin_src emacs-lisp
+  (message "ljs-config main file loaded.")
+#+end_src
+
 *** LJS Config Git
 #+srcname: ljs-config-load-appearance
 #+begin_src emacs-lisp
