@@ -17,7 +17,35 @@ GTD system or tool for reproducible research and literate programming.
 For more information on org-mode check out [[http://orgmode.org/worg/][worg]], a large Org-mode wiki
 which is also implemented using Org-mode and [[http://git-scm.com/][git]].
 
+** Org-Mode
+
+#+srcname: org-config
+#+begin_src emacs-lisp
+(defun org-mode-setup ()
+  (org-indent-mode 1)
+  (variable-pitch-mode 1)
+  (auto-fill-mode 0)
+  (visual-line-mode 1))
+
+(use-package org
+  :hook (org-mode . org-mode-setup)
+  :config
+  (setq org-ellipsis " ▾"
+        org-hide-emphasis-markers t))
+
+  ;; Replace list hyphen with dot
+  (font-lock-add-keywords 'org-mode
+                        '(("^ *\\([-]\\) "
+                          (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
+
+
+
 #+end_src
+
+
+
+
+
 
 ** Org-Mode Hooks
 Make yasnippet work properly with org-mode. 
@@ -90,8 +118,9 @@ The next block makes org-babel aware that a lower-case 'r' in a =src= block head
 
 #+source: add-r
 #+begin_src emacs-lisp
-    (add-to-list 'org-src-lang-modes
-                 '("r" . ess-mode))
+      (add-to-list 'org-src-lang-modes
+		   '("r" . ess-mode)
+		   '("stan" . stan-mode))
 #+end_src
 
 ** Code block fontification
@@ -132,15 +161,24 @@ Org-mode manual is available to the =info= command (bound to =C-h i=).
               Info-directory-list))
 #+end_src
 
+
 ** Nice Bulleted Lists
 #+name: org-bullets
 #+begin_src emacs-lisp :tangle no
 (use-package org-bullets
-  :ensure t
-  :hook (org-mode . org-bullets-mode))
+    :ensure t
+    :init
+    (add-hook 'org-mode-hook (lambda ()
+                      (org-bullets-mode 1))))
+  :custom
+  (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
 #+end_src
+
+
 
 #+source: message-line
 #+begin_src emacs-lisp
   (message "LJS Config Org loaded.")
 #+end_src
+
+

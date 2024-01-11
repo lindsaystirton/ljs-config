@@ -90,13 +90,18 @@ the social sciences]]. I have made some effort to implement use-package.
 *** Automatic Parsing
 #+source: autoparse
 #+begin_src emacs-lisp
-(use-package tex
-  :ensure auctex
-  :defer t
-  :config
-  (setq TeX-parse-self t) ; Enable parse on load.
-  (setq TeX-auto-save t) ; Enable parse on save.
-)
+  (use-package tex
+    :ensure auctex
+    :defer t
+    :config
+    (add-hook 'LaTeX-mode-hook 'my-auctex-mode-setup)
+    (setq TeX-parse-self t) ; Enable parse on load.
+    (setq TeX-auto-save t)) ; Enable parse on save.)
+
+ (defun my-auctex-mode-setup ()
+   "My custom AUCTeX mode setup."
+   (variable-pitch-mode 1)
+   (visual-line-mode 1))
 #+end_src
 
 *** Use pdfLaTeX
