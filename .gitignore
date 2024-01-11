@@ -12,3 +12,5 @@ ljs-config*.el
 =======
 >>>>>>> origin/main
 #*
+/#ljs-config-org.org#
+.#*.*
