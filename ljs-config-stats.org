@@ -1,10 +1,8 @@
 #+TITLE: LJS Config Statistics
 #+OPTIONS: toc:nil num:nil ^:nil
 
-This is part of the [[file:ljs-config.org][LJS-Config]]. This file was (even more than the
-others) pretty much copied from Kieran Healy's [[https://github.com/kjhealy/emacs-starter-kit][emacs starter-kit for
-the social sciences]]. I have made some effort to implement
-use-package.
+This is part of the [[file:ljs-config.org][LJS-Config]]. ESS settings borrowed heavily from Kieran Healy's [[https://github.com/kjhealy/emacs-starter-kit][emacs starter-kit for
+the social sciences]]. I have made some effort to implement use-package. I have added stan-mode configuration, and some settings for csv-mode. I see Healy has the latter in starter-kit-text.org. I will maybe put these in an equivalent file eventually. 
 
 
 This file provides settings for ESS and R. 
@@ -15,23 +13,23 @@ This file provides settings for ESS and R.
 
  ** Load ESS 
 
+ Smart parens, and uses Meta-up to go to previous command. 
+
 #+source: load-ess
 #+begin_src emacs-lisp
-(use-package ess)
-#+end_src
-
-
-
-
-** Coding Hooks
-#+source: ide-ess
-#+begin_src emacs-lisp
-(use-package smartparens
-  :ensure t
+(use-package ess
   :config
   (add-hook 'ess-R-post-run-hook 'smartparens-mode)
-  (add-hook 'ess-mode-hook 'run-ljs-config-coding-hook))
+  (add-hook 'ess-mode-hook 'run-ljs-config-coding-hook)
+  (add-hook 'inferior-ess-mode-hook
+            (lambda ()
+              (local-set-key (kbd "M-<up>") 'comint-previous-input)
+              (local-set-key (kbd "M-<down>") 'comint-next-input)
+              (setq inferior-ess-site "https://www.stats.bris.ac.uk/R/"))))
 #+end_src
+
+
+
 
 ** Use Polymode 
 Polymode is a package that supports multiple modes inside a single buffer. It is aimed particularly at literate programming approaches and supports, e.g., R and markdown in a single =.Rmd= file. So it is very useful with knitr in R.
@@ -48,7 +46,7 @@ Polymode is a package that supports multiple modes inside a single buffer. It is
   :ensure t)
 #+end_src
 
-#+end_src
+
 
 ** Make shift-enter to a lot in ESS.
  Use shift-enter to split window & launch R (if not running), execute
@@ -158,7 +156,6 @@ This is useful for when you have buffers with many similar names, as when there 
 
 
 
-
 * Stan Mode Configurations
 
 ** Install and Configure Stan Mode
@@ -215,4 +212,33 @@ This is useful for when you have buffers with many similar names, as when there 
 ** Rainbow delimiters in Stan-mode
 #+begin_src emacs-lisp
 (add-hook 'stan-mode-hook #'rainbow-delimiters-mode)
+#+end_src
+
+* CSV-mode - For viewing .csv files in emacs
+
+#+src_name: ljs-config-csv-mode
+#+begin_src emacs-lisp
+(use-package csv-mode
+  :ensure t
+  :mode ("\\.csv\\'" . csv-mode)
+  :config
+  ;; Set the column separator (default is comma)
+  (setq csv-separators '("," ";"))
+  
+  ;; Automatically adjust window width to fit content
+  (setq csv-align-to-separators t)
+
+  ;; Enable column highlight in csv-align-fields mode
+  (setq csv-align-field-separator ?\s)
+
+  ;; If you want to use header line for column names
+  (setq csv-header-line t)
+
+  ;; If you want to enable csv-align-fields mode by default
+  (add-hook 'csv-mode-hook 'csv-align-fields)
+
+  ;; Example: Customize key bindings for csv-mode
+  (define-key csv-mode-map (kbd "C-c C-a") 'csv-align-fields)
+  (define-key csv-mode-map (kbd "C-c C-u") 'csv-unalign-fields)
+  )
 #+end_src

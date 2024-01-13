@@ -497,12 +497,20 @@ Located in [[file:ljs-config-org.org][ljs-config-org]]
   (ljs-config-load "./ljs-config/ljs-config-org.org")
 #+end_src
 
+** LJS Config Eshell
+Located in [[file:ljs-config-eshell.org][ljs-config-eshell]]
+
+#+srcname: ljs-config-load-eshell
+#+begin_src emacs-lisp
+  (ljs-config-load "./ljs-config/ljs-config-eshell.org")
+#+end_src
+
 
 
 
 #+source: message-line
 #+begin_src emacs-lisp
-  (message "ljs-config main file loaded.")
+  (message "LJS Config main file loaded.")
 #+end_src
 
 

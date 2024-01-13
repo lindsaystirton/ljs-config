@@ -15,7 +15,9 @@ easier to manage and update your Emacs configuration.
 #+begin_src emacs-lisp
   (use-package auctex)
   (use-package all-the-icons)
+  (use-package all-the-icons-dired)
   (use-package cl-lib)
+  (use-package csv-mode)
   (use-package doom-modeline)
   (use-package ebib)
   (use-package ess)
