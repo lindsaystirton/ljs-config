@@ -47,7 +47,7 @@ do so, enter M-x ef-themes-toggle.
 
 ** Doom modeline
 
- #+srcname: ljs-config-appearance-doom-modeline
+#+srcname: ljs-config-appearance-doom-modeline
 #+begin_src emacs-lisp
 
    (use-package doom-modeline
@@ -63,9 +63,42 @@ do so, enter M-x ef-themes-toggle.
      (setq doom-modeline-height 10)
 #+end_src
 
+* Splitting frames
+
+I found the idea and code for this on a [[https://christiantietze.de/posts/2022/02/split-and-resize-frame/][blog post by Christian
+Tietze]]. Basically douples the width of the window when splitting the
+frame vertically. The problem with the original code is that if you closed the right frame, the window retained the same dimenions. This version retains the frame width and reduces the window size accordingly. 
+
+#+srcname: ljs-config-appearance-split-right-resize
+#+begin_src emacs-lisp
+(defvar ljs/original-frame-width nil
+  "Variable to store the original frame width.")
+
+(defun ljs/frame-double-width (&optional frame)
+   (let* ((current_width (frame-pixel-width frame))
+          (monitor_width (nth 2 (frame-monitor-workarea frame)))
+          (double_width (min monitor_width
+                             (* 2 current_width))))
+       (set-frame-width frame double_width nil t)))
+
+(defun ljs/split-right-and-resize-frame ()
+  (interactive)
+  (setq ljs/original-frame-width (frame-pixel-width))
+  (split-window-right)
+  (ljs/frame-double-width))
+
+(defun ljs/restore-original-dimensions ()
+  (interactive)
+  (delete-other-windows)
+  (when ljs/original-frame-width
+    (set-frame-width (selected-frame) ljs/original-frame-width nil t)))
+
+(global-set-key (kbd "C-x 3") 'ljs/split-right-and-resize-frame)
+(global-set-key (kbd "C-x 1") 'ljs/restore-original-dimensions)
+#+end_src
 
 #+source: message-line
 #+begin_src emacs-lisp
-  (message "ljs-config-appearance loaded.")
+       (message "LJS Config Appearance.")
 #+end_src
 
