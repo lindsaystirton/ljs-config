@@ -204,6 +204,12 @@ the social sciences]]. I have made some effort to implement use-package.
 #+end_src
 
 
+#+srcname: latex-turn-off-auto-fill
+#+begin_src emacs-lisp :tangle no
+(add-hook 'latex-mode-hook 'turn-off-auto-fill)
+#+end_src
+
+
 *** Configure Org-babel
 #+name: org-babel-configuration
 #+begin_src emacs-lisp

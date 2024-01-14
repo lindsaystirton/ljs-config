@@ -21,6 +21,8 @@ This file provides settings for ESS and R.
   :config
   (add-hook 'ess-R-post-run-hook 'smartparens-mode)
   (add-hook 'ess-mode-hook 'run-ljs-config-coding-hook)
+  (add-hook 'ess-mode-hook 'turn-on-auto-fill)
+  (add-hook 'inferior-ess-mode-hook 'turn-on-auto-fill)
   (add-hook 'inferior-ess-mode-hook
             (lambda ()
               (local-set-key (kbd "M-<up>") 'comint-previous-input)
@@ -214,31 +216,3 @@ This is useful for when you have buffers with many similar names, as when there 
 (add-hook 'stan-mode-hook #'rainbow-delimiters-mode)
 #+end_src
 
-* CSV-mode - For viewing .csv files in emacs
-
-#+src_name: ljs-config-csv-mode
-#+begin_src emacs-lisp
-(use-package csv-mode
-  :ensure t
-  :mode ("\\.csv\\'" . csv-mode)
-  :config
-  ;; Set the column separator (default is comma)
-  (setq csv-separators '("," ";"))
-  
-  ;; Automatically adjust window width to fit content
-  (setq csv-align-to-separators t)
-
-  ;; Enable column highlight in csv-align-fields mode
-  (setq csv-align-field-separator ?\s)
-
-  ;; If you want to use header line for column names
-  (setq csv-header-line t)
-
-  ;; If you want to enable csv-align-fields mode by default
-  (add-hook 'csv-mode-hook 'csv-align-fields)
-
-  ;; Example: Customize key bindings for csv-mode
-  (define-key csv-mode-map (kbd "C-c C-a") 'csv-align-fields)
-  (define-key csv-mode-map (kbd "C-c C-u") 'csv-unalign-fields)
-  )
-#+end_src

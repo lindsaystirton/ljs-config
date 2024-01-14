@@ -480,6 +480,14 @@ Located in [[file:ljs-config-stats.org][ljs-config-stats]]
   (ljs-config-load "./ljs-config/ljs-config-stats.org")
 #+end_src
 
+*** Starter Kit Text
+Located in [[file:ljs-config-text.org][ljs-config-text]]
+
+#+begin_src emacs-lisp
+  (ljs-config-load "./ljs-config/ljs-config-text.org")
+#+end_src
+
+
 *** LJS Config Git
 Located in [[file:ljs-config-git.org][ljs-config-git]]
 
