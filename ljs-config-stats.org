@@ -33,6 +33,7 @@ This file provides settings for ESS and R.
 
 
 
+
 ** Use Polymode 
 Polymode is a package that supports multiple modes inside a single buffer. It is aimed particularly at literate programming approaches and supports, e.g., R and markdown in a single =.Rmd= file. So it is very useful with knitr in R.
 
@@ -55,27 +56,28 @@ Polymode is a package that supports multiple modes inside a single buffer. It is
  highlighted region (if R running & area highlighted), or execute
  current line (and move to next line, skipping comments). Nice. See
  http://www.emacswiki.org/emacs/EmacsSpeaksStatistics,
- FelipeCsaszar. Adapted to split vertically instead of horizontally. 
+ FelipeCsaszar. Adapted to double the window with when R is opened in
+ a frame on the right.
+ 
 #+src-name: ess-shift-enter
 #+begin_src emacs-lisp
-(setq ess-ask-for-ess-directory nil)
-  (setq ess-local-process-name "R")
-  (setq ansi-color-for-comint-mode 'filter)
-  (setq comint-scroll-to-bottom-on-input t)
-  (setq comint-scroll-to-bottom-on-output t)
-  (setq comint-move-point-for-output t)
-  (defun my-ess-start-R ()
-    (interactive)
-    (unless (mapcar (lambda (s) (string-match "*R" (buffer-name s))) (buffer-list))
-;;    (unless (string-match "*R" (mapcar (function buffer-name) (buffer-list)))
-      (progn
-	(delete-other-windows)
-	(setq w1 (selected-window))
-	(setq w1name (buffer-name))
-	(setq w2 (split-window w1 nil t))
-	(R)
-	(set-window-buffer w2 "*R*")
-	(set-window-buffer w1 w1name))))
+(defun my-ess-start-R ()
+  "Start R and split the window horizontally, doubling the frame width."
+  (interactive)
+  (or (assq 'inferior-ess-mode
+            (mapcar 
+              (lambda (buff) (list (buffer-local-value 'major-mode buff)))
+              (buffer-list)))
+   (progn
+     (delete-other-windows)
+     (setq w1 (selected-window))
+     (setq w1name (buffer-name))
+     (setq w2 (split-window w1 nil t))
+     (R)
+     (set-window-buffer w2 "*R*")
+     (set-window-buffer w1 w1name)
+     (setq ljs/original-frame-width (frame-pixel-width))
+     (ljs/frame-double-width)))) ; Double the frame width
   (defun my-ess-eval ()
     (interactive)
     (my-ess-start-R)
@@ -88,12 +90,26 @@ Polymode is a package that supports multiple modes inside a single buffer. It is
   (add-hook 'inferior-ess-mode-hook
 	    '(lambda()
 	       (local-set-key [C-up] 'comint-previous-input)
-	       (local-set-key [C-down] 'comint-next-input)))
- (add-hook 'Rnw-mode-hook 
-          '(lambda() 
-             (local-set-key [(shift return)] 'my-ess-eval))) 
+	       (local-set-key [C-down] 'comint-next-input))) 
   (require 'ess-site)
 #+end_src
+
+** Restore Original Frame Dimensions on quitting R
+Following the behaviour of my-ess-start-r, the following code makes
+sure that the window dimensions revert with R is killed.
+
+#+src-name: ess-restore-frame-dimensions
+#+begin_src emacs-lisp
+(defun my-restore-original-dimensions ()
+  (interactive)
+  (if (string-match-p "\\*R\\*" (buffer-name (current-buffer)))
+      (my-ess-start-R)
+    (progn
+      (delete-other-windows)
+      (when ljs/original-frame-width
+        (set-frame-width (selected-frame) ljs/original-frame-width nil t)))))
+#+end_src
+
 
 ** Add a Keyboard Shortcut for the Pipe Operator
 

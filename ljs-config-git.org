@@ -1,4 +1,4 @@
-#+TITLE: ljs-config Git
+#+TITLE: LJS Config Git
 #+OPTIONS: toc:nil num:nil ^:nil
 
 This file is part of the [[file:ljs-config.org][Lindsay Stirton's Emacs Configurations]].
@@ -33,5 +33,5 @@ This file is part of the [[file:ljs-config.org][Lindsay Stirton's Emacs Configur
 
 #+source: message-line
 #+begin_src emacs-lisp
-  (message "ljs-config-git.el loaded.")
+  (message "LJS-Config-Git loaded")
 #+end_src
