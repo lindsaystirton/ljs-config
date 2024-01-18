@@ -1,8 +1,8 @@
 #+TITLE: LJS Config Statistics
 #+OPTIONS: toc:nil num:nil ^:nil
 
-This is part of the [[file:ljs-config.org][LJS-Config]]. ESS settings borrowed heavily from Kieran Healy's [[https://github.com/kjhealy/emacs-starter-kit][emacs starter-kit for
-the social sciences]]. I have made some effort to implement use-package. I have added stan-mode configuration, and some settings for csv-mode. I see Healy has the latter in starter-kit-text.org. I will maybe put these in an equivalent file eventually. 
+Part of [[file:ljs-config.org][LJS-Config]]. ESS settings borrowed heavily from Kieran Healy's [[https://github.com/kjhealy/emacs-starter-kit][emacs starter-kit for
+the social sciences]]. I have used use-package to load and configure packages where possible. I have added stan-mode configuration because #Bayes. 
 
 
 This file provides settings for ESS and R. 

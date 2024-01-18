@@ -505,7 +505,7 @@ Located in [[file:ljs-config-org.org][ljs-config-org]]
   (ljs-config-load "./ljs-config/ljs-config-org.org")
 #+end_src
 
-** LJS Config Eshell
+*** *LJS Config Eshell
 Located in [[file:ljs-config-eshell.org][ljs-config-eshell]]
 
 #+srcname: ljs-config-load-eshell
@@ -513,6 +513,13 @@ Located in [[file:ljs-config-eshell.org][ljs-config-eshell]]
   (ljs-config-load "./ljs-config/ljs-config-eshell.org")
 #+end_src
 
+*** LJS Config Python
+
+Located in [[ljs-config-python.org][ljs-config-python]]
+#+srcname: ljs-config-load-python
+#+begin_src emacs-lisp
+  (ljs-config-load "./ljs-config/ljs-config-python.org")
+#+end_src
 
 
 

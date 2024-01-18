@@ -1,0 +1,34 @@
+#+TITLE: LJS Config Python
+#+OPTIONS: toc:nil num:nil ^:nil
+Part of [[file:ljs-config.org][LJS-Config]].
+
+I don't use Python, so this is a straight read-over of Kieran Healy's [[file:starter-kit.org][Emacs Starter Kit]], adapted to make use of use-packgae. .
+
+* Starter kit Python
+
+Support for the Python programming language.
+
+** Elpy
+
+#+begin_src emacs-lisp
+  (use-package elpy
+  :ensure t
+  :config
+  (elpy-enable)
+
+  (setq python-shell-interpreter "jupyter"
+        python-shell-interpreter-args "console --simple-prompt"
+        python-shell-prompt-detect-failure-warning nil)
+
+  (add-to-list 'python-shell-completion-native-disabled-interpreters
+               "jupyter")
+
+  (when (require 'flycheck nil t)
+    (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
+    (add-hook 'elpy-mode-hook 'flycheck-mode)))
+#+end_src
+
+#+source: message-line
+#+begin_src emacs-lisp
+  (message "LJS Config Python loaded.")
+#+end_src

@@ -174,7 +174,13 @@ Org-mode manual is available to the =info= command (bound to =C-h i=).
   (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
 #+end_src
 
+** Org-Roam
 
+#+name: org-roam
+#+begin_src emacs-lisp :tangle no
+(use-package org-roam
+  :ensure t)
+#+end_src
 
 #+source: message-line
 #+begin_src emacs-lisp
