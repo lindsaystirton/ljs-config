@@ -164,22 +164,38 @@ Org-mode manual is available to the =info= command (bound to =C-h i=).
 
 ** Nice Bulleted Lists
 #+name: org-bullets
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp 
 (use-package org-bullets
-    :ensure t
-    :init
-    (add-hook 'org-mode-hook (lambda ()
-                      (org-bullets-mode 1))))
+  :ensure t
+  :init
+  (add-hook 'org-mode-hook (lambda ()
+                             (org-bullets-mode 1)))
   :custom
   (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
 #+end_src
 
 ** Org-Roam
 
+[[https://systemcrafters.net/build-a-second-brain-in-emacs/getting-started-with-org-roam/][David Wilson's]] suggested configuration for org-roam. 
+
 #+name: org-roam
-#+begin_src emacs-lisp :tangle no
-(use-package org-roam
-  :ensure t)
+#+begin_src emacs-lisp 
+ (use-package org-roam
+  :ensure t
+  :hook (org-mode . org-roam-mode)
+  :custom
+  (org-roam-directory "~/Dropbox/RoamNotes")
+  (org-roam-db-autosync-mode t)  ; Specify t to enable the mode
+  (org-roam-completion-everywhere t)
+  :bind (("C-c n l" . org-roam-buffer-toggle)
+         ("C-c n f" . org-roam-node-find)
+         ("C-c n i" . org-roam-node-insert)
+         :map org-mode-map
+         ("C-M-i" . completion-at-point))  ; Binding for org-mode
+  :config
+  (org-roam-setup)
+  (setq org-link-file-path-type 'adaptive))
+
 #+end_src
 
 #+source: message-line
