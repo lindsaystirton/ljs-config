@@ -176,7 +176,7 @@ Org-mode manual is available to the =info= command (bound to =C-h i=).
 [[https://systemcrafters.net/build-a-second-brain-in-emacs/getting-started-with-org-roam/][David Wilson's]] suggested configuration for org-roam. 
 
 #+name: org-roam
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package org-roam
   :ensure t
   :custom
