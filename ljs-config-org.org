@@ -175,11 +175,27 @@ Org-mode manual is available to the =info= command (bound to =C-h i=).
 
 [[https://systemcrafters.net/build-a-second-brain-in-emacs/getting-started-with-org-roam/][David Wilson's]] suggested configuration for org-roam. 
 
-
-
-#+source: message-line
+#+name: org-bullets
 #+begin_src emacs-lisp
-  (message "LJS Config Org loaded.")
+(use-package org-roam
+  :ensure t
+  :init
+  (setq org-roam-v2-ack t)
+  :custom
+  (org-roam-directory "~/Dropbox/RoamNotes")
+  (org-roam-completion-everywhere t)
+  :bind (("C-c n l" . org-roam-buffer-toggle)
+         ("C-c n f" . org-roam-node-find)
+         ("C-c n i" . org-roam-node-insert)
+         :map org-mode-map
+         ("C-M-i"    . completion-at-point))
+  :config
+  (org-roam-setup))
+#+end_src
+
+ #+source: message-line
+ #+begin_src emacs-lisp
+    (message "LJS Config Org loaded.")
 #+end_src
 
 
