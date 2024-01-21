@@ -204,7 +204,7 @@ The pdf-tools packages provides an emacs pdf viewer that replaces the standard d
 
   Run the following command in your terminal to reinstall dependencies:
 
-  #+BEGIN_SRC shell
+  #+BEGIN_SRC shell :tangle no
   brew reinstall cairo poppler glib libpng
   #+END_SRC
 
@@ -212,7 +212,7 @@ The pdf-tools packages provides an emacs pdf viewer that replaces the standard d
 
   Launch Emacs using the command line with the following command:
 
-  #+BEGIN_SRC shell
+  #+BEGIN_SRC shell :tangle no
   /Applications/Emacs.app/Contents/MacOS/Emacs
   #+END_SRC
 
