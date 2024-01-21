@@ -244,7 +244,7 @@ the social sciences]]. I have made some effort to implement use-package.
 
 ** Window behaviour
 
-This function runs stores the screen width as variable  ljs/original-frame-width and runs ljs/frame-double-width before running TeX-command-run-all (bound to C-c C-a). Forces emacs to open the pdf viewer on the right and doubles the width.  The second function reduces the frame-width on killing the right buffer. 
+This function runs stores the screen width as variable  ljs/original-frame-width and runs ljs/frame-double-width before running TeX-command-run-all (bound to C-c C-a). Forces emacs to open the pdf viewer on the right and doubles the width. 
 
 #+name: frame-behaviour
 #+begin_src emacs-lisp
@@ -264,6 +264,32 @@ This function runs stores the screen width as variable  ljs/original-frame-width
 
 (advice-add 'TeX-view :around #'my-advice-before-TeX-view)
 
+(defun my-restore-original-dimensions-after-pdf-kill ()
+  "Restore original dimensions after killing a PDF buffer."
+  (delete-other-windows)
+  (when ljs/original-frame-width
+    (set-frame-width (selected-frame) ljs/original-frame-width nil t)))
+#+end_src
+
+
+The code below deletes the window when you kill a buffer in pdf-view-mode. Useful for editing LaTeX files in AucTeX. We'll see how it works alongside other uses of pdf-view mode like org-noter, etc. 
+
+#+name: delete-window-on-kill-pdf-view-buffer
+#+begin_src emacs-lisp
+(defun my-restore-original-dimensions ()
+  "Restore original dimensions of the frame."
+  (when ljs/original-frame-width
+    (set-frame-width (selected-frame) ljs/original-frame-width nil t)))
+
+(defun my-kill-pdf-buffer ()
+  "Function to run before killing a PDF buffer."
+  (when (eq major-mode 'pdf-view-mode)
+    (my-restore-original-dimensions)
+    (delete-other-windows)))
+
+(add-hook 'pdf-view-mode-hook
+          (lambda ()
+            (add-hook 'kill-buffer-hook #'my-kill-pdf-buffer nil 'local)))
 #+end_src
 
 * Message
