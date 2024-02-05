@@ -36,13 +36,12 @@ the social sciences]].
                     '("gunzip" "gz\\'"))
        (add-to-list 'eshell-command-completions-alist
                     '("tar" "\\(\\.tar|\\.tgz\\|\\.tar\\.gz\\)\\'"))
-       (add-to-list 'eshell-output-filter-functions 'eshell-handle-ansi-color)))
+       (add-to-list 'eshell-output-filter-functions 'eshell-handle-ansi-color))))
 
-  (add-hook 'eshell-mode-hook
-            (lambda ()
-              (require 'ansi-color)
-              (add-hook 'eshell-preoutput-filter-functions 'ansi-color-filter-apply))))
-
+(add-hook 'eshell-mode-hook
+          (lambda ()
+            (require 'ansi-color)
+            (add-hook 'eshell-preoutput-filter-functions 'ansi-color-filter-apply)))                    
 #+end_src
 
 ** Eshell Autosuggest

@@ -465,6 +465,12 @@ LJS Config function definitions in [[file:ljs-config-defuns][ljs-comfig-defuns]]
   (ljs-config-load "./ljs-config/ljs-config-appearance.org")
 #+end_src
 
+*** LJS Config Completion
+[[file:ljs-config-completion.org][ljs-config-completion]].
+#+srcname: ljs-config-load-completion
+#+begin_src emacs-lisp
+  (ljs-config-load "./ljs-config/ljs-config-completion.org")
+#+end_src
 
 *** LJS Config LaTeX
 Located in [[file:ljs-config-latex.org][ljs-config-latex]]
@@ -515,12 +521,21 @@ Located in [[file:ljs-config-eshell.org][ljs-config-eshell]]
 #+end_src
 
 *** LJS Config Python
-
 Located in [[ljs-config-python.org][ljs-config-python]]
+
 #+srcname: ljs-config-load-python
 #+begin_src emacs-lisp
   (ljs-config-load "./ljs-config/ljs-config-python.org")
 #+end_src
+
+*** LJS Config Lisp
+Located in [[ljs-config-lisp.org][ljs-config-lisp]]
+
+#+srcname: ljs-config-load-lisp
+#+begin_src emacs-lisp
+  (ljs-config-load "./ljs-config/ljs-config-lisp.org")
+#+end_src
+
 
 
 

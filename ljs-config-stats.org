@@ -187,6 +187,19 @@ This is useful for when you have buffers with many similar names, as when there 
   :hook (stan-mode . stan-mode-setup))
 #+end_src
 
+
+** Install and Configure Company-Stan
+
+#+srcname: ljs-config-company-stan
+#+begin_src emacs-lisp 
+  (use-package company-stan
+    :ensure t
+    :after stan-mode
+    :config
+    ;; Add company-stan to the list of backends for stan-mode
+    (add-to-list 'company-backends 'company-stan))
+#+end_src
+
 ** Install and Configure stan-snippets
 #+srcname: ljs-config-stan-snippets
 #+begin_src emacs-lisp 

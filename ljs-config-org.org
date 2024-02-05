@@ -2,9 +2,10 @@
 #+OPTIONS: toc:nil num:nil ^:nil
 
 
-This file is part of the [[file:ljs-config.org][Lindsay Stirton's Emacs Configurations]]. This
-file is all but copy-pased from Kieran Healy's [[https://github.com/kjhealy/emacs-starter-kit/][Emacs Starter-Kit for
-the Social Sciences]].
+This file is part of the [[file:ljs-config.org][Lindsay Stirton's Emacs Configurations]]. Code
+for Org is all but copy-pased from Kieran Healy's [[https://github.com/kjhealy/emacs-starter-kit/][Emacs Starter-Kit
+for the Social Sciences]]. I have added support for Pdf-Tools and a
+configuration for Org-Roam.
 
 * Starter Kit Org
 Configuration for the eminently useful [[http://orgmode.org/][Org Mode]].
@@ -173,28 +174,36 @@ Org-mode manual is available to the =info= command (bound to =C-h i=).
 
 ** Org-Roam
 
-[[https://systemcrafters.net/build-a-second-brain-in-emacs/getting-started-with-org-roam/][David Wilson's]] suggested configuration for org-roam. 
+Setup largely follows [[https://systemcrafters.net/build-a-second-brain-in-emacs/getting-started-with-org-roam/][David Wilson's]] suggested configuration for org-roam. 
 
-#+name: org-bullets
+#+name: org-roam
 #+begin_src emacs-lisp
-  (use-package org-roam
-    :ensure t
-    :init
-    (setq org-roam-v2-ack t)
-    :custom
-    (org-roam-directory "~/Dropbox/RoamNotes")
-    (org-roam-completion-everywhere t)
-    :bind (("C-c n l" . org-roam-buffer-toggle)
-           ("C-c n f" . org-roam-node-find)
-           ("C-c n i" . org-roam-node-insert)
-           :map org-mode-map
-           ("C-M-i"    . completion-at-point))
-    :config
-    (org-roam-setup)
-    (setq org-link-file-path-type 'adaptive))
+(use-package org-roam
+  :ensure t
+  :custom
+  (org-roam-directory "~/Dropbox/Org-roam/Notes/")
+  (org-roam-completion-everywhere t)
+  (org-roam-capture-templates
+   '(("d" "default" plain
+      "%?"
+      :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
+      :unnarrowed t)
+     ("a" "archive" plain (file "~/Dropbox/Org-roam/Templates/ArchiveTemplate.org")
+      :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
+      :unnarrowed t)
+     ("s" "source" plain (file "~/Dropbox/Org-roam/Templates/SourceTemplate.org")
+      :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
+      :unnarrowed t)))
+  (org-roam-auto-synchronize t)  ; Add this line to enable auto-sync
+  :bind (("C-c n l" . org-roam-buffer-toggle)
+         ("C-c n f" . org-roam-node-find)
+         ("C-c n i" . org-roam-node-insert)
+         :map org-mode-map
+         ("C-M-i"    . completion-at-point))
+  :config
+  (setq org-link-file-path-type 'adaptive)
+  (setq org-roam-db-location "~/Dropbox/Org-roam/org-roam.db"))
 #+end_src
-
-
 
 ** PDF-Tools Setup for Org and Org-Roam
 
@@ -252,6 +261,29 @@ The pdf-tools packages provides an emacs pdf viewer that replaces the standard d
         '("citekey" "title" "url" "author-or-editor" "keywords"))
   (setq orb-note-actions-interface 'default))
 #+end_src
+
+** Open pdfs in a frame on the right using pdf-tools
+
+
+
+#+name: org-link-frame-behaviour
+#+begin_src emacs-lisp
+(defun my-org-open-pdf (file link)
+  "Open a PDF file using org-pdftools with custom frame behavior."
+  (let ((ljs/original-frame-width (frame-pixel-width)))
+    (ljs/frame-double-width)
+    (org-pdftools-open file)))
+
+(defun my-restore-original-dimensions-after-pdf-kill ()
+  "Restore original dimensions after killing a PDF buffer."
+  (delete-other-windows)
+  (when ljs/original-frame-width
+    (set-frame-width (selected-frame) ljs/original-frame-width nil t)))
+
+(advice-add 'org-file-apps-default :before-until #'my-org-open-pdf)
+(add-hook 'pdf-view-mode-hook #'my-restore-original-dimensions-after-pdf-kill)
+#+end_src
+
 
 
 ** Confirmation Message
