@@ -207,51 +207,22 @@ Setup largely follows [[https://systemcrafters.net/build-a-second-brain-in-emacs
 
 ** PDF-Tools Setup for Org and Org-Roam
 
-The pdf-tools packages provides an emacs pdf viewer that replaces the standard docview programme. Getting it to compile on MacOS was not straighforward, but the following seemed to solve any problems. 
-
-*** Reinstall Dependencies
-
-  Run the following command in your terminal to reinstall dependencies:
-
-  #+BEGIN_SRC shell :tangle no
-  brew reinstall cairo poppler glib libpng
-  #+END_SRC
-
-*** Open Emacs in Terminal/iTerm2
-
-  Launch Emacs using the command line with the following command:
-
-  #+BEGIN_SRC shell :tangle no
-  /Applications/Emacs.app/Contents/MacOS/Emacs
-  #+END_SRC
-
-*** Verify pdfinfo Path
-
-  Ensure that the correct filepath to `pdfinfo` is specified. You can do this by checking the `pdf-info-epdfinfo-program` variable in Emacs. Update the path if necessary.
-
-  Example:
-  #+BEGIN_SRC emacs-lisp :tangle no
-  (setq pdf-info-epdfinfo-program "/path/to/pdfinfo")
-  #+END_SRC
-
-  Make sure to replace "/path/to/pdfinfo" with the actual path to your `pdfinfo` executable.
-
-*** Restart Emacs
-
-  After making changes, restart Emacs to apply the configuration.
-  
+#+name: pdf-tools
 #+begin_src emacs-lisp
 (use-package pdf-tools
   :ensure t
   :config
-  ;; Install pdf-tools
-  (pdf-tools-install)
-  ;; Set the path to pdfinfo from Poppler
- (setq org-pdftools-command "/opt/homebrew/Cellar/poppler/24.01.0/bin/pdfinfo"))
+  (message "pdf-tools loaded"))
 
 (use-package org-pdftools
   :ensure t
-  :after (org pdf-tools))
+  :hook (org-mode . org-pdftools-setup-link)
+  :after (org pdf-tools)
+  :config
+  ;; Set org-file-apps to open PDFs with pdf-tools
+  (setq org-file-apps
+        '(("\\.pdf\\'" . emacsclient)))
+  (message "org-pdftools loaded"))
 
 (use-package org-roam-bibtex
   :after org-roam
@@ -259,29 +230,25 @@ The pdf-tools packages provides an emacs pdf viewer that replaces the standard d
   :config
   (setq orb-preformat-keywords
         '("citekey" "title" "url" "author-or-editor" "keywords"))
-  (setq orb-note-actions-interface 'default))
+  (message "org-roam-bibtex loaded"))
 #+end_src
+
 
 ** Open pdfs in a frame on the right using pdf-tools
 
+*** Is there some unnecessary function duplication?
 
-
-#+name: org-link-frame-behaviour
+#+name: org-pdf-frame-behaviour
 #+begin_src emacs-lisp
 (defun my-org-open-pdf (file link)
+  "Open a PDF file using org-pdftools."
+  (org-pdftools-open file))
+
+(defun my-org-open-pdf-with-frame-behavior (file link)
   "Open a PDF file using org-pdftools with custom frame behavior."
-  (let ((ljs/original-frame-width (frame-pixel-width)))
-    (ljs/frame-double-width)
-    (org-pdftools-open file)))
-
-(defun my-restore-original-dimensions-after-pdf-kill ()
-  "Restore original dimensions after killing a PDF buffer."
-  (delete-other-windows)
-  (when ljs/original-frame-width
-    (set-frame-width (selected-frame) ljs/original-frame-width nil t)))
-
-(advice-add 'org-file-apps-default :before-until #'my-org-open-pdf)
-(add-hook 'pdf-view-mode-hook #'my-restore-original-dimensions-after-pdf-kill)
+  (let ((original-width (frame-pixel-width)))
+    (my-org-open-pdf file link)
+    (ljs/frame-double-width original-width)))
 #+end_src
 
 
@@ -292,3 +259,5 @@ The pdf-tools packages provides an emacs pdf viewer that replaces the standard d
  #+begin_src emacs-lisp
     (message "LJS Config Org loaded.")
 #+end_src
+
+* 

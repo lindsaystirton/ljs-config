@@ -194,19 +194,21 @@ the social sciences]]. I have made some effort to implement use-package.
 
 
 ** Use pdf-tools with AUCTeX
-   - Add this to enable pdf-tools with AUCTeX.
+Enables pdf-tools with AUCTeX.
+
 #+begin_src emacs-lisp
-(use-package pdf-tools
+(use-package tex
   :config
+  ;; Set pdf-tools as the PDF viewer for AUCTeX
   (setq TeX-view-program-selection '((output-pdf "PDF Tools")))
-  (setq TeX-view-program-list
-        '(("PDF Tools" TeX-pdf-tools-sync-view)))
-  (pdf-tools-install))
+  (setq TeX-view-program-list '(("PDF Tools" TeX-pdf-tools-sync-view))))
 #+end_src
 
 #+begin_src emacs-lisp
 (add-hook 'latex-mode-hook 'turn-off-auto-fill)
 #+end_src
+
+
 
 
 
@@ -291,6 +293,7 @@ The code below deletes the window when you kill a buffer in pdf-view-mode. Usefu
           (lambda ()
             (add-hook 'kill-buffer-hook #'my-kill-pdf-buffer nil 'local)))
 #+end_src
+
 
 * Message
 #+name: message-config

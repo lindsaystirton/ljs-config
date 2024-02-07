@@ -44,24 +44,87 @@ do so, enter M-x ef-themes-toggle.
      (load-theme 'modus-vivendi t))
 #+end_src
 
+** All the icons
+
+#+srcname: ljs-config-appearance-all-the-icons
+#+begin_src emacs-lisp
+(use-package all-the-icons
+  :if (display-graphic-p))
+#+end_src
 
 ** Doom modeline
 
 #+srcname: ljs-config-appearance-doom-modeline
 #+begin_src emacs-lisp
-
-   (use-package doom-modeline
-     :init
-     (require 'all-the-icons)
-     :config
-     (setq doom-modeline-major-mode-icon t)
-     (setq doom-modeline-buffer-state-icon t)
-     :custom ((doom-modeline-height 10)))
-     (doom-modeline-mode 1)
-     (setq doom-modeline-icon t)
-     (setq doom-modeline-major-mode-icon t)
-     (setq doom-modeline-height 10)
+ (use-package doom-modeline
+    :init
+    (require 'all-the-icons)
+    :config
+    (setq doom-modeline-major-mode-icon t)
+    (setq doom-modeline-buffer-state-icon t)
+    :custom ((doom-modeline-height 10)))
+    (doom-modeline-mode 1)
+    (setq doom-modeline-icon t)
+    (setq doom-modeline-major-mode-icon t)
+    (setq doom-modeline-height 10)
 #+end_src
+
+** PDF VIew
+
+The pdf-tools packages provides an emacs pdf viewer that replaces the standard docview programme. Getting it to compile on MacOS was not straighforward, but the following seemed to solve any problems. 
+
+*** Reinstall Dependencies
+
+  Run the following command in your terminal to reinstall dependencies:
+
+  #+BEGIN_SRC shell :tangle no
+  brew reinstall cairo poppler glib libpng
+  #+END_SRC
+
+*** Open Emacs in Terminal/iTerm2
+
+  Launch Emacs using the command line with the following command:
+
+  #+BEGIN_SRC shell :tangle no
+  /Applications/Emacs.app/Contents/MacOS/Emacs
+  #+END_SRC
+
+*** Verify pdfinfo Path
+
+  Ensure that the correct filepath to `pdfinfo` is specified. You can do this by checking the `pdf-info-epdfinfo-program` variable in Emacs. Update the path if necessary.
+
+  Example:
+  #+BEGIN_SRC emacs-lisp :tangle no
+  (setq pdf-info-epdfinfo-program "/path/to/pdfinfo")
+  #+END_SRC
+
+  Make sure to replace "/path/to/pdfinfo" with the actual path to your `pdfinfo` executable.
+
+*** Restart Emacs
+
+  After making changes, restart Emacs to apply the configuration.
+  
+
+#+begin_src emacs-lisp
+(use-package pdf-tools
+  :ensure t
+  :config
+  ;; Install pdf-tools
+  (pdf-tools-install)
+  (setq org-pdftools-command "/opt/homebrew/Cellar/poppler/24.01.0/bin/pdfinfo")
+
+  ;; Set pdf-tools as the default PDF viewer
+  (setq-default pdf-viewer 'pdf-tools)
+
+  ;; Ensure that pdf-tools is used for all PDF files
+  (add-to-list 'auto-mode-alist '("\\.pdf\\'" . pdf-view-mode)))
+#+end_src
+
+
+** TODO Other viewers
+
+
+
 
 * Splitting frames
 

@@ -1,0 +1,163 @@
+#+TITLE: LJS Config Completion
+#+OPTIONS: toc:nil num:nil ^:nil
+
+Part of [[file:ljs-config.org][LJS-Config]]. ESS settings borrowed heavily from Kieran Healy's [[https://github.com/kjhealy/emacs-starter-kit][emacs starter-kit for
+the social sciences]]. I have used use-package to load and configure Yasnippet and Company.
+
+I have also added support for Vertico, Consult and Orderless. It was a tough call between these and Ivy, Counsel and Swiper, and I may well go back to these.
+
+* Vertico, Consult, and Orderless Configuration
+
+** Install Vertico
+#+NAME: vertico-installation
+#+begin_src emacs-lisp
+(use-package vertico
+  :ensure t
+  :config
+  (vertico-mode))
+#+end_src
+
+** Install Consult
+#+NAME: consult-installation
+#+begin_src emacs-lisp
+(use-package consult
+  :ensure t
+  :demand
+  :bind (("C-s" . consult-line)
+         ("M-g g" . consult-goto-line)
+         ("M-g M-g" . consult-goto-line)
+         ("C-x b" . consult-buffer)
+         ("C-x 4 b" . consult-buffer-other-window)
+         ("C-x 5 b" . consult-buffer-other-frame)
+         ("M-y" . consult-yank-pop)
+         ("C-x r b" . consult-bookmark)
+         ("C-x M-f" . consult-find)
+         :map vertico-map
+         ("C-j" . vertico-next)
+         ("C-k" . vertico-previous))
+  :config
+  (setq consult-line-point-position 'window)
+  (setq consult-line-prompts
+        `(,buffer-file-name
+          ,(and (bound-and-true-p projectile-mode)
+                (projectile-project-name))
+          ,(abbreviate-file-name default-directory)))
+  :custom
+  (consult-project-root-function #'projectile-project-root)
+  (consult-narrow-key "<")
+  (consult-project-root-function #'projectile-project-root))
+#+end_src
+
+** Install Orderless
+#+NAME: orderless-installation
+#+begin_src emacs-lisp
+ :ensure t
+  :custom (completion-styles '(orderless))
+  :init (icomplete-mode 1))
+#+end_src
+
+
+
+** Disable isearch keys in minibuffer
+
+Necessary because of conflicts with i-search.
+
+#+begin_src emacs-lisp
+(add-hook 'minibuffer-setup-hook
+          (lambda ()
+            (local-unset-key (kbd "C-s"))
+            (local-unset-key (kbd "C-r"))))
+#+end_src
+
+* Starter kit yasnippet
+
+Yasnippet is a snippet expansion system for Emacs. It uses short phrases and the tab key to trigger the insertion of frequently-used snippets of code or text in your document. 
+
+** Load the yasnippet bundle
+#+begin_src emacs-lisp :tangle yes
+(use-package yasnippet
+  :ensure t
+  :config
+  (yas-global-mode 1)
+  
+  ;; Load snippets from the package's ./snippets/ directory
+  (let ((snippets-dir (expand-file-name "snippets" dotfiles-dir)))
+    (when (file-directory-p snippets-dir)
+      (yas-load-directory snippets-dir)))
+
+  ;; Check expansion function
+  (defun check-expansion ()
+    (save-excursion
+      (if (looking-at "\\_>") t
+        (backward-char 1)
+        (if (looking-at "\\.") t
+          (backward-char 1)
+          (if (looking-at "->") t nil)))))
+
+  ;; Do yas-expand function
+  (defun do-yas-expand ()
+    (let ((yas-fallback-behavior 'return-nil))
+      (yas-expand)))
+
+  ;; Tab, indent, or complete function
+  (defun tab-indent-or-complete ()
+    (interactive)
+    (if (minibufferp)
+        (minibuffer-complete)
+      (if (or (not yas-minor-mode)
+              (null (do-yas-expand)))
+          (if (check-expansion)
+              (company-complete-common)
+            (indent-for-tab-command)))))
+
+  ;; Bind tab to tab-indent-or-complete
+  :bind
+  (:map yas-minor-mode-map
+        ([tab] . tab-indent-or-complete)))  
+#+end_src
+
+** Company Mode
+Auto-completion of text and code. 
+
+We use the `:with` keyword to include dabbrev in every backend, which gives us completion from everything that's in the buffer (and other open buffers).
+
+#+source: company-mode
+#+begin_src emacs-lisp 
+(use-package company
+  :ensure t
+  :custom
+  (company-idle-delay 0)
+  (company-require-match nil)
+  :bind
+  ("<C-tab>" . company-complete)
+  :config
+  (global-company-mode)
+  
+  ;; Use C-n and C-p to cycle through completions
+  (define-key company-active-map (kbd "C-n") 'company-select-next)
+  (define-key company-active-map (kbd "<tab>") 'company-complete-common)
+  (define-key company-active-map (kbd "C-p") 'company-select-previous)
+  (define-key company-active-map (kbd "<backtab>") 'company-select-previous)
+  
+  ;; Enable math completions
+  (use-package company-math
+    :ensure t
+    :config
+    (add-to-list 'company-backends 'company-math-symbols-unicode))
+
+  ;; Completion for kill ring history
+  (use-package browse-kill-ring
+    :ensure t
+    :config
+    (browse-kill-ring-default-keybindings)))
+#+end_src
+
+
+
+
+
+#+name: message-line
+#+begin_src emacs-lisp
+  (message "LJS Config Completion loaded.")
+#+end_src
+
