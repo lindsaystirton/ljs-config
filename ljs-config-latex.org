@@ -209,6 +209,23 @@ Enables pdf-tools with AUCTeX.
 #+end_src
 
 
+NOTE that there is an issue compiling pdf-tools on MacOS. There is
+info at the following:
+[[https://github.com/politza/pdf-tools/issues/652#issue-795687902.
+
+In the end what woked for me was running the following in terminal emacs:
+
+#+begin_src emacs-lisp :eval never
+(use-package pdf-tools
+   :ensure t
+   :config
+   (setenv "PKG_CONFIG_PATH" "/opt/homebrew/Cellar/zlib/1.2.13/lib/pkgconfig:/opt/homebrew/lib/pkgconfig:/opt/X11/lib/pkgconfig/:/opt/homebrew/Cellar/poppler/23.01.0/lib/pkgconfig:/opt/X11/share/pkgconfig")
+   (pdf-tools-install)
+   (custom-set-variables
+    '(pdf-tools-handle-upgrades t)))
+#+end_src
+
+
 
 
 

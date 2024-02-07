@@ -1,9 +1,8 @@
 #+TITLE: LJS Config Org
 #+OPTIONS: toc:nil num:nil ^:nil
 
-
 This file is part of the [[file:ljs-config.org][Lindsay Stirton's Emacs Configurations]]. Code
-for Org is all but copy-pased from Kieran Healy's [[https://github.com/kjhealy/emacs-starter-kit/][Emacs Starter-Kit
+for Org is all but copy-pasted from Kieran Healy's [[https://github.com/kjhealy/emacs-starter-kit/][Emacs Starter-Kit
 for the Social Sciences]]. I have added support for Pdf-Tools and a
 configuration for Org-Roam.
 
@@ -20,7 +19,6 @@ which is also implemented using Org-mode and [[http://git-scm.com/][git]].
 
 ** Org-Mode
 
-#+srcname: org-config
 #+begin_src emacs-lisp
 (use-package org
   :hook (org-mode . org-mode-setup)
@@ -36,22 +34,13 @@ which is also implemented using Org-mode and [[http://git-scm.com/][git]].
     (org-indent-mode 1)
     (variable-pitch-mode 1)
     (auto-fill-mode 0)
-    (visual-line-mode 1))
-  )
+    (visual-line-mode 1)))
 #+end_src
 
-
-
-
-
-
 ** Org-Mode Hooks
-Make yasnippet work properly with org-mode. 
+Make yasnippet work properly with org-mode.
 
 #+begin_src emacs-lisp
-;;  (defun yas/org-very-safe-expand ()
-;;    (let ((yas/fallback-behavior 'return-nil)) (yas/expand)))
-
 (defun yas-org-very-safe-expand ()
   (let ((yas-fallback-behavior 'return-nil))
     (and (fboundp 'yas-expand) (yas-expand))))
@@ -59,110 +48,67 @@ Make yasnippet work properly with org-mode.
 (add-hook 'org-mode-hook
           (lambda ()
             (add-to-list 'org-tab-first-hook
-                         'yas-org-very-safe-expand)
-            ))
-
+                         'yas-org-very-safe-expand)))
 #+end_src
 
 #+begin_src emacs-lisp
-  (add-hook 'org-mode-hook
-            (lambda ()
-              (local-set-key "\M-\C-n" 'outline-next-visible-heading)
-              (local-set-key "\M-\C-p" 'outline-previous-visible-heading)
-              (local-set-key "\M-\C-u" 'outline-up-heading)
-              ;; table
-              (local-set-key "\M-\C-w" 'org-table-copy-region)
-              (local-set-key "\M-\C-y" 'org-table-paste-rectangle)
-              (local-set-key "\M-\C-l" 'org-table-sort-lines)
-              ;; display images
-              (local-set-key "\M-I" 'org-toggle-iimage-in-org)
-              ;; yasnippet (using the new org-cycle hooks)
-              ;;(make-variable-buffer-local 'yas/trigger-key)
-              ;;(setq yas/trigger-key [tab])
-              ;;(add-to-list 'org-tab-first-hook 'yas/org-very-safe-expand)
-              ;;(define-key yas/keymap [tab] 'yas/next-field)
-              ))
+(add-hook 'org-mode-hook
+          (lambda ()
+            (local-set-key "\M-\C-n" 'outline-next-visible-heading)
+            (local-set-key "\M-\C-p" 'outline-previous-visible-heading)
+            (local-set-key "\M-\C-u" 'outline-up-heading)
+            ;; table
+            (local-set-key "\M-\C-w" 'org-table-copy-region)
+            (local-set-key "\M-\C-y" 'org-table-paste-rectangle)
+            (local-set-key "\M-\C-l" 'org-table-sort-lines)
+            ;; display images
+            (local-set-key "\M-I" 'org-toggle-iimage-in-org)))
 #+end_src
 
 ** Speed keys
-Speed commands enable single-letter commands in Org-mode files when
-the point is at the beginning of a headline, or at the beginning of a
-code block.
-
-See the =org-speed-commands-default= variable for a list of the keys
-and commands enabled at the beginning of headlines.  All code blocks
-are available at the beginning of a code block, the following key
-sequence =C-c C-v h= (bound to =org-babel-describe-bindings=) will
-display a list of the code blocks commands and their related keys.
-
 #+begin_src emacs-lisp
-  (setq org-use-speed-commands t)
+(setq org-use-speed-commands t)
 #+end_src
 
 ** Code blocks
-This activates a number of widely used languages, you are encouraged
-to activate more languages using the customize interface for the
-=org-babel-load-languages= variable, or with an elisp form like the
-one below.  The customize interface of =org-babel-load-languages=
-contains an up to date list of the currently supported languages.
 #+begin_src emacs-lisp
-  (org-babel-do-load-languages
-   'org-babel-load-languages
-   '((emacs-lisp . t)
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((emacs-lisp . t)
    (shell . t)))
 #+end_src
 
-The next block makes org-babel aware that a lower-case 'r' in a =src= block header should be processed as R. 
-
-#+source: add-r
 #+begin_src emacs-lisp
-      (add-to-list 'org-src-lang-modes
-		   '("r" . ess-mode)
-		   '("stan" . stan-mode))
+(add-to-list 'org-src-lang-modes
+             '("r" . ess-mode))
+(add-to-list 'org-src-lang-modes
+             '("stan" . stan-mode))
 #+end_src
 
 ** Code block fontification
-   :PROPERTIES:
-   :CUSTOM_ID: code-block-fontification
-   :END:
-
-The following displays the contents of code blocks in Org-mode files
-using the major-mode of the code.  It also changes the behavior of
-=TAB= to as if it were used in the appropriate major mode.  This means
-that reading and editing code form inside of your Org-mode files is
-much more like reading and editing of code using its major mode.
 #+begin_src emacs-lisp
-  (setq org-src-fontify-natively t)
-  (setq org-src-tab-acts-natively t)
+(setq org-src-fontify-natively t)
+(setq org-src-tab-acts-natively t)
 #+end_src
 
-Don't ask for confirmation on every =C-c C-c= code-block compile. 
-
-#+source: turn-off-code-block-confirm
 #+begin_src emacs-lisp
-  (setq org-confirm-babel-evaluate nil)
+(setq org-confirm-babel-evaluate nil)
 #+end_src
 
 ** Ensure the Latest Org-mode manual is in the info directory
-By placing the =doc/= directory in Org-mode at the front of the
-=Info-directory-list= we can be sure that the latest version of the
-Org-mode manual is available to the =info= command (bound to =C-h i=).
 #+begin_src emacs-lisp
-  (unless (boundp 'Info-directory-list)
-    (setq Info-directory-list Info-default-directory-list))
-  (setq Info-directory-list
-        (cons (expand-file-name
-               "doc"
-               (expand-file-name
-                "org"
-                (expand-file-name "src" dotfiles-dir)))
-              Info-directory-list))
+(unless (boundp 'Info-directory-list)
+  (setq Info-directory-list Info-default-directory-list))
+(setq Info-directory-list
+      (cons (expand-file-name
+             "doc"
+             (expand-file-name "org"
+                               (expand-file-name "src" dotfiles-dir)))
+            Info-directory-list))
 #+end_src
 
-
 ** Nice Bulleted Lists
-#+name: org-bullets
-#+begin_src emacs-lisp 
+#+begin_src emacs-lisp
 (use-package org-bullets
   :ensure t
   :init
@@ -173,10 +119,6 @@ Org-mode manual is available to the =info= command (bound to =C-h i=).
 #+end_src
 
 ** Org-Roam
-
-Setup largely follows [[https://systemcrafters.net/build-a-second-brain-in-emacs/getting-started-with-org-roam/][David Wilson's]] suggested configuration for org-roam. 
-
-#+name: org-roam
 #+begin_src emacs-lisp
 (use-package org-roam
   :ensure t
@@ -194,24 +136,23 @@ Setup largely follows [[https://systemcrafters.net/build-a-second-brain-in-emacs
      ("s" "source" plain (file "~/Dropbox/Org-roam/Templates/SourceTemplate.org")
       :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
       :unnarrowed t)))
-  (org-roam-auto-synchronize t)  ; Add this line to enable auto-sync
+  (org-roam-auto-synchronize t)
   :bind (("C-c n l" . org-roam-buffer-toggle)
          ("C-c n f" . org-roam-node-find)
          ("C-c n i" . org-roam-node-insert)
          :map org-mode-map
-         ("C-M-i"    . completion-at-point))
+         ("C-M-i" . completion-at-point))
   :config
   (setq org-link-file-path-type 'adaptive)
   (setq org-roam-db-location "~/Dropbox/Org-roam/org-roam.db"))
 #+end_src
 
 ** PDF-Tools Setup for Org and Org-Roam
-
-#+name: pdf-tools
 #+begin_src emacs-lisp
 (use-package pdf-tools
   :ensure t
   :config
+  (setq pdf-info-epdfinfo-program "/usr/local/bin/epdfinfo")
   (message "pdf-tools loaded"))
 
 (use-package org-pdftools
@@ -219,7 +160,6 @@ Setup largely follows [[https://systemcrafters.net/build-a-second-brain-in-emacs
   :hook (org-mode . org-pdftools-setup-link)
   :after (org pdf-tools)
   :config
-  ;; Set org-file-apps to open PDFs with pdf-tools
   (setq org-file-apps
         '(("\\.pdf\\'" . emacsclient)))
   (message "org-pdftools loaded"))
@@ -233,31 +173,22 @@ Setup largely follows [[https://systemcrafters.net/build-a-second-brain-in-emacs
   (message "org-roam-bibtex loaded"))
 #+end_src
 
-
-** Open pdfs in a frame on the right using pdf-tools
-
-*** Is there some unnecessary function duplication?
-
-#+name: org-pdf-frame-behaviour
+** Open PDFs in a frame on the right using pdf-tools
 #+begin_src emacs-lisp
-(defun my-org-open-pdf (file link)
-  "Open a PDF file using org-pdftools."
-  (org-pdftools-open file))
+(defun ljs/display-pdf-to-right (buffer alist)
+  "Display PDF files to the right in org-mode."
+  (when (eq major-mode 'org-mode)
+    (let* ((window (display-buffer-in-side-window buffer '((side . right) (slot . 0)))))
+      (ljs/frame-double-width (window-frame window))
+      (window--display-buffer buffer window 'window alist)
+      (when (eq (length (window-list)) 1)
+        (split-window-horizontally))
+      window)))
 
-(defun my-org-open-pdf-with-frame-behavior (file link)
-  "Open a PDF file using org-pdftools with custom frame behavior."
-  (let ((original-width (frame-pixel-width)))
-    (my-org-open-pdf file link)
-    (ljs/frame-double-width original-width)))
+(add-to-list 'display-buffer-alist '("\\.pdf\\'" . (ljs/display-pdf-to-right)))
 #+end_src
-
-
 
 ** Confirmation Message
-
- #+source: message-line
- #+begin_src emacs-lisp
-    (message "LJS Config Org loaded.")
+#+begin_src emacs-lisp
+(message "LJS Config Org loaded.")
 #+end_src
-
-* 

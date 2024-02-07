@@ -2,33 +2,72 @@
 #+OPTIONS: toc:nil num:nil ^:nil
 Part of [[file:ljs-config.org][LJS-Config]].
 
-I don't use Python, so this is a straight read-over of Kieran Healy's [[file:starter-kit.org][Emacs Starter Kit]], adapted to make use of use-packgae. .
-
-* Starter kit Python
-
 Support for the Python programming language.
 
-** Elpy
+* Python Development Setup with Elpy
 
-#+begin_src emacs-lisp
-  (use-package elpy
+** Syncing PATH Variable
+
+Ensure Emacs knows about your PATH settings, especially if your Python environment is set up in a shell configuration file.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package exec-path-from-shell
   :ensure t
   :config
-  (elpy-enable)
+  (exec-path-from-shell-initialize))
+#+end_src
 
-  (setq python-shell-interpreter "jupyter"
+** Install Elpy and Configure
+
+#+begin_src emacs-lisp :tangle yes
+(use-package elpy
+  :ensure t
+  :init
+  ;; Enable Elpy
+  (elpy-enable)
+  :config
+  ;; Set Jupyter as the Python interpreter with full path
+  (setq python-shell-interpreter "/Users/ljs46/myenv/bin/jupyter"
         python-shell-interpreter-args "console --simple-prompt"
         python-shell-prompt-detect-failure-warning nil)
 
+  ;; Disable native completion for Jupyter
   (add-to-list 'python-shell-completion-native-disabled-interpreters
                "jupyter")
 
+  ;; Use Flycheck instead of Flymake for better syntax checking
   (when (require 'flycheck nil t)
     (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
     (add-hook 'elpy-mode-hook 'flycheck-mode)))
 #+end_src
 
-#+source: message-line
+** Setting the Python Interpreter from a Virtual Environment
+
+Ensure Elpy uses the Python interpreter from your virtual environment. Adjust the path according to your virtual environment location.
+
+#+begin_src emacs-lisp :tangle yes
+(setq elpy-rpc-python-command "/Users/ljs46/myenv/bin/python")
+#+end_src
+
+** Improving Performance
+
+Set the buffer size threshold for Elpy to improve performance in large projects.
+
+#+begin_src emacs-lisp :tangle yes
+(setq elpy-rpc-ignored-buffer-size (* 1024 1024)) ;; 1MB
+#+end_src
+
+** Custom Key Bindings
+
+Customize key bindings for convenience. Here, we set a key binding to quickly open a Python shell.
+
+#+begin_src emacs-lisp :tangle yes
+(define-key elpy-mode-map (kbd "C-c C-p") 'run-python)
+#+end_src
+
+** Message
+
+#+name: message-config
 #+begin_src emacs-lisp
-  (message "LJS Config Python loaded.")
+(message "LJS Config Python loaded.")
 #+end_src
