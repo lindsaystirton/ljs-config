@@ -1,194 +1,185 @@
-#+TITLE: LJS Config Org
-#+OPTIONS: toc:nil num:nil ^:nil
+#+TITLE: LJS Config LaTeX
+#+OPTIONS: toc:nil H:2 num:nil ^:nil
 
-This file is part of the [[file:ljs-config.org][Lindsay Stirton's Emacs Configurations]]. Code
-for Org is all but copy-pasted from Kieran Healy's [[https://github.com/kjhealy/emacs-starter-kit/][Emacs Starter-Kit
-for the Social Sciences]]. I have added support for Pdf-Tools and a
-configuration for Org-Roam.
+This is part of the [[file:ljs-config.org][LJS-Config]]. This file was (even more than the
+others) pretty much copied from Kieran Healy's
+[[https://github.com/kjhealy/emacs-starter-kit][emacs starter-kit for
+the social sciences]]. I have made some effort to implement use-package.
 
-* Starter Kit Org
-Configuration for the eminently useful [[http://orgmode.org/][Org Mode]].
+* Starter Kit LaTeX
+  Support for editing LaTeX.
 
-Org-mode is for keeping notes, maintaining ToDo lists, doing project
-planning, and authoring with a fast and effective plain-text system.
-Org Mode can be used as a very simple folding outliner or as a complex
-GTD system or tool for reproducible research and literate programming.
+** Load Support Packages
 
-For more information on org-mode check out [[http://orgmode.org/worg/][worg]], a large Org-mode wiki
-which is also implemented using Org-mode and [[http://git-scm.com/][git]].
-
-** Org-Mode
+*** Prettify Math in Buffers
 
 #+begin_src emacs-lisp
-(use-package org
-  :hook (org-mode . org-mode-setup)
-  :config
-  (setq org-ellipsis " ▾"
-        org-hide-emphasis-markers t)
-  ;; Replace list hyphen with dot
-  (font-lock-add-keywords 'org-mode
-                          '(("^ *\\([-]\\) "
-                             (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
-
-  (defun org-mode-setup ()
-    (org-indent-mode 1)
-    (variable-pitch-mode 1)
-    (auto-fill-mode 0)
-    (visual-line-mode 1)))
+(use-package latex-pretty-symbols
+  :ensure t)
 #+end_src
 
-** Org-Mode Hooks
-Make yasnippet work properly with org-mode.
+*** Load RefTeX
 
 #+begin_src emacs-lisp
-(defun yas-org-very-safe-expand ()
-  (let ((yas-fallback-behavior 'return-nil))
-    (and (fboundp 'yas-expand) (yas-expand))))
-
-(add-hook 'org-mode-hook
-          (lambda ()
-            (add-to-list 'org-tab-first-hook
-                         'yas-org-very-safe-expand)))
-#+end_src
-
-#+begin_src emacs-lisp
-(add-hook 'org-mode-hook
-          (lambda ()
-            (local-set-key "\M-\C-n" 'outline-next-visible-heading)
-            (local-set-key "\M-\C-p" 'outline-previous-visible-heading)
-            (local-set-key "\M-\C-u" 'outline-up-heading)
-            ;; table
-            (local-set-key "\M-\C-w" 'org-table-copy-region)
-            (local-set-key "\M-\C-y" 'org-table-paste-rectangle)
-            (local-set-key "\M-\C-l" 'org-table-sort-lines)
-            ;; display images
-            (local-set-key "\M-I" 'org-toggle-iimage-in-org)))
-#+end_src
-
-** Speed keys
-#+begin_src emacs-lisp
-(setq org-use-speed-commands t)
-#+end_src
-
-** Code blocks
-#+begin_src emacs-lisp
-(org-babel-do-load-languages
- 'org-babel-load-languages
- '((emacs-lisp . t)
-   (shell . t)))
-#+end_src
-
-#+begin_src emacs-lisp
-(add-to-list 'org-src-lang-modes
-             '("r" . ess-mode))
-(add-to-list 'org-src-lang-modes
-             '("stan" . stan-mode))
-#+end_src
-
-** Code block fontification
-#+begin_src emacs-lisp
-(setq org-src-fontify-natively t)
-(setq org-src-tab-acts-natively t)
-#+end_src
-
-#+begin_src emacs-lisp
-(setq org-confirm-babel-evaluate nil)
-#+end_src
-
-** Ensure the Latest Org-mode manual is in the info directory
-#+begin_src emacs-lisp
-(unless (boundp 'Info-directory-list)
-  (setq Info-directory-list Info-default-directory-list))
-(setq Info-directory-list
-      (cons (expand-file-name
-             "doc"
-             (expand-file-name "org"
-                               (expand-file-name "src" dotfiles-dir)))
-            Info-directory-list))
-#+end_src
-
-** Nice Bulleted Lists
-#+begin_src emacs-lisp
-(use-package org-bullets
+(use-package reftex
   :ensure t
+  :commands (reftex-mode turn-on-reftex reftex-citation reftex-index-phrase-mode)
+  :hook ((LaTeX-mode . turn-on-reftex)
+         (pandoc-mode . turn-on-reftex)
+         (org-mode . org-mode-reftex-setup))
+  :config
+  (setq reftex-enable-partial-scans t
+        reftex-save-parse-info t
+        reftex-use-multiple-selection-buffers t
+        reftex-plug-into-AUCTeX t)
+  (defun org-mode-reftex-setup ()
+    (load-library "reftex")
+    (when (and (buffer-file-name)
+               (file-exists-p (buffer-file-name)))
+      (reftex-parse-all))
+    (define-key org-mode-map (kbd "C-c (") 'reftex-citation))
+  (setq reftex-cite-format
+        '((?\C-m . "\\cite[]{%l}")
+          (?t . "\\textcite{%l}")
+          (?a . "\\autocite[]{%l}")
+          (?p . "\\parencite[]{%l}")
+          (?f . "\\footcite[][]{%l}")
+          (?F . "\\fullcite[]{%l}")
+          (?P . "[@%l]")
+          (?T . "@%l [p. ]")
+          (?x . "[]{%l}")
+          (?X . "{%l}")))
+  (setq font-latex-match-reference-keywords
+        '(("cite" "[{")
+          ("cites" "[{}]")
+          ("footcite" "[{")
+          ("footcites" "[{")
+          ("parencite" "[{")
+          ("textcite" "[{")
+          ("fullcite" "[{")
+          ("citetitle" "[{")
+          ("citetitles" "[{")
+          ("headlessfullcite" "[{")))
+  (setq reftex-cite-prompt-optional-args nil
+        reftex-cite-cleanup-optional-args t))
+#+end_src
+
+*** Load ebib
+
+#+begin_src emacs-lisp
+(use-package ebib
+  :ensure t
+  :commands (ebib)
   :init
-  (add-hook 'org-mode-hook (lambda ()
-                             (org-bullets-mode 1)))
-  :custom
-  (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
+  (setq ebib-preload-bib-files '("/Users/ljs46/Documents/bibs/masterbib.bib"))
+  :hook (LaTeX-mode . (lambda ()
+                        (local-set-key "\C-cb" 'ebib-insert-bibtex-key))))
 #+end_src
 
-** Org-Roam
+* Configure AucTeX
+
+** Automatic Parsing
+
 #+begin_src emacs-lisp
-(use-package org-roam
-  :ensure t
-  :custom
-  (org-roam-directory "~/Dropbox/Org-roam/Notes/")
-  (org-roam-completion-everywhere t)
-  (org-roam-capture-templates
-   '(("d" "default" plain
-      "%?"
-      :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
-      :unnarrowed t)
-     ("a" "archive" plain (file "~/Dropbox/Org-roam/Templates/ArchiveTemplate.org")
-      :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
-      :unnarrowed t)
-     ("s" "source" plain (file "~/Dropbox/Org-roam/Templates/SourceTemplate.org")
-      :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
-      :unnarrowed t)))
-  (org-roam-auto-synchronize t)
-  :bind (("C-c n l" . org-roam-buffer-toggle)
-         ("C-c n f" . org-roam-node-find)
-         ("C-c n i" . org-roam-node-insert)
-         :map org-mode-map
-         ("C-M-i" . completion-at-point))
+(use-package tex
+  :ensure auctex
+  :defer t
   :config
-  (setq org-link-file-path-type 'adaptive)
-  (setq org-roam-db-location "~/Dropbox/Org-roam/org-roam.db"))
+  (setq TeX-parse-self t
+        TeX-auto-save t)
+  (add-hook 'LaTeX-mode-hook 'my-auctex-mode-setup))
+
+(defun my-auctex-mode-setup ()
+  (variable-pitch-mode 1)
+  (visual-line-mode 1))
 #+end_src
 
-** PDF-Tools Setup for Org and Org-Roam
+** Use pdfLaTeX
+
 #+begin_src emacs-lisp
-(use-package pdf-tools
-  :ensure t
-  :config
-  (setq pdf-info-epdfinfo-program "/usr/local/bin/epdfinfo")
-  (message "pdf-tools loaded"))
-
-(use-package org-pdftools
-  :ensure t
-  :hook (org-mode . org-pdftools-setup-link)
-  :after (org pdf-tools)
-  :config
-  (setq org-file-apps
-        '(("\\.pdf\\'" . emacsclient)))
-  (message "org-pdftools loaded"))
-
-(use-package org-roam-bibtex
-  :after org-roam
-  :hook (org-roam-mode . org-roam-bibtex-mode)
-  :config
-  (setq orb-preformat-keywords
-        '("citekey" "title" "url" "author-or-editor" "keywords"))
-  (message "org-roam-bibtex loaded"))
+(use-package tex
+  :hook (LaTeX-mode . TeX-PDF-mode))
 #+end_src
 
-** Open PDFs in a frame on the right using pdf-tools
-#+begin_src emacs-lisp
-(defun ljs/display-pdf-to-right (buffer alist)
-  "Display PDF files to the right in org-mode."
-  (when (eq major-mode 'org-mode)
-    (let* ((window (display-buffer-in-side-window buffer '((side . right) (slot . 0)))))
-      (ljs/frame-double-width (window-frame window))
-      (window--display-buffer buffer window 'window alist)
-      (when (eq (length (window-list)) 1)
-        (split-window-horizontally))
-      window)))
+** Configure Biber
 
-(add-to-list 'display-buffer-alist '("\\.pdf\\'" . (ljs/display-pdf-to-right)))
+#+begin_src emacs-lisp
+(use-package tex
+  :config
+  (defun TeX-run-Biber (name command file)
+    (let ((process (TeX-run-command name command file)))
+      (setq TeX-sentinel-function 'TeX-Biber-sentinel)
+      (if TeX-process-asynchronous
+          process
+        (TeX-synchronous-sentinel name file process))))
+
+  (defun TeX-Biber-sentinel (process name)
+    (goto-char (point-max))
+    (cond
+     ((re-search-backward "^(There \\(?:was\\|were\\) \\([0-9]+\\) \\(warnings?\\|error messages?\\))" nil t)
+      (message (concat "Biber finished with %s %s. Type `%s' to display output.")
+               (match-string 1) (match-string 2)
+               (substitute-command-keys "\\\\[TeX-recenter-output-buffer]")))
+     (t
+      (message "Biber finished successfully. Run LaTeX again to get citations right."))))
+
+  (eval-after-load "tex"
+    '(add-to-list 'TeX-command-list '("Biber" "biber %s" TeX-run-Biber nil t :help "Run Biber"))))
 #+end_src
 
-** Confirmation Message
+** Use latexmk for Compilation by Default
+
 #+begin_src emacs-lisp
-(message "LJS Config Org loaded.")
+(use-package tex
+  :config
+  (eval-after-load "tex"
+    '(add-to-list 'TeX-command-list '("latexmk" "latexmk -synctex=1 -shell-escape -pdf %s" TeX-run-TeX nil t :help "Process file with latexmk")))
+  (eval-after-load "tex"
+    '(add-to-list 'TeX-command-list '("xelatexmk" "latexmk -synctex=1 -shell-escape -xelatex %s" TeX-run-TeX nil t :help "Process file with xelatexmk")))
+  (add-hook 'TeX-mode-hook (lambda () (setq TeX-command-default "latexmk"))))
+#+end_src
+
+** Use pdf-tools with AUCTeX
+
+#+begin_src emacs-lisp
+(use-package tex
+  :config
+  (setq TeX-view-program-selection '((output-pdf "PDF Tools")))
+  (setq TeX-view-program-list '(("PDF Tools" TeX-pdf-tools-sync-view))))
+#+end_src
+
+* Smart Display of PDF on C-c C-a
+
+#+begin_src emacs-lisp
+(defun ljs/frame-double-width (&optional frame)
+  "Double the width of FRAME (or selected frame)."
+  (let ((frame (or frame (selected-frame))))
+    (set-frame-width frame (* 2 (frame-width frame))))
+  (balance-windows))
+
+(defun ljs/TeX-command-run-all-with-smart-display ()
+  "Compile the LaTeX document and display the PDF smartly."
+  (interactive)
+  (TeX-command-run-all)
+  (run-at-time "0.5 sec" nil
+               (lambda ()
+                 (let ((pdf-buffer (get-buffer (concat (file-name-sans-extension (buffer-name)) ".pdf"))))
+                   (when (and pdf-buffer (buffer-live-p pdf-buffer))
+                     (display-buffer
+                      pdf-buffer
+                      '((display-buffer-reuse-window . t)
+                        (side . right)
+                        (window-width . 0.5)))
+                     (ljs/frame-double-width))))))
+
+(with-eval-after-load 'tex
+  (add-hook 'LaTeX-mode-hook
+            (lambda ()
+              (local-set-key (kbd "C-c C-a") #'ljs/TeX-command-run-all-with-smart-display))))
+#+end_src
+
+* Message
+
+#+begin_src emacs-lisp
+(message "LJS Config LaTeX loaded.")
 #+end_src

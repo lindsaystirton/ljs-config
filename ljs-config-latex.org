@@ -6,7 +6,7 @@ others) pretty much copied from Kieran Healy's
 [[https://github.com/kjhealy/emacs-starter-kit][emacs starter-kit for
 the social sciences]]. I have made some effort to implement use-package. 
 
-* Starter Kit LaTeX
+* LJS Config LaTeX
   Support for editing LaTeX.
 
 ** Load Support Packages
