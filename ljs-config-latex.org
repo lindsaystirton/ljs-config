@@ -1,4 +1,4 @@
-#+TITLE: LJS Config LaTeX
+ #+TITLE: LJS Config LaTeX
 #+OPTIONS: toc:nil H:2 num:nil ^:nil
 
 This is part of the [[file:ljs-config.org][LJS-Config]]. This file was (even more than the
@@ -6,7 +6,7 @@ others) pretty much copied from Kieran Healy's
 [[https://github.com/kjhealy/emacs-starter-kit][emacs starter-kit for
 the social sciences]]. I have made some effort to implement use-package. 
 
-* Starter Kit LaTeX
+* LJS Config LaTeX
   Support for editing LaTeX.
 
 ** Load Support Packages
@@ -135,7 +135,7 @@ the social sciences]]. I have made some effort to implement use-package.
       ;; Tell the user their number so that she sees whether the
       ;; situation is getting better or worse.
       (message (concat "Biber finished with %s %s. "
-                       "Type `%s' to display output.")
+                       "Type %s' to display output.")
                (match-string 1) (match-string 2)
                (substitute-command-keys
                 "\\\\[TeX-recenter-output-buffer]")))
@@ -268,7 +268,7 @@ This function runs stores the screen width as variable  ljs/original-frame-width
 #+name: frame-behaviour
 #+begin_src emacs-lisp
 (defun my-advice-before-TeX-command-run-all (orig-fun &rest args)
-  "Run custom actions before `TeX-command-run-all'."
+  "Run custom actions before TeX-command-run-all'."
   (setq ljs/original-frame-width (frame-pixel-width))
   (ljs/frame-double-width)
   (apply orig-fun args))
@@ -276,7 +276,7 @@ This function runs stores the screen width as variable  ljs/original-frame-width
 (advice-add 'TeX-command-run-all :around #'my-advice-before-TeX-command-run-all)
 
 (defun my-advice-before-TeX-view (orig-fun &rest args)
-  "Run custom actions before `TeX-view."
+  "Run custom actions before TeX-view."
   (setq ljs/original-frame-width (frame-pixel-width))
   (ljs/frame-double-width)
   (apply orig-fun args))
@@ -318,7 +318,3 @@ The code below deletes the window when you kill a buffer in pdf-view-mode. Usefu
 ;; Message
 (message "LJS Conig LaTeX loaded.")
 #+end_src
-
-
-
-
