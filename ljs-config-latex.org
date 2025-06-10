@@ -1,10 +1,9 @@
  #+TITLE: LJS Config LaTeX
 #+OPTIONS: toc:nil H:2 num:nil ^:nil
 
-This is part of the [[file:ljs-config.org][LJS-Config]]. This file was (even more than the
-others) pretty much copied from Kieran Healy's
+This is part of the [[file:ljs-config.org][LJS-Config]]. This file is derived from Kieran Healy's
 [[https://github.com/kjhealy/emacs-starter-kit][emacs starter-kit for
-the social sciences]]. I have made some effort to implement use-package. 
+the social sciences]]. I have made some effort to implement use-package. Implemented pdf-view as the pdf-viewer. Also worked on window/frame behaviour, so that C-a causes the frame to double in size and the pdf to be displayed in a window to the right. 
 
 * LJS Config LaTeX
   Support for editing LaTeX.
@@ -316,5 +315,5 @@ The code below deletes the window when you kill a buffer in pdf-view-mode. Usefu
 #+name: message-config
 #+begin_src emacs-lisp
 ;; Message
-(message "LJS Conig LaTeX loaded.")
+(message "LJS Config LaTeX loaded.")
 #+end_src

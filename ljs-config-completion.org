@@ -48,13 +48,23 @@ I have also added support for Vertico, Consult and Orderless. It was a tough cal
   (consult-project-root-function #'projectile-project-root))
 #+end_src
 
-** Install Orderless
-#+NAME: orderless-installation
-#+begin_src emacs-lisp
- :ensure t
-  :custom (completion-styles '(orderless))
-  :init (icomplete-mode 1))
+** Install Orderless and Enable Completion Styles
+
+#+begin_src emacs-lisp :tangle yes
+(use-package orderless
+  :ensure t
+  :custom
+  (completion-styles '(orderless))
+  (completion-category-defaults nil))
 #+end_src
+
+#+begin_src emacs-lisp :tangle yes
+(use-package icomplete
+  :ensure nil ; built-in
+  :init
+  (icomplete-mode 1))
+#+end_src
+
 
 
 
