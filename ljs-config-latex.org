@@ -1,26 +1,22 @@
 #+TITLE: LJS Config LaTeX
 #+OPTIONS: toc:nil H:2 num:nil ^:nil
 
-This is part of the [[file:ljs-config.org][LJS-Config]]. This file was (even more than the
+This is part of [[file:ljs-config.org][LJS-Config]]. This file was (even more than the
 others) pretty much copied from Kieran Healy's
 [[https://github.com/kjhealy/emacs-starter-kit][emacs starter-kit for
-the social sciences]]. I have made some effort to implement use-package. 
+the social sciences]]. I have made some effort to implement use-package.
 
 * LJS Config LaTeX
   Support for editing LaTeX.
 
-** Load Support Packages
-*** Prettify Math in Buffers
-
-#+name: latex-pretty-symbols
-#+begin_src emacs-lisp
+** Prettify Math in Buffers
+#+begin_src emacs-lisp :tangle yes
 (use-package latex-pretty-symbols
   :ensure t)
 #+end_src
 
-*** Load RefTeX
-#+name: reftex-support
-#+begin_src emacs-lisp 
+** Load RefTeX
+#+begin_src emacs-lisp :tangle yes
 (use-package reftex
   :ensure t
   :commands (reftex-mode turn-on-reftex reftex-citation reftex-index-phrase-mode)
@@ -64,261 +60,42 @@ the social sciences]]. I have made some effort to implement use-package.
         reftex-cite-cleanup-optional-args t))
 #+end_src
 
-*** Load ebib
-    ebib is a bibtex database manager that works inside emacs. It can
-    talk to org-mode. See [[http://ebib.sourceforge.net/][the ebib project page]] for more. When Ebib is
-    loaded, you can run it with =M-x ebib=.
-  
-#+name: ebib-load
-#+begin_src emacs-lisp
- (use-package ebib
+** Load Ebib
+#+begin_src emacs-lisp :tangle yes
+(use-package ebib
   :ensure t
   :commands (ebib)
   :init
   (setq ebib-preload-bib-files '("/Users/ljs46/Documents/bibs/masterbib.bib"))
   :hook (LaTeX-mode . (lambda ()
                         (local-set-key "\C-cb" 'ebib-insert-bibtex-key))))
-
 #+end_src
 
-
-* Configure AucTeX
-
-** Automatic Parsing
-#+name: autoparse
-#+begin_src emacs-lisp
-(use-package tex
-  :ensure auctex
+** AUCTeX Configuration (Replaces all tex blocks)
+#+begin_src emacs-lisp :tangle yes
+(use-package auctex
+  :ensure t
   :defer t
+  :hook (LaTeX-mode . my-auctex-mode-setup)
   :config
-  (add-hook 'LaTeX-mode-hook 'my-auctex-mode-setup)
-  (setq TeX-parse-self t) ; Enable parse on load.
-  (setq TeX-auto-save t))
-(defun my-auctex-mode-setup ()
-  "My custom AUCTeX mode setup."
-  (variable-pitch-mode 1)
-  (visual-line-mode 1))
-#+end_src
+  (setq TeX-parse-self t
+        TeX-auto-save t
+        TeX-PDF-mode t
+        TeX-view-program-selection '((output-pdf "PDF Tools"))
+        TeX-view-program-list '(("PDF Tools" TeX-pdf-tools-sync-view)))
 
+  (defun my-auctex-mode-setup ()
+    "My custom AUCTeX mode setup."
+    (variable-pitch-mode 1)
+    (visual-line-mode 1))
 
-** Use pdfLaTeX
-  - Take this out to compile to DVI, instead.
-#+name: pdflatex
-#+begin_src emacs-lisp
-(use-package tex
-  :hook (LaTeX-mode . TeX-PDF-mode))
-#+end_src
-
-
-** Configure Biber
-   - Allow AucTeX to use biber as well as/instead of bibtex.
-#+name: biber
-#+begin_src emacs-lisp
-(use-package tex
-  :config
-  (defun TeX-run-Biber (name command file)
-    "Create a process for NAME using COMMAND to format FILE with Biber." 
-    (let ((process (TeX-run-command name command file)))
-      (setq TeX-sentinel-function 'TeX-Biber-sentinel)
-      (if TeX-process-asynchronous
-          process
-        (TeX-synchronous-sentinel name file process))))
-
-  (defun TeX-Biber-sentinel (process name)
-    "Cleanup TeX output buffer after running Biber."
-    (goto-char (point-max))
-    (cond
-     ;; Check whether Biber reports any warnings or errors.
-     ((re-search-backward (concat
-                           "^(There \\(?:was\\|were\\) \\([0-9]+\\) "
-                           "\\(warnings?\\|error messages?\\))") nil t)
-      ;; Tell the user their number so that she sees whether the
-      ;; situation is getting better or worse.
-      (message (concat "Biber finished with %s %s. "
-                       "Type `%s' to display output.")
-               (match-string 1) (match-string 2)
-               (substitute-command-keys
-                "\\\\[TeX-recenter-output-buffer]")))
-     (t
-      (message (concat "Biber finished successfully. "
-                       "Run LaTeX again to get citations right."))))
-    (setq TeX-command-next TeX-command-default))
-
-  (eval-after-load "tex"
-    '(add-to-list 'TeX-command-list '("Biber" "biber %s" TeX-run-Biber nil t :help "Run Biber"))
-  )
-)
-#+end_src
-
-
-** Use Biblatex key template by default in bib files
-   - For compatibility with Pandoc.
-#+begin_src emacs-lisp :tangle no
-(use-package bibtex
-  :config
-  (setq bibtex-dialect "BibTeX"))
-#+end_src
-
-** Use '-' as the separator in auto-generated bibtex keys
-   - We use this (rather than the underscore character) for compatibility with Pandoc.
-#+begin_src emacs-lisp :tangle no
-(use-package bibtex
-  :config
-  (setq bibtex-autokey-titleword-separator "_")
-  (setq bibtex-autokey-year-title-separator ":_"))
-#+end_src
-
-** Use latexmk for compilation by default
-#+begin_src emacs-lisp
-(use-package tex
-  :config
-  (eval-after-load "tex"
-    '(add-to-list 'TeX-command-list '("latexmk" "latexmk -synctex=1 -shell-escape -pdf %s" TeX-run-TeX nil t :help "Process file with latexmk")))
-  (eval-after-load "tex"
-    '(add-to-list 'TeX-command-list '("xelatexmk" "latexmk -synctex=1 -shell-escape -xelatex %s" TeX-run-TeX nil t :help "Process file with xelatexmk")))
-  (add-hook 'TeX-mode-hook '(lambda () (setq TeX-command-default "latexmk"))))
-#+end_src
-
-** Set a Path to Executables (optional)
-   - The location of the LaTeX executables is system dependent.
-     AUCTeX calls everything through a shell, so you may
-     or may not need this.  This source-code block is turned off by
-     default as it should be added to the user's personal
-     configuration as needed.
-#+begin_src emacs-lisp :tangle no
-(use-package exec-path-from-shell
-  :if (memq window-system '(mac ns x))
-  :config
-  (exec-path-from-shell-initialize))
-#+end_src
-
-
-** Use pdf-tools with AUCTeX
-Enables pdf-tools with AUCTeX.
-
-#+begin_src emacs-lisp
-(use-package tex
-  :config
-  ;; Set pdf-tools as the PDF viewer for AUCTeX
-  (setq TeX-view-program-selection '((output-pdf "PDF Tools")))
-  (setq TeX-view-program-list '(("PDF Tools" TeX-pdf-tools-sync-view))))
-#+end_src
-
-#+begin_src emacs-lisp
-(add-hook 'latex-mode-hook 'turn-off-auto-fill)
-#+end_src
-
-
-NOTE that there is an issue compiling pdf-tools on MacOS. There is
-info at the following:
-[[https://github.com/politza/pdf-tools/issues/652#issue-795687902.
-
-In the end what woked for me was running the following in terminal emacs:
-
-#+begin_src emacs-lisp :eval never
-(use-package pdf-tools
-   :ensure t
-   :config
-   (setenv "PKG_CONFIG_PATH" "/opt/homebrew/Cellar/zlib/1.2.13/lib/pkgconfig:/opt/homebrew/lib/pkgconfig:/opt/X11/lib/pkgconfig/:/opt/homebrew/Cellar/poppler/23.01.0/lib/pkgconfig:/opt/X11/share/pkgconfig")
-   (pdf-tools-install)
-   (custom-set-variables
-    '(pdf-tools-handle-upgrades t)))
-#+end_src
-
-
-
-
-
-** Configure Org-babel
-#+name: org-babel-configuration
-#+begin_src emacs-lisp
-(use-package org
-  :config
-  ;; Add LaTeX to the list of languages Org-babel will recognize
-  (require 'ob-latex)
-
-  ;; Add LaTeX to a list of languages that raise noweb-type errors
-  (add-to-list 'org-babel-noweb-error-langs "latex"))
-#+end_src
-
-** LaTeX Word Count
-
-#+begin_src  emacs-lisp
-(defun latex-word-count ()
-  (interactive)
-  (let* ((this-file (buffer-file-name))
-         (word-count
-          (with-output-to-string
-            (with-current-buffer standard-output
-              (call-process "texcount" nil t nil "-brief" this-file)))))
-    (string-match "\n$" word-count)
-    (message (replace-match "" nil nil word-count))))
-
-(defun my-latex-setup ()
-  (define-key LaTeX-mode-map "\C-w" 'latex-word-count))
-
-(add-hook 'LaTeX-mode-hook 'my-latex-setup t)
-#+end_src
-
-
-** Window behaviour
-
-This function runs stores the screen width as variable  ljs/original-frame-width and runs ljs/frame-double-width before running TeX-command-run-all (bound to C-c C-a). Forces emacs to open the pdf viewer on the right and doubles the width. 
-
-#+name: frame-behaviour
-#+begin_src emacs-lisp
-(defun my-advice-before-TeX-command-run-all (orig-fun &rest args)
-  "Run custom actions before `TeX-command-run-all'."
-  (setq ljs/original-frame-width (frame-pixel-width))
-  (ljs/frame-double-width)
-  (apply orig-fun args))
-
-(advice-add 'TeX-command-run-all :around #'my-advice-before-TeX-command-run-all)
-
-(defun my-advice-before-TeX-view (orig-fun &rest args)
-  "Run custom actions before `TeX-view."
-  (setq ljs/original-frame-width (frame-pixel-width))
-  (ljs/frame-double-width)
-  (apply orig-fun args))
-
-(advice-add 'TeX-view :around #'my-advice-before-TeX-view)
-
-(defun my-restore-original-dimensions-after-pdf-kill ()
-  "Restore original dimensions after killing a PDF buffer."
-  (delete-other-windows)
-  (when ljs/original-frame-width
-    (set-frame-width (selected-frame) ljs/original-frame-width nil t)))
-#+end_src
-
-
-The code below deletes the window when you kill a buffer in pdf-view-mode. Useful for editing LaTeX files in AucTeX. We'll see how it works alongside other uses of pdf-view mode like org-noter, etc. 
-
-#+name: delete-window-on-kill-pdf-view-buffer
-#+begin_src emacs-lisp
-(defun my-restore-original-dimensions ()
-  "Restore original dimensions of the frame."
-  (when ljs/original-frame-width
-    (set-frame-width (selected-frame) ljs/original-frame-width nil t)))
-
-(defun my-kill-pdf-buffer ()
-  "Function to run before killing a PDF buffer."
-  (when (eq major-mode 'pdf-view-mode)
-    (my-restore-original-dimensions)
-    (delete-other-windows)))
-
-(add-hook 'pdf-view-mode-hook
-          (lambda ()
-            (add-hook 'kill-buffer-hook #'my-kill-pdf-buffer nil 'local)))
-#+end_src
-
-
-* Message
-#+name: message-config
-#+begin_src emacs-lisp
-;; Message
-(message "LJS Conig LaTeX loaded.")
-#+end_src
-
-
-
-
+  ;; latexmk, xelatexmk, and Biber integration
+  (with-eval-after-load "tex"
+    (add-to-list 'TeX-command-list
+                 '("latexmk" "latexmk -synctex=1 -shell-escape -pdf %s"
+                   TeX-run-TeX nil t :help "Process file with latexmk"))
+    (add-to-list 'TeX-command-list
+                 '("xelatexmk" "latexmk -synctex=1 -shell-escape -xelatex %s"
+                   TeX-run-TeX nil t :help "Process file with xelatexmk"))
+    (add-to-list 'TeX-command-list
+                 '("Biber" "biber %s" TeX
