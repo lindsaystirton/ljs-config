@@ -10,6 +10,11 @@ This file is part of the [[file:ljs-config.org][Lindsay Stirton's Emacs Configur
 Basic setting preferences, including size and positioning of emacs frames. 
 
 #+srcname: ljs-config-appearance-startup
+#+srcname: lexical-binding-cookie
+#+begin_src emacs-lisp
+;;; -*- lexical-binding: t; -*-
+#+end_src
+
 #+begin_src emacs-lisp 
  (use-package emacs
   :config
@@ -39,7 +44,15 @@ do so, enter M-x ef-themes-toggle.
 
  #+srcname: ljs-config-appearance-themes
 #+begin_src emacs-lisp
+   ;; NOTE: :ensure t added because Emacs 31 tightened its face-inheritance
+   ;; checks (see Emacs bug#79672) and the modus-themes snapshot bundled
+   ;; inside some Emacs 31 builds predates upstream's fix for exactly this
+   ;; ("Face inheritance results in inheritance cycle: button"). Forcing
+   ;; installation from GNU ELPA pulls the maintained release (5.0.0+),
+   ;; which already contains the fix, instead of relying on whatever
+   ;; modus-themes snapshot happens to be frozen inside the Emacs binary.
    (use-package modus-themes
+     :ensure t
      :init
      (load-theme 'modus-vivendi t))
 #+end_src
