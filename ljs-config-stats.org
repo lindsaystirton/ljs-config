@@ -16,6 +16,11 @@ This file provides settings for ESS and R.
  Smart parens, and uses Meta-up to go to previous command. 
 
 #+source: load-ess
+#+srcname: lexical-binding-cookie
+#+begin_src emacs-lisp
+;;; -*- lexical-binding: t; -*-
+#+end_src
+
 #+begin_src emacs-lisp
 (use-package ess
   :config

@@ -6,6 +6,11 @@ Healy's [[https://github.com/kjhealy/emacs-starter-kit][emacs starter-kit for th
 
 ** Define keys
 #+srcname: starter-kit-define-lisp-keys
+#+srcname: lexical-binding-cookie
+#+begin_src emacs-lisp
+;;; -*- lexical-binding: t; -*-
+#+end_src
+
 #+begin_src emacs-lisp 
 (define-key read-expression-map (kbd "TAB") 'lisp-complete-symbol)
 ;; (define-key lisp-mode-shared-map (kbd "C-c l") "lambda")

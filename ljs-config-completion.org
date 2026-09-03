@@ -11,6 +11,11 @@ I have also added support for Vertico, Consult, Orderless, Marginalia (candidate
 
 ** Install Vertico
 #+NAME: vertico-installation
+#+srcname: lexical-binding-cookie
+#+begin_src emacs-lisp
+;;; -*- lexical-binding: t; -*-
+#+end_src
+
 #+begin_src emacs-lisp
 (use-package vertico
   :ensure t

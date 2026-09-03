@@ -11,6 +11,11 @@ Sane line wrapping and scrolling for long documents and
 papers. Plus a function for removing any hard-returns in a document.
 
 #+srcname: line-modes
+#+srcname: lexical-binding-cookie
+#+begin_src emacs-lisp
+;;; -*- lexical-binding: t; -*-
+#+end_src
+
 #+begin_src emacs-lisp
 
   (use-package adaptive-wrap

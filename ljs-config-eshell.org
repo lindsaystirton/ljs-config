@@ -9,6 +9,11 @@ the social sciences]].
 [[http://www.emacswiki.org/emacs/CategoryEshell][Eshell]] is a really great shell, actually.
 
 ** Basic Eshell Configuration
+#+srcname: lexical-binding-cookie
+#+begin_src emacs-lisp
+;;; -*- lexical-binding: t; -*-
+#+end_src
+
 #+begin_src emacs-lisp
 (use-package eshell
   :init

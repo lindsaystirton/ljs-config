@@ -19,6 +19,11 @@ which is also implemented using Org-mode and [[http://git-scm.com/][git]].
 
 ** Org-Mode
 
+#+srcname: lexical-binding-cookie
+#+begin_src emacs-lisp
+;;; -*- lexical-binding: t; -*-
+#+end_src
+
 #+begin_src emacs-lisp
 (use-package org
   :hook (org-mode . org-mode-setup)

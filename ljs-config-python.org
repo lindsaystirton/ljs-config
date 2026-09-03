@@ -17,6 +17,11 @@ adding several seconds combined for no benefit over doing it once.
 
 ** Install Elpy and Configure
 
+#+srcname: lexical-binding-cookie
+#+begin_src emacs-lisp
+;;; -*- lexical-binding: t; -*-
+#+end_src
+
 #+begin_src emacs-lisp :tangle yes
 (use-package elpy
   :ensure t

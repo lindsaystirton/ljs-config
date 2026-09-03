@@ -12,6 +12,11 @@ the social sciences]]. I have made some effort to implement use-package. Impleme
 *** Prettify Math in Buffers
 
 #+name: latex-pretty-symbols
+#+srcname: lexical-binding-cookie
+#+begin_src emacs-lisp
+;;; -*- lexical-binding: t; -*-
+#+end_src
+
 #+begin_src emacs-lisp
 (use-package latex-pretty-symbols
   :ensure t)

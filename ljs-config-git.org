@@ -7,6 +7,11 @@ This file is part of the [[file:ljs-config.org][Lindsay Stirton's Emacs Configur
 
 ** Configure Magit
 #+srcname: ljs-config-git-magit
+#+srcname: lexical-binding-cookie
+#+begin_src emacs-lisp
+;;; -*- lexical-binding: t; -*-
+#+end_src
+
 #+begin_src emacs-lisp
   (use-package magit
    :ensure t

@@ -12,6 +12,11 @@ flyspell doesn't start properly. Putting this customization in
 - This file is loaded by a special line added to [[file:ljs-config.org][ljs-config.org]].
 
 ** Specify aspell
+#+srcname: lexical-binding-cookie
+#+begin_src emacs-lisp
+;;; -*- lexical-binding: t; -*-
+#+end_src
+
 #+begin_src emacs-lisp
 (use-package flyspell
   :config

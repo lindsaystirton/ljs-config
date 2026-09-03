@@ -12,6 +12,11 @@ modular and consistent approach to package management, making it
 easier to manage and update your Emacs configuration.
 
 #+srcname: ljs-config-elpa-download-packages
+#+srcname: lexical-binding-cookie
+#+begin_src emacs-lisp
+;;; -*- lexical-binding: t; -*-
+#+end_src
+
 #+begin_src emacs-lisp
   (use-package auctex)
   (use-package all-the-icons)
