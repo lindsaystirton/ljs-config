@@ -181,20 +181,27 @@ Make yasnippet work properly with org-mode.
 ** Open PDFs in a frame on the right using pdf-tools
 #+begin_src emacs-lisp
 (defun ljs/display-pdf-to-right (buffer alist)
-  "Display PDF files (from LaTeX, Org, or anywhere else) in a side
-window on the right, doubling the frame width to make room.
+  "Display PDF files (from LaTeX, Org, or anywhere else) in a window
+on the right that takes up half the frame, doubling the frame width
+first so the source buffer doesn't get squeezed either.
 
 Previously restricted to `org-mode' buffers only via a major-mode
 guard, which is why this never worked when compiling/viewing PDFs
 from LaTeX -- broadened so it applies regardless of which buffer you
-triggered it from."
-  (setq ljs/original-frame-width (frame-pixel-width (window-frame (selected-window))))
-  (let* ((window (display-buffer-in-side-window buffer '((side . right) (slot . 0)))))
-    (ljs/frame-double-width (window-frame window))
-    (window--display-buffer buffer window 'window alist)
-    (when (eq (length (window-list)) 1)
-      (split-window-horizontally))
-    window))
+triggered it from.
+
+NOTE: this used to go through `display-buffer-in-side-window', which
+is Emacs's mechanism for small auxiliary panes (like a sidebar or a
+help buffer) -- it has no notion of "half the frame", which is why
+the PDF pane always came out narrow rather than an equal split.
+`display-buffer-in-direction' with an explicit `window-width' of 0.5
+is the correct tool for an actual 50/50 split."
+  (let ((frame (window-frame (selected-window))))
+    (setq ljs/original-frame-width (frame-pixel-width frame))
+    (ljs/frame-double-width frame))
+  (display-buffer-in-direction
+   buffer
+   (append alist '((direction . right) (window-width . 0.5)))))
 
 (add-to-list 'display-buffer-alist '("\\.pdf\\'" . (ljs/display-pdf-to-right)))
 #+end_src
