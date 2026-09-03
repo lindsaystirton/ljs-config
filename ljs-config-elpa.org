@@ -41,6 +41,8 @@ easier to manage and update your Emacs configuration.
   (use-package thingatpt)
   (use-package smartparens)
   (use-package ess)
+  (use-package corfu)
+  (use-package cape)
 #+end_src
 
 
@@ -54,7 +56,7 @@ easier to manage and update your Emacs configuration.
                   (functionp package))
         (message "Installing %s" (symbol-name package))
         (package-install package))))
-  #+end-src
+  #+end_src
 
   #+srcname: ljs-config-esk-online
   #+begin_src emacs-lisp
@@ -71,9 +73,9 @@ easier to manage and update your Emacs configuration.
       (unless package-archive-contents
         (package-refresh-contents))
       (ljs-config-elpa-install)))
-  #+end-src
+  #+end_src
 
 
 #+begin_src emacs-lisp
 (message "ljs-config-elpa loaded.")
-#+end-src
+#+end_src

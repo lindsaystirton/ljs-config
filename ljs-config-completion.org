@@ -2,7 +2,8 @@
 #+OPTIONS: toc:nil num:nil ^:nil
 
 Part of [[file:ljs-config.org][LJS-Config]]. ESS settings borrowed heavily from Kieran Healy's [[https://github.com/kjhealy/emacs-starter-kit][emacs starter-kit for
-the social sciences]]. I have used use-package to load and configure Yasnippet and Company.
+the social sciences]]. I have used use-package to load and configure Yasnippet, and,
+for in-buffer completion, Corfu and Cape (see below for why this replaced Company).
 
 I have also added support for Vertico, Consult, Orderless, Marginalia (candidate annotations) and Embark (act-on-candidate). This was a tough call against Ivy, Counsel and Swiper, but the Vertico stack is what's actually installed and configured, so it's the settled choice.
 
@@ -151,7 +152,7 @@ Yasnippet is a snippet expansion system for Emacs. It uses short phrases and the
       (if (or (not yas-minor-mode)
               (null (do-yas-expand)))
           (if (check-expansion)
-              (company-complete-common)
+              (completion-at-point)
             (indent-for-tab-command)))))
 
   ;; Bind tab to tab-indent-or-complete
@@ -160,40 +161,79 @@ Yasnippet is a snippet expansion system for Emacs. It uses short phrases and the
         ([tab] . tab-indent-or-complete)))  
 #+end_src
 
-** Company Mode
-Auto-completion of text and code. 
+** Corfu, Cape, and in-buffer completion (replaces Company)
 
-We use the `:with` keyword to include dabbrev in every backend, which gives us completion from everything that's in the buffer (and other open buffers).
+Company-mode was the in-buffer completion popup here for a long time,
+but it's a separate, older protocol from Emacs's built-in
+=completion-at-point-functions= (capf) mechanism. Corfu is the
+in-buffer counterpart to Vertico -- same author, same minimalist
+philosophy, and it displays whatever comes through the standard capf
+mechanism rather than requiring its own backend protocol. Most of what
+we relied on Company for (ESS/R, elisp, AUCTeX macros) already goes
+through capf natively via each major mode, so Corfu picks it up with
+no extra wiring. The two backends that were Company-specific --
+company-math and company-stan (see ljs-config-stats.org) -- are kept,
+not dropped: Cape's =cape-company-to-capf= wraps a Company backend so
+it can still be used as a capf source under Corfu.
 
-#+source: company-mode
-#+begin_src emacs-lisp 
-(use-package company
+#+source: corfu-mode
+#+begin_src emacs-lisp
+(use-package corfu
   :ensure t
   :custom
-  (company-idle-delay 0)
-  (company-require-match nil)
+  (corfu-cycle t)
+  (corfu-auto t)
+  (corfu-auto-prefix 1)
+  (corfu-auto-delay 0)
+  (corfu-quit-no-match 'separator)
   :bind
-  ("<C-tab>" . company-complete)
-  :config
-  (global-company-mode)
-  
-  ;; Use C-n and C-p to cycle through completions
-  (define-key company-active-map (kbd "C-n") 'company-select-next)
-  (define-key company-active-map (kbd "<tab>") 'company-complete-common)
-  (define-key company-active-map (kbd "C-p") 'company-select-previous)
-  (define-key company-active-map (kbd "<backtab>") 'company-select-previous)
-  
-  ;; Enable math completions
-  (use-package company-math
-    :ensure t
-    :config
-    (add-to-list 'company-backends 'company-math-symbols-unicode))
+  (("<C-tab>" . completion-at-point)
+   :map corfu-map
+   ("C-n" . corfu-next)
+   ("C-p" . corfu-previous)
+   ("TAB" . corfu-complete)
+   ("<tab>" . corfu-complete)
+   ("<backtab>" . corfu-previous))
+  :init
+  (global-corfu-mode))
+#+end_src
 
-  ;; Completion for kill ring history
-  (use-package browse-kill-ring
-    :ensure t
-    :config
-    (browse-kill-ring-default-keybindings)))
+#+source: cape-mode
+#+begin_src emacs-lisp
+(use-package cape
+  :ensure t
+  :init
+  ;; General-purpose fallback sources, added at a low priority (depth
+  ;; 100) so they only kick in after any mode-specific capf. This is
+  ;; the rough equivalent of company's old :with dabbrev behaviour
+  ;; (completion from buffer/other-buffer text).
+  (add-hook 'completion-at-point-functions #'cape-dabbrev 100)
+  (add-hook 'completion-at-point-functions #'cape-file 100)
+  (add-hook 'completion-at-point-functions #'cape-elisp-block 100))
+#+end_src
+
+#+source: company-math-bridge
+#+begin_src emacs-lisp
+;; company-math has no native capf backend, so bridge it via Cape
+;; instead of dropping it. Registered globally, matching its old
+;; global company-backends registration.
+(use-package company-math
+  :ensure t
+  :commands (company-math-symbols-unicode)
+  :config
+  (add-hook 'completion-at-point-functions
+            (cape-company-to-capf #'company-math-symbols-unicode)))
+#+end_src
+
+#+source: browse-kill-ring-mode
+#+begin_src emacs-lisp
+;; Unrelated to completion -- this used to live nested inside Company's
+;; :config block for no real reason. Given its own top-level
+;; use-package so it doesn't depend on a completion package to load.
+(use-package browse-kill-ring
+  :ensure t
+  :config
+  (browse-kill-ring-default-keybindings))
 #+end_src
 
 
