@@ -10,12 +10,10 @@ Support for the Python programming language.
 
 Ensure Emacs knows about your PATH settings, especially if your Python environment is set up in a shell configuration file.
 
-#+begin_src emacs-lisp :tangle yes
-(use-package exec-path-from-shell
-  :ensure t
-  :config
-  (exec-path-from-shell-initialize))
-#+end_src
+Handled once, centrally, in =ljs-config-appearance.org= now -- three
+separate copies of this (python, eshell, appearance) were each paying
+the cost of spawning a login shell to read your PATH on every startup,
+adding several seconds combined for no benefit over doing it once.
 
 ** Install Elpy and Configure
 

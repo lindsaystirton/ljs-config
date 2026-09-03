@@ -55,12 +55,8 @@ the social sciences]].
 
 ** 'Exec-Path-From-Shell Configuration
 
-#+begin_src emacs-lisp
-(use-package exec-path-from-shell
-  :ensure t
-  :config
-  (exec-path-from-shell-initialize))
-#+end_src
+Handled once, centrally, in =ljs-config-appearance.org= now -- see the
+note in ljs-config-python.org for why the other copies were removed.
 
 ** Set Zsh as DefaultShell for Eshell
 

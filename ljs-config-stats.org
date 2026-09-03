@@ -180,21 +180,33 @@ This is useful for when you have buffers with many similar names, as when there 
 #+srcname: ljs-config-stan-mode
 #+begin_src emacs-lisp
 (use-package stan-mode
-  :config
-  (setq stan-executable "/opt/homebrew/bin/stanc")
-  (setq stan-indentation-offset 2)
+  :ensure t
   :mode ("\\.stan\\'" . stan-mode)
-  :hook (stan-mode . stan-mode-setup))
+  :hook (stan-mode . stan-mode-setup)
+  :config
+  (setq stan-executable (or (executable-find "stanc") "stanc"))
+  (setq stan-indentation-offset 2))
 #+end_src
 
 
 ** Install and Configure Company-Stan
 
+NOTE: this used to be =:after stan-mode=, deferring company-stan's own
+load (and the add-to-list below) until stan-mode's feature was
+actually provided -- which, since stan-mode is itself lazily
+autoloaded via =:mode= above, might never happen in a given session.
+That looks like the cause of the "Symbol's function definition is
+void: company-stan" error: company-backends ended up naming a function
+that was never actually loaded. Depending on company (which loads
+early and unconditionally) instead avoids the whole timing question --
+company-stan is cheap to load immediately, and it's a harmless no-op
+backend outside stan-mode buffers anyway.
+
 #+srcname: ljs-config-company-stan
 #+begin_src emacs-lisp 
   (use-package company-stan
     :ensure t
-    :after stan-mode
+    :after company
     :config
     ;; Add company-stan to the list of backends for stan-mode
     (add-to-list 'company-backends 'company-stan))
