@@ -44,14 +44,11 @@ Polymode is a package that supports multiple modes inside a single buffer. It is
 
 #+source: Polymode
 #+begin_src emacs-lisp 
-(use-package poly-R
-  :ensure t)
+(use-package poly-R)
 
-(use-package poly-markdown
-  :ensure t)
+(use-package poly-markdown)
 
-(use-package polymode
-  :ensure t)
+(use-package polymode)
 #+end_src
 
 
@@ -157,7 +154,7 @@ This is useful for when you have buffers with many similar names, as when there 
 
 #+source: uniquify
 #+begin_src emacs-lisp
-  (use-package uniquify
+  (use-package uniquify :straight nil
   :config
   (setq uniquify-buffer-name-style 'post-forward-angle-brackets))
 #+end_src
@@ -185,7 +182,6 @@ This is useful for when you have buffers with many similar names, as when there 
 #+srcname: ljs-config-stan-mode
 #+begin_src emacs-lisp
 (use-package stan-mode
-  :ensure t
   :mode ("\\.stan\\'" . stan-mode)
   :hook (stan-mode . stan-mode-setup)
   :config
@@ -210,7 +206,6 @@ applies inside stan-mode buffers, not globally.
 #+srcname: ljs-config-company-stan
 #+begin_src emacs-lisp 
   (use-package company-stan
-    :ensure t
     :after stan-mode
     :config
     (add-hook 'stan-mode-hook
@@ -223,8 +218,7 @@ applies inside stan-mode buffers, not globally.
 ** Install and Configure stan-snippets
 #+srcname: ljs-config-stan-snippets
 #+begin_src emacs-lisp 
-  (use-package stan-snippets
-    :ensure t)
+  (use-package stan-snippets)
 #+end_src
 
 ** Install and Configure Flycheck for Stan

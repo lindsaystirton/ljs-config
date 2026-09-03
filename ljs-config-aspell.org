@@ -18,7 +18,7 @@ flyspell doesn't start properly. Putting this customization in
 #+end_src
 
 #+begin_src emacs-lisp
-(use-package flyspell
+(use-package flyspell :straight nil
   :config
   (setq ispell-program-name "aspell"
         ispell-dictionary "british" ; Set to "british" for UK English

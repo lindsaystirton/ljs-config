@@ -18,7 +18,6 @@ I have also added support for Vertico, Consult, Orderless, Marginalia (candidate
 
 #+begin_src emacs-lisp
 (use-package vertico
-  :ensure t
   :config
   (vertico-mode))
 #+end_src
@@ -27,7 +26,6 @@ I have also added support for Vertico, Consult, Orderless, Marginalia (candidate
 #+NAME: consult-installation
 #+begin_src emacs-lisp
 (use-package consult
-  :ensure t
   :demand
   :bind (("C-s" . consult-line)
          ("M-g g" . consult-goto-line)
@@ -62,7 +60,6 @@ I have also added support for Vertico, Consult, Orderless, Marginalia (candidate
 
 #+begin_src emacs-lisp :tangle yes
 (use-package orderless
-  :ensure t
   :custom
   (completion-styles '(orderless))
   (completion-category-defaults nil))
@@ -94,14 +91,12 @@ re-comment `(marginalia-mode)' below and reopen this as still broken.
 
 #+begin_src emacs-lisp :tangle yes
 (use-package marginalia
-  :ensure t
   :config
   (marginalia-mode))
 #+end_src
 
 #+begin_src emacs-lisp :tangle yes
 (use-package embark
-  :ensure t
   :bind
   (("C-." . embark-act)
    ("C-;" . embark-dwim)
@@ -110,7 +105,6 @@ re-comment `(marginalia-mode)' below and reopen this as still broken.
   (setq prefix-help-command #'embark-prefix-help-command))
 
 (use-package embark-consult
-  :ensure t
   :after (embark consult)
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
@@ -134,7 +128,6 @@ Yasnippet is a snippet expansion system for Emacs. It uses short phrases and the
 ** Load the yasnippet bundle
 #+begin_src emacs-lisp :tangle yes
 (use-package yasnippet
-  :ensure t
   :config
   (yas-global-mode 1)
   
@@ -192,7 +185,6 @@ it can still be used as a capf source under Corfu.
 #+source: corfu-mode
 #+begin_src emacs-lisp
 (use-package corfu
-  :ensure t
   :custom
   (corfu-cycle t)
   (corfu-auto t)
@@ -214,7 +206,6 @@ it can still be used as a capf source under Corfu.
 #+source: cape-mode
 #+begin_src emacs-lisp
 (use-package cape
-  :ensure t
   :init
   ;; General-purpose fallback sources, added at a low priority (depth
   ;; 100) so they only kick in after any mode-specific capf. This is
@@ -231,7 +222,6 @@ it can still be used as a capf source under Corfu.
 ;; instead of dropping it. Registered globally, matching its old
 ;; global company-backends registration.
 (use-package company-math
-  :ensure t
   :commands (company-math-symbols-unicode)
   :config
   (add-hook 'completion-at-point-functions
@@ -244,7 +234,6 @@ it can still be used as a capf source under Corfu.
 ;; :config block for no real reason. Given its own top-level
 ;; use-package so it doesn't depend on a completion package to load.
 (use-package browse-kill-ring
-  :ensure t
   :config
   (browse-kill-ring-default-keybindings))
 #+end_src

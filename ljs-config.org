@@ -249,16 +249,69 @@ This section contains all code implementing Lindsay's emacs configuration.
 
 ** ljs-config basics
 
-*** Ubiquitous Packages
-
-These should be loaded on startup rather than autoloaded on demand
-since they are likely to be used in every session
-
 #+srcname: ljs-config-load-on-startup
 #+srcname: lexical-binding-cookie
 #+begin_src emacs-lisp
 ;;; -*- lexical-binding: t; -*-
 #+end_src
+
+*** straight.el bootstrap (package-manager migration, Phase 2, moved after first restart)
+
+Two real bugs turned up on the first restart after Phase 2, both fixed
+here rather than patched around:
+
+1. *Ordering bug.* This block used to sit down in the old ELPA
+   section, after "Ubiquitous Packages" and after
+   ljs-config-aspell.org were already loaded. Those files' bare
+   =(use-package cl-lib :straight nil)=-style declarations (cl-lib,
+   ffap, uniquify, ansi-color, recentf, saveplace, flyspell) ran
+   before straight had ever taught =use-package= what =:straight=
+   even means, so they all failed with "Unrecognized keyword:
+   :straight". Fixed by moving this whole block to the very top of
+   the Implementation section, before anything else that uses
+   =use-package= loads.
+2. *org-mode fetch failure.* Even with =(use-package org :straight
+   nil ...)= correctly in place in ljs-config-latex.org and
+   ljs-config-org.org, Emacs's init crashed outright trying to `git
+   clone` =emacs-straight/org-mode= -- because =:straight nil= on our
+   own declarations only opts *those* out; it does nothing about
+   other straight-managed packages (org-roam, most likely) that list
+   =org= as a dependency and would otherwise make straight fetch it
+   regardless. The standard fix, and a well-documented gotcha for
+   straight.el + org-roam specifically: register an explicit recipe
+   for =org= as satisfied by whatever ships built into Emacs, before
+   anything else can ask straight for it.
+
+#+srcname: ljs-config-straight-bootstrap
+#+begin_src emacs-lisp
+  (defvar bootstrap-version)
+  (let ((bootstrap-file
+         (expand-file-name
+          "straight/repos/straight.el/bootstrap.el"
+          (or (bound-and-true-p straight-base-dir)
+              user-emacs-directory)))
+        (bootstrap-version 7))
+    (unless (file-exists-p bootstrap-file)
+      (with-current-buffer
+          (url-retrieve-synchronously
+           "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+           'silent 'inhibit-cookies)
+        (goto-char (point-max))
+        (eval-print-last-sexp)))
+    (load bootstrap-file nil 'nomessage))
+
+  (straight-use-package 'use-package)
+  ;; Tell straight org is satisfied by the Emacs-bundled version,
+  ;; before any other package (org-roam in particular) can ask
+  ;; straight to go fetch it from emacs-straight/org-mode instead.
+  (straight-use-package '(org :type built-in))
+  (setq straight-use-package-by-default t)
+#+end_src
+
+*** Ubiquitous Packages
+
+These should be loaded on startup rather than autoloaded on demand
+since they are likely to be used in every session
 
 #+begin_src emacs-lisp 
 
@@ -266,27 +319,27 @@ since they are likely to be used in every session
     (require 'use-package)
 
     (use-package cl-lib
-      :ensure t)
+      :straight nil)
 
     (use-package ffap
-      :ensure t)
+      :straight nil)
 
     (use-package uniquify
-      :ensure nil
+      :straight nil
       :demand t
       :config
       (setq uniquify-buffer-name-style 'forward))
 
     (use-package ansi-color
-      :ensure t)
+      :straight nil)
 
     (use-package recentf
-      :ensure t
+      :straight nil
       :config
       (recentf-mode 1))
 
     (use-package saveplace
-      :ensure t
+      :straight nil
       :config
       (save-place-mode 1))
 #+end_src
@@ -348,24 +401,23 @@ aspell workaround in [[file:ljs-config-aspell.org][ljs-config-aspell]]
 #+srcname: ljs-config-package
 #+begin_src emacs-lisp 
 
-   (require 'package)
-   (setq package-archives
-      '(("org" . "https://orgmode.org/elpa/")
-        ("gnu" . "http://elpa.gnu.org/packages/")
-        ("melpa" . "https://melpa.org/packages/")))
+  ;; package.el retired here as of Phase 2 of the straight.el migration
+  ;; (see the audit, sections 4 and 6). All package fetching and
+  ;; activation is now handled by straight.el, bootstrapped near the
+  ;; top of this file (see the "straight.el bootstrap" section
+  ;; above), so
+  ;; this block no longer calls `require' on `package', sets
+  ;; `package-archives', or calls `package-initialize' -- keeping
+  ;; package.el active alongside straight.el would make both package
+  ;; managers try to install the same packages at once (see
+  ;; radian-software/straight.el issue #425). Emacs's own automatic
+  ;; startup activation of package.el is separately disabled in
+  ;; early-init.el via `package-enable-at-startup'.
 
+#+end_src
 
-
-  ;; Removed: an old defadvice-based filter on package--add-to-archive-contents,
-  ;; using the deprecated defadvice mechanism and an internal package.el helper
-  ;; whose behaviour has drifted since this was written circa 2013. It only
-  ;; ever excluded one package (eieio, a built-in Emacs library that was never
-  ;; going to be fetched from MELPA anyway), and strong circumstantial evidence
-  ;; suggests it was the reason `package-refresh-contents` silently stopped
-  ;; updating the cached MELPA index -- it hadn't actually written a fresh
-  ;; archive-contents file to disk since April 2025.
-
-    (package-initialize)
+#+srcname: ljs-config-load-elpa
+#+begin_src emacs-lisp
     (ljs-config-load "./ljs-config/ljs-config-elpa.org")
  #+end_src
 

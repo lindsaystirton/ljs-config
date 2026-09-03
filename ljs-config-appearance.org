@@ -16,7 +16,7 @@ Basic setting preferences, including size and positioning of emacs frames.
 #+end_src
 
 #+begin_src emacs-lisp 
- (use-package emacs
+ (use-package emacs :straight nil
   :config
   (setq inhibit-startup-message t)
   (add-to-list 'initial-frame-alist '(top . 0))
@@ -52,7 +52,6 @@ do so, enter M-x ef-themes-toggle.
    ;; which already contains the fix, instead of relying on whatever
    ;; modus-themes snapshot happens to be frozen inside the Emacs binary.
    (use-package modus-themes
-     :ensure t
      :init
      (load-theme 'modus-vivendi t))
 #+end_src
@@ -80,7 +79,6 @@ do so, enter M-x ef-themes-toggle.
  ;; depends on it moved inside :config where it belongs. The four
  ;; duplicate/conflicting setqs are collapsed to one each.
  (use-package doom-modeline
-   :ensure t
    :init
    (require 'all-the-icons)
    :config
@@ -129,7 +127,6 @@ The pdf-tools packages provides an emacs pdf viewer that replaces the standard d
 
 #+begin_src emacs-lisp
 (use-package exec-path-from-shell
-  :ensure t
   :if (memq window-system '(mac ns x))
   :config
   ;; macOS GUI Emacs doesn't inherit your shell's PATH by default, so
@@ -141,7 +138,6 @@ The pdf-tools packages provides an emacs pdf viewer that replaces the standard d
   (exec-path-from-shell-initialize))
 
 (use-package pdf-tools
-  :ensure t
   :config
   ;; Install pdf-tools
   (pdf-tools-install)

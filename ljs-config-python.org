@@ -24,7 +24,6 @@ adding several seconds combined for no benefit over doing it once.
 
 #+begin_src emacs-lisp :tangle yes
 (use-package elpy
-  :ensure t
   :init
   ;; Enable Elpy
   (elpy-enable)

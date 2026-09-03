@@ -2,7 +2,7 @@
 #+OPTIONS: toc:nil num:nil ^:nil
 
 This file is part of the [[file:ljs-config.org][Lindsay Stirton's Emacs Configurations]]. Code
-for Org is all but copy-pasted from Kieran Healy's [[https://github.com/kjhealy/emacs-starter-kit/][Emacs Starter-Kit
+for Org is adapted from Kieran Healy's [[https://github.com/kjhealy/emacs-starter-kit/][Emacs Starter-Kit
 for the Social Sciences]]. I have added support for Pdf-Tools and a
 configuration for Org-Roam.
 
@@ -25,7 +25,7 @@ which is also implemented using Org-mode and [[http://git-scm.com/][git]].
 #+end_src
 
 #+begin_src emacs-lisp
-(use-package org
+(use-package org :straight nil
   :hook (org-mode . org-mode-setup)
   :config
   (setq org-ellipsis " ▾"
@@ -115,7 +115,6 @@ Make yasnippet work properly with org-mode.
 ** Nice Bulleted Lists
 #+begin_src emacs-lisp
 (use-package org-bullets
-  :ensure t
   :init
   (add-hook 'org-mode-hook (lambda ()
                              (org-bullets-mode 1)))
@@ -126,7 +125,6 @@ Make yasnippet work properly with org-mode.
 ** Org-Roam
 #+begin_src emacs-lisp
 (use-package org-roam
-  :ensure t
   :custom
   (org-roam-directory "~/Dropbox/Org-roam/Notes/")
   (org-roam-completion-everywhere t)
@@ -155,18 +153,10 @@ Make yasnippet work properly with org-mode.
 ** PDF-Tools Setup for Org and Org-Roam
 #+begin_src emacs-lisp
 (use-package pdf-tools
-  :ensure t
   :config
-  ;; NOTE: previously hardcoded pdf-info-epdfinfo-program to
-  ;; "/usr/local/bin/epdfinfo" (an Intel-Mac path, and not even the
-  ;; right kind of binary -- there normally isn't a Homebrew-installed
-  ;; "epdfinfo"; it's pdf-tools' own compiled server). Removed so
-  ;; pdf-tools uses its own bundled epdfinfo, which works on both
-  ;; Intel and Apple Silicon.
   (message "pdf-tools loaded"))
 
 (use-package org-pdftools
-  :ensure t
   :hook (org-mode . org-pdftools-setup-link)
   :after (org pdf-tools)
   :config
@@ -186,21 +176,6 @@ Make yasnippet work properly with org-mode.
 ** Open PDFs in a frame on the right using pdf-tools
 #+begin_src emacs-lisp
 (defun ljs/display-pdf-to-right (buffer alist)
-  "Display PDF files (from LaTeX, Org, or anywhere else) in a window
-on the right that takes up half the frame, doubling the frame width
-first so the source buffer doesn't get squeezed either.
-
-Previously restricted to `org-mode' buffers only via a major-mode
-guard, which is why this never worked when compiling/viewing PDFs
-from LaTeX -- broadened so it applies regardless of which buffer you
-triggered it from.
-
-NOTE: this used to go through `display-buffer-in-side-window', which
-is Emacs's mechanism for small auxiliary panes (like a sidebar or a
-help buffer) -- it has no notion of `half the frame', which is why
-the PDF pane always came out narrow rather than an equal split.
-`display-buffer-in-direction' with an explicit `window-width' of 0.5
-is the correct tool for an actual 50/50 split."
   (let ((frame (window-frame (selected-window))))
     (setq ljs/original-frame-width (frame-pixel-width frame))
     (ljs/frame-double-width frame))

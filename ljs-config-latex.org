@@ -18,15 +18,14 @@ the social sciences]]. I have made some effort to implement use-package. Impleme
 #+end_src
 
 #+begin_src emacs-lisp
-(use-package latex-pretty-symbols
-  :ensure t)
+(use-package latex-pretty-symbols)
 #+end_src
 
 *** Load RefTeX
 #+name: reftex-support
 #+begin_src emacs-lisp 
 (use-package reftex
-  :ensure t
+  :straight nil
   :commands (reftex-mode turn-on-reftex reftex-citation reftex-index-phrase-mode)
   :hook ((LaTeX-mode . turn-on-reftex)
          (pandoc-mode . turn-on-reftex)
@@ -76,7 +75,6 @@ the social sciences]]. I have made some effort to implement use-package. Impleme
 #+name: ebib-load
 #+begin_src emacs-lisp
  (use-package ebib
-  :ensure t
   :commands (ebib)
   :init
   (setq ebib-preload-bib-files '("/Users/ljs46/Documents/bibs/masterbib.bib"))
@@ -92,7 +90,7 @@ the social sciences]]. I have made some effort to implement use-package. Impleme
 #+name: autoparse
 #+begin_src emacs-lisp
 (use-package tex
-  :ensure auctex
+  :straight auctex
   :defer t
   :config
   (add-hook 'LaTeX-mode-hook 'my-auctex-mode-setup)
@@ -109,7 +107,7 @@ the social sciences]]. I have made some effort to implement use-package. Impleme
   - Take this out to compile to DVI, instead.
 #+name: pdflatex
 #+begin_src emacs-lisp
-(use-package tex
+(use-package tex :straight nil
   :hook (LaTeX-mode . TeX-PDF-mode))
 #+end_src
 
@@ -118,7 +116,7 @@ the social sciences]]. I have made some effort to implement use-package. Impleme
    - Allow AucTeX to use biber as well as/instead of bibtex.
 #+name: biber
 #+begin_src emacs-lisp
-(use-package tex
+(use-package tex :straight nil
   :config
   (defun TeX-run-Biber (name command file)
     "Create a process for NAME using COMMAND to format FILE with Biber." 
@@ -158,7 +156,7 @@ the social sciences]]. I have made some effort to implement use-package. Impleme
 ** Use Biblatex key template by default in bib files
    - For compatibility with Pandoc.
 #+begin_src emacs-lisp :tangle no
-(use-package bibtex
+(use-package bibtex :straight nil
   :config
   (setq bibtex-dialect "BibTeX"))
 #+end_src
@@ -166,7 +164,7 @@ the social sciences]]. I have made some effort to implement use-package. Impleme
 ** Use '-' as the separator in auto-generated bibtex keys
    - We use this (rather than the underscore character) for compatibility with Pandoc.
 #+begin_src emacs-lisp :tangle no
-(use-package bibtex
+(use-package bibtex :straight nil
   :config
   (setq bibtex-autokey-titleword-separator "_")
   (setq bibtex-autokey-year-title-separator ":_"))
@@ -174,7 +172,7 @@ the social sciences]]. I have made some effort to implement use-package. Impleme
 
 ** Use latexmk for compilation by default
 #+begin_src emacs-lisp
-(use-package tex
+(use-package tex :straight nil
   :config
   (eval-after-load "tex"
     '(add-to-list 'TeX-command-list '("latexmk" "latexmk -synctex=1 -shell-escape -pdf %s" TeX-run-TeX nil t :help "Process file with latexmk")))
@@ -201,22 +199,12 @@ the social sciences]]. I have made some effort to implement use-package. Impleme
 Enables pdf-tools with AUCTeX.
 
 #+begin_src emacs-lisp
-(use-package tex
+(use-package tex :straight nil
   :config
   ;; Set pdf-tools as the PDF viewer for AUCTeX
   (setq TeX-view-program-selection '((output-pdf "PDF Tools")))
   (setq TeX-view-program-list '(("PDF Tools" TeX-pdf-tools-sync-view)))
-  ;; Turn on SyncTeX source correlation. Without this, AUCTeX has no
-  ;; correlation data to use for forward/backward search between the
-  ;; .tex source and the compiled PDF, even though latexmk is already
-  ;; generating the .synctex.gz data below -- this was the main
-  ;; reason source/PDF syncing never worked.
   (TeX-source-correlate-mode 1)
-  ;; Without this, the already-open PDF buffer keeps showing whatever
-  ;; it last rendered until you manually press `g' (revert-buffer) in
-  ;; it -- compiling again doesn't touch the visible buffer on its
-  ;; own. This reverts it automatically the moment a compile finishes,
-  ;; so the PDF you're looking at always matches what was just built.
   (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer))
 #+end_src
 
@@ -233,7 +221,6 @@ In the end what woked for me was running the following in terminal emacs:
 
 #+begin_src emacs-lisp :eval never
 (use-package pdf-tools
-   :ensure t
    :config
    (setenv "PKG_CONFIG_PATH" "/opt/homebrew/Cellar/zlib/1.2.13/lib/pkgconfig:/opt/homebrew/lib/pkgconfig:/opt/X11/lib/pkgconfig/:/opt/homebrew/Cellar/poppler/23.01.0/lib/pkgconfig:/opt/X11/share/pkgconfig")
    (pdf-tools-install)
@@ -248,7 +235,7 @@ In the end what woked for me was running the following in terminal emacs:
 ** Configure Org-babel
 #+name: org-babel-configuration
 #+begin_src emacs-lisp
-(use-package org
+(use-package org :straight nil
   :config
   ;; Add LaTeX to the list of languages Org-babel will recognize
   (require 'ob-latex)

@@ -14,7 +14,6 @@ This file is part of the [[file:ljs-config.org][Lindsay Stirton's Emacs Configur
 
 #+begin_src emacs-lisp
   (use-package magit
-   :ensure t
    :commands magit-status
    :bind (("C-x g" . magit-status))
    :config
@@ -25,7 +24,6 @@ This file is part of the [[file:ljs-config.org][Lindsay Stirton's Emacs Configur
 #+srcname: ljs-config-git-forge
 #+begin_src emacs-lisp
   (use-package forge
-   :ensure t
    :after magit
    :config
    (setq forge-user "Lindsay James Stirton"

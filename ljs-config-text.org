@@ -19,7 +19,6 @@ papers. Plus a function for removing any hard-returns in a document.
 #+begin_src emacs-lisp
 
   (use-package adaptive-wrap
-    :ensure t
     :config
     (defun my-activate-adaptive-wrap-prefix-mode ()
       "Toggle `visual-line-mode' and `adaptive-wrap-prefix-mode' simultaneously."
@@ -29,7 +28,6 @@ papers. Plus a function for removing any hard-returns in a document.
     (global-visual-line-mode t))
 
   (use-package smooth-scrolling
-    :ensure t
     :config
     (setq-default
      scroll-conservatively 0
@@ -47,7 +45,6 @@ papers. Plus a function for removing any hard-returns in a document.
   ;; no external app or browser tab involved, and it updates live as
   ;; you edit. Ships with markdown-mode itself; nothing to install.
   (use-package markdown-mode
-    :ensure t
     :mode (("\\.md\\'" . markdown-mode)
            ("README\\.md\\'" . gfm-mode)
            ("\\.markdown\\'" . markdown-mode)
@@ -90,7 +87,6 @@ In CSV mode, the following commands are available:
 #+src_name: csv-mode
 #+begin_src emacs-lisp
 (use-package csv-mode
-  :ensure t
   :mode ("\\.[Cc][Ss][Vv]\\'" . csv-mode)
   :config
   ;; Set the column separator (default is comma)
