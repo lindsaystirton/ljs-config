@@ -18,18 +18,23 @@ easier to manage and update your Emacs configuration.
 #+end_src
 
 #+begin_src emacs-lisp
+  ;; NOTE: doom-modeline used to be declared twice here, bare, with no
+  ;; :ensure -- which meant these two lines always failed to load it
+  ;; ("Cannot load doom-modeline" x2) since nothing here ever installed
+  ;; it. Removed outright: doom-modeline already has its own fully
+  ;; configured, :ensure t use-package block in ljs-config-appearance.org,
+  ;; which is what actually installs and enables it. The other
+  ;; once-duplicated entries below (all-the-icons, cl-lib, ess,
+  ;; smartparens) are deduplicated to a single line each -- harmless
+  ;; either way, but no reason to declare the same package twice.
   (use-package auctex)
   (use-package all-the-icons)
   (use-package all-the-icons-dired)
   (use-package cl-lib)
   (use-package csv-mode)
   (use-package djvu)
-  (use-package doom-modeline)
   (use-package ebib)
   (use-package ess)
-  (use-package all-the-icons)
-  (use-package cl-lib)
-  (use-package doom-modeline)
   (use-package exec-path-from-shell)
   (use-package flycheck)
   (use-package flyspell)
@@ -45,8 +50,6 @@ easier to manage and update your Emacs configuration.
   (use-package reftex)
   (use-package smartparens)
   (use-package thingatpt)
-  (use-package smartparens)
-  (use-package ess)
   (use-package corfu)
   (use-package cape)
 #+end_src

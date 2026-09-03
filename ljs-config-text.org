@@ -19,6 +19,7 @@ papers. Plus a function for removing any hard-returns in a document.
 #+begin_src emacs-lisp
 
   (use-package adaptive-wrap
+    :ensure t
     :config
     (defun my-activate-adaptive-wrap-prefix-mode ()
       "Toggle `visual-line-mode' and `adaptive-wrap-prefix-mode' simultaneously."
@@ -28,6 +29,7 @@ papers. Plus a function for removing any hard-returns in a document.
     (global-visual-line-mode t))
 
   (use-package smooth-scrolling
+    :ensure t
     :config
     (setq-default
      scroll-conservatively 0
