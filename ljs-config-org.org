@@ -152,7 +152,12 @@ Make yasnippet work properly with org-mode.
 (use-package pdf-tools
   :ensure t
   :config
-  (setq pdf-info-epdfinfo-program "/usr/local/bin/epdfinfo")
+  ;; NOTE: previously hardcoded pdf-info-epdfinfo-program to
+  ;; "/usr/local/bin/epdfinfo" (an Intel-Mac path, and not even the
+  ;; right kind of binary -- there normally isn't a Homebrew-installed
+  ;; "epdfinfo"; it's pdf-tools' own compiled server). Removed so
+  ;; pdf-tools uses its own bundled epdfinfo, which works on both
+  ;; Intel and Apple Silicon.
   (message "pdf-tools loaded"))
 
 (use-package org-pdftools
@@ -176,14 +181,20 @@ Make yasnippet work properly with org-mode.
 ** Open PDFs in a frame on the right using pdf-tools
 #+begin_src emacs-lisp
 (defun ljs/display-pdf-to-right (buffer alist)
-  "Display PDF files to the right in org-mode."
-  (when (eq major-mode 'org-mode)
-    (let* ((window (display-buffer-in-side-window buffer '((side . right) (slot . 0)))))
-      (ljs/frame-double-width (window-frame window))
-      (window--display-buffer buffer window 'window alist)
-      (when (eq (length (window-list)) 1)
-        (split-window-horizontally))
-      window)))
+  "Display PDF files (from LaTeX, Org, or anywhere else) in a side
+window on the right, doubling the frame width to make room.
+
+Previously restricted to `org-mode' buffers only via a major-mode
+guard, which is why this never worked when compiling/viewing PDFs
+from LaTeX -- broadened so it applies regardless of which buffer you
+triggered it from."
+  (setq ljs/original-frame-width (frame-pixel-width (window-frame (selected-window))))
+  (let* ((window (display-buffer-in-side-window buffer '((side . right) (slot . 0)))))
+    (ljs/frame-double-width (window-frame window))
+    (window--display-buffer buffer window 'window alist)
+    (when (eq (length (window-list)) 1)
+      (split-window-horizontally))
+    window))
 
 (add-to-list 'display-buffer-alist '("\\.pdf\\'" . (ljs/display-pdf-to-right)))
 #+end_src

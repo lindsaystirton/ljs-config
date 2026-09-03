@@ -106,12 +106,24 @@ The pdf-tools packages provides an emacs pdf viewer that replaces the standard d
   
 
 #+begin_src emacs-lisp
+(use-package exec-path-from-shell
+  :ensure t
+  :if (memq window-system '(mac ns x))
+  :config
+  ;; macOS GUI Emacs doesn't inherit your shell's PATH by default, so
+  ;; without this, anything installed via Homebrew (or asdf, pyenv,
+  ;; etc) can be invisible to Emacs even though it works fine in
+  ;; Terminal. This also means paths below never need to hardcode a
+  ;; specific Homebrew prefix (/opt/homebrew vs /usr/local) -- whichever
+  ;; one is on your shell's PATH is the one Emacs will find.
+  (exec-path-from-shell-initialize))
+
 (use-package pdf-tools
   :ensure t
   :config
   ;; Install pdf-tools
   (pdf-tools-install)
-  (setq org-pdftools-command "/opt/homebrew/Cellar/poppler/24.01.0/bin/pdfinfo")
+  (setq org-pdftools-command (or (executable-find "pdfinfo") "pdfinfo"))
 
   ;; Set pdf-tools as the default PDF viewer
   (setq-default pdf-viewer 'pdf-tools)

@@ -4,7 +4,7 @@
 Part of [[file:ljs-config.org][LJS-Config]]. ESS settings borrowed heavily from Kieran Healy's [[https://github.com/kjhealy/emacs-starter-kit][emacs starter-kit for
 the social sciences]]. I have used use-package to load and configure Yasnippet and Company.
 
-I have also added support for Vertico, Consult and Orderless. It was a tough call between these and Ivy, Counsel and Swiper, and I may well go back to these.
+I have also added support for Vertico, Consult, Orderless, Marginalia (candidate annotations) and Embark (act-on-candidate). This was a tough call against Ivy, Counsel and Swiper, but the Vertico stack is what's actually installed and configured, so it's the settled choice.
 
 * Vertico, Consult, and Orderless Configuration
 
@@ -37,15 +37,19 @@ I have also added support for Vertico, Consult and Orderless. It was a tough cal
          ("C-k" . vertico-previous))
   :config
   (setq consult-line-point-position 'window)
+  ;; Uses Emacs's built-in project.el rather than the (uninstalled)
+  ;; projectile package, which the old config referenced but never
+  ;; actually depended on -- this used to be a latent error waiting
+  ;; to happen the first time a project-scoped consult command ran.
   (setq consult-line-prompts
         `(,buffer-file-name
-          ,(and (bound-and-true-p projectile-mode)
-                (projectile-project-name))
+          ,(when-let ((proj (project-current)))
+             (file-name-nondirectory (directory-file-name (project-root proj))))
           ,(abbreviate-file-name default-directory)))
   :custom
-  (consult-project-root-function #'projectile-project-root)
-  (consult-narrow-key "<")
-  (consult-project-root-function #'projectile-project-root))
+  (consult-project-root-function
+   (lambda () (when-let ((proj (project-current))) (project-root proj))))
+  (consult-narrow-key "<"))
 #+end_src
 
 ** Install Orderless and Enable Completion Styles
@@ -58,15 +62,45 @@ I have also added support for Vertico, Consult and Orderless. It was a tough cal
   (completion-category-defaults nil))
 #+end_src
 
+** Icomplete (removed)
+
+Icomplete used to be turned on here alongside Vertico. Running both at
+once is redundant -- they are two different minibuffer completion UIs
+-- and can visually conflict, so this has been removed. Vertico
+supersedes it.
+
+
+
+
+** Install Marginalia and Embark
+
+Marginalia annotates completion candidates in the minibuffer (docstrings
+for =M-x=, file details for =find-file=, etc). Embark lets you act on a
+candidate directly from the minibuffer or at point.
+
 #+begin_src emacs-lisp :tangle yes
-(use-package icomplete
-  :ensure nil ; built-in
-  :init
-  (icomplete-mode 1))
+(use-package marginalia
+  :ensure t
+  :config
+  (marginalia-mode))
 #+end_src
 
+#+begin_src emacs-lisp :tangle yes
+(use-package embark
+  :ensure t
+  :bind
+  (("C-." . embark-act)
+   ("C-;" . embark-dwim)
+   ("C-h B" . embark-bindings))
+  :init
+  (setq prefix-help-command #'embark-prefix-help-command))
 
-
+(use-package embark-consult
+  :ensure t
+  :after (embark consult)
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
+#+end_src
 
 ** Disable isearch keys in minibuffer
 

@@ -50,6 +50,13 @@ flyspell doesn't start properly. Putting this customization in
            ("verbatim\\*?"        . "\\\\end[ \t\n]*{[ \t\n]*verbatim\\*?[ \t\n]*}"))))
 #+end_src
 
+** Turn on inline spell-checking for LaTeX by default
+   Requested by Lindsay: flyspell should just be on whenever editing a .tex file,
+   rather than something you have to remember to switch on by hand.
+#+begin_src emacs-lisp
+(add-hook 'LaTeX-mode-hook #'flyspell-mode)
+#+end_src
+
 #+begin_src emacs-lisp
   ;; More efforts to speed up flyspell
   ;; See http://www.brool.com/index.php/speeding-up-flyspell-region 

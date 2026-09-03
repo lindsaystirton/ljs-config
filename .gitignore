@@ -1,4 +1,6 @@
 ljs-config*.el
+*.el~
+*.org~
 /auto-save-list/
 /custom.el
 /elpa/
@@ -7,10 +9,7 @@ ljs-config*.el
 /places
 /recentf
 /transient/
-<<<<<<< HEAD
-*.org~
-=======
->>>>>>> origin/main
+.DS_Store
 #*
 /#ljs-config-org.org#
 .#*.*

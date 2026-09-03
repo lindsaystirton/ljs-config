@@ -200,7 +200,13 @@ Enables pdf-tools with AUCTeX.
   :config
   ;; Set pdf-tools as the PDF viewer for AUCTeX
   (setq TeX-view-program-selection '((output-pdf "PDF Tools")))
-  (setq TeX-view-program-list '(("PDF Tools" TeX-pdf-tools-sync-view))))
+  (setq TeX-view-program-list '(("PDF Tools" TeX-pdf-tools-sync-view)))
+  ;; Turn on SyncTeX source correlation. Without this, AUCTeX has no
+  ;; correlation data to use for forward/backward search between the
+  ;; .tex source and the compiled PDF, even though latexmk is already
+  ;; generating the .synctex.gz data below -- this was the main
+  ;; reason source/PDF syncing never worked.
+  (TeX-source-correlate-mode 1))
 #+end_src
 
 #+begin_src emacs-lisp
@@ -263,6 +269,14 @@ In the end what woked for me was running the following in terminal emacs:
 ** Window behaviour
 
 This function runs stores the screen width as variable  ljs/original-frame-width and runs ljs/frame-double-width before running TeX-command-run-all (bound to C-c C-a). Forces emacs to open the pdf viewer on the right and doubles the width. 
+
+NOTE: the actual splitting-and-placing-on-the-right now happens via
+=ljs/display-pdf-to-right= (see ljs-config-org.org), invoked
+automatically through =display-buffer-alist= whenever a PDF buffer is
+shown -- it used to be restricted to org-mode only, which is why this
+never worked from LaTeX. The frame-doubling below still runs
+pre-emptively before compiling, which is harmless (capped at monitor
+width) but is now somewhat redundant with that function.
 
 #+name: frame-behaviour
 #+begin_src emacs-lisp
