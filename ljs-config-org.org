@@ -197,7 +197,7 @@ triggered it from.
 
 NOTE: this used to go through `display-buffer-in-side-window', which
 is Emacs's mechanism for small auxiliary panes (like a sidebar or a
-help buffer) -- it has no notion of "half the frame", which is why
+help buffer) -- it has no notion of `half the frame', which is why
 the PDF pane always came out narrow rather than an equal split.
 `display-buffer-in-direction' with an explicit `window-width' of 0.5
 is the correct tool for an actual 50/50 split."
