@@ -237,10 +237,10 @@ applies inside stan-mode buffers, not globally.
   :config
   ;; A string containing the name or the path of the stanc2 executable
   ;; If nil, defaults to `stanc2'
-  (setq flycheck-stanc-executable "/opt/homebrew/bin/stanc")
-  ;; A string containing the name or the path of the stanc2 executable
+  (setq flycheck-stanc-executable (or (executable-find "stanc") "stanc"))
+  ;; A string containing the name or the path of the stanc3 executable
   ;; If nil, defaults to `stanc3'
-  (setq flycheck-stanc3-executable "/opt/homebrew/bin/stanc3"))
+  (setq flycheck-stanc3-executable (or (executable-find "stanc3") "stanc3")))
 
 #+end_src
 
