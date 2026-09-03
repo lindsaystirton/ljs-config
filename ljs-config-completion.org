@@ -84,25 +84,19 @@ Marginalia annotates completion candidates in the minibuffer (docstrings
 for =M-x=, file details for =find-file=, etc). Embark lets you act on a
 candidate directly from the minibuffer or at point.
 
-NOTE: marginalia-mode is temporarily switched OFF below. Its
-freshest MELPA snapshot (2026-08-31) crashes on the file annotator --
-`marginalia--time-relative' calls the built-in `seconds-to-string'
-with three arguments (a delay, plus `expanded' and `abbrev'), but
-Emacs 30.1's actual `seconds-to-string' only accepts one. That's an
-upstream marginalia/Emacs-version mismatch, not anything in this
-config, and it breaks `find-file' outright (any minibuffer prompt
-that annotates file candidates goes through this code path). Package
-archives don't keep older snapshots around to pin to, so the package
-itself is switched off here until either marginalia publishes a fix
-upstream, or this moves to straight.el, which can pin an exact known
-good revision. Re-enable by uncommenting `(marginalia-mode)' below.
+NOTE: marginalia-mode was temporarily switched off (see git history
+for this file) after its freshest MELPA snapshot crashed the file
+annotator -- `marginalia--time-relative' called the built-in
+`seconds-to-string' with three arguments, which Emacs 30.1's version
+didn't accept. Re-enabled here to test whether the Emacs 31.1 upgrade
+resolved the mismatch. If `find-file' or `M-x' start erroring again,
+re-comment `(marginalia-mode)' below and reopen this as still broken.
 
 #+begin_src emacs-lisp :tangle yes
 (use-package marginalia
   :ensure t
   :config
-  ;; (marginalia-mode)
-  )
+  (marginalia-mode))
 #+end_src
 
 #+begin_src emacs-lisp :tangle yes
