@@ -58,22 +58,8 @@ papers. Plus a function for removing any hard-returns in a document.
                (shell-quote-argument (buffer-file-name)))))
     :hook (markdown-mode . latex-unicode-simplified))
 
-  (use-package csv-mode
-    :ensure t
-    :mode ("\\.[Cc][Ss][Vv]\\'" . csv-mode))
-
-
 #+end_src
 
-
-** Smartparens Mode
-   Smart autopairing of quotes and parentheses. 
-#+srcname: smartparens
-#+begin_src emacs-lisp 
-  (smartparens-global-mode 1)
-  (require 'smartparens-config)
-  (show-smartparens-global-mode +1)
-#+end_src
 
 ** Markdown 
 Markdown mode support. 
@@ -171,12 +157,6 @@ In CSV mode, the following commands are available:
   (define-key csv-mode-map (kbd "C-c C-a") 'csv-align-fields)
   (define-key csv-mode-map (kbd "C-c C-u") 'csv-unalign-fields)
   )
-#+end_src
-
-  (add-to-list 'auto-mode-alist '("\\.[Cc][Ss][Vv]\\'" . csv-mode))
-  (autoload 'csv-mode "csv-mode"
-    "Major mode for editing comma-separated value files." t)
-
 #+end_src
 
 
