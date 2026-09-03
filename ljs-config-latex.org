@@ -211,7 +211,13 @@ Enables pdf-tools with AUCTeX.
   ;; .tex source and the compiled PDF, even though latexmk is already
   ;; generating the .synctex.gz data below -- this was the main
   ;; reason source/PDF syncing never worked.
-  (TeX-source-correlate-mode 1))
+  (TeX-source-correlate-mode 1)
+  ;; Without this, the already-open PDF buffer keeps showing whatever
+  ;; it last rendered until you manually press `g' (revert-buffer) in
+  ;; it -- compiling again doesn't touch the visible buffer on its
+  ;; own. This reverts it automatically the moment a compile finishes,
+  ;; so the PDF you're looking at always matches what was just built.
+  (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer))
 #+end_src
 
 #+begin_src emacs-lisp
