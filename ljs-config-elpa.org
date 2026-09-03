@@ -40,7 +40,8 @@ easier to manage and update your Emacs configuration.
   (use-package modus-themes)
   (use-package nov)
   (use-package org-bullets)
-  (use-package rainbow-delimiters)
+  (use-package rainbow-delimiters
+    :ensure t)
   (use-package reftex)
   (use-package smartparens)
   (use-package thingatpt)

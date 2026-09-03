@@ -69,17 +69,26 @@ do so, enter M-x ef-themes-toggle.
 
 #+srcname: ljs-config-appearance-doom-modeline
 #+begin_src emacs-lisp
+ ;; NOTE: this block used to close the use-package form one paren too
+ ;; early (right after :custom), leaving `(doom-modeline-mode 1)' and the
+ ;; setqs below it as bare top-level forms with no protection at all. That
+ ;; meant they ran unconditionally even when doom-modeline hadn't loaded
+ ;; (it had no :ensure, and isn't actually present in elpa/), crashing
+ ;; init.el with "Symbol's function definition is void: doom-modeline-mode"
+ ;; the moment use-package's own tolerance for a missing package changed.
+ ;; Fixed: :ensure t added so it actually installs, and everything that
+ ;; depends on it moved inside :config where it belongs. The four
+ ;; duplicate/conflicting setqs are collapsed to one each.
  (use-package doom-modeline
-    :init
-    (require 'all-the-icons)
-    :config
-    (setq doom-modeline-major-mode-icon t)
-    (setq doom-modeline-buffer-state-icon t)
-    :custom ((doom-modeline-height 10)))
-    (doom-modeline-mode 1)
-    (setq doom-modeline-icon t)
-    (setq doom-modeline-major-mode-icon t)
-    (setq doom-modeline-height 10)
+   :ensure t
+   :init
+   (require 'all-the-icons)
+   :config
+   (setq doom-modeline-icon t)
+   (setq doom-modeline-major-mode-icon t)
+   (setq doom-modeline-buffer-state-icon t)
+   (setq doom-modeline-height 10)
+   (doom-modeline-mode 1))
 #+end_src
 
 ** PDF VIew
