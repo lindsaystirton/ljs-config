@@ -192,16 +192,28 @@ This is useful for when you have buffers with many similar names, as when there 
 
 ** Install and Configure Company-Stan
 
-NOTE: this has been through a few iterations. First, gating on
-=:after stan-mode= and then =:after company= both still produced
-"Symbol's function definition is void: company-stan" on startup;
-fixed by tying registration to actually entering a stan-mode buffer
-(via stan-mode-hook) instead of package-load time. Then Company itself
-was retired in favour of Corfu (see ljs-config-completion.org) --
-Stan has no LSP server, so company-stan (a company-only backend) is
-now bridged into the standard completion-at-point-functions mechanism
-via Cape's =cape-company-to-capf=, registered buffer-locally so it only
-applies inside stan-mode buffers, not globally.
+NOTE: this has been through a few iterations, and the real bug was
+misdiagnosed each time. First, gating on =:after stan-mode= and then
+=:after company= both produced "Symbol's function definition is void:
+company-stan" -- this was assumed to be a load-timing problem, "fixed"
+by tying the completion-at-point-functions registration to actually
+entering a stan-mode buffer (via stan-mode-hook) instead of
+package-load time. That deferred *when* the error surfaced but not
+*whether* it did: the same void-function error still occurred, now
+triggered by Corfu the first time it tried to complete in a .stan
+buffer rather than at startup. The actual root cause, found by reading
+company-stan.el directly: the package's own completion backend
+function is named =company-stan-backend=, not =company-stan= -- there
+is no function called =company-stan= anywhere in the package (only
+=company-stan-backend= and the setup convenience function
+=company-stan-setup=). Every prior fix attempt was solving a timing
+problem that didn't exist while leaving the actual wrong-symbol bug in
+place. Since Company itself was retired in favour of Corfu (see
+ljs-config-completion.org) and Stan has no LSP server,
+=company-stan-backend= is bridged into the standard
+completion-at-point-functions mechanism via Cape's
+=cape-company-to-capf=, registered buffer-locally so it only applies
+inside stan-mode buffers, not globally.
 
 #+srcname: ljs-config-company-stan
 #+begin_src emacs-lisp 
@@ -211,7 +223,7 @@ applies inside stan-mode buffers, not globally.
     (add-hook 'stan-mode-hook
               (lambda ()
                 (add-hook 'completion-at-point-functions
-                          (cape-company-to-capf #'company-stan)
+                          (cape-company-to-capf #'company-stan-backend)
                           nil t))))
 #+end_src
 
