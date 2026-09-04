@@ -28,8 +28,12 @@ adding several seconds combined for no benefit over doing it once.
   ;; Enable Elpy
   (elpy-enable)
   :config
-  ;; Set Jupyter as the Python interpreter with full path
-  (setq python-shell-interpreter "/Users/ljs46/myenv/bin/jupyter"
+  ;; Set Jupyter as the Python interpreter. Previously hardcoded to
+  ;; Lindsay's own virtualenv (/Users/ljs46/myenv/bin/jupyter), which
+  ;; broke on any other username or machine. Falls back to whatever
+  ;; `jupyter' resolves to on PATH; a specific virtualenv belongs in
+  ;; the per-user override file once that mechanism is rebuilt.
+  (setq python-shell-interpreter (or (executable-find "jupyter") "jupyter")
         python-shell-interpreter-args "console --simple-prompt"
         python-shell-prompt-detect-failure-warning nil)
 
@@ -45,10 +49,13 @@ adding several seconds combined for no benefit over doing it once.
 
 ** Setting the Python Interpreter from a Virtual Environment
 
-Ensure Elpy uses the Python interpreter from your virtual environment. Adjust the path according to your virtual environment location.
+Ensure Elpy uses the Python interpreter from your virtual environment. As
+above, this now falls back to whatever `python3' resolves to on PATH
+rather than a hardcoded personal virtualenv -- point this at a specific
+virtual environment via the per-user override file once it exists.
 
 #+begin_src emacs-lisp :tangle yes
-(setq elpy-rpc-python-command "/Users/ljs46/myenv/bin/python")
+(setq elpy-rpc-python-command (or (executable-find "python3") "python3"))
 #+end_src
 
 ** Improving Performance

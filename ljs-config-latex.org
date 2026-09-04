@@ -71,13 +71,19 @@ the social sciences]]. I have made some effort to implement use-package. Impleme
     ebib is a bibtex database manager that works inside emacs. It can
     talk to org-mode. See [[http://ebib.sourceforge.net/][the ebib project page]] for more. When Ebib is
     loaded, you can run it with =M-x ebib=.
-  
+
+    No bibliography is preloaded here -- the previous setting hardcoded
+    a personal path (=/Users/ljs46/...=) to a file Lindsay isn't
+    actually using, and it wouldn't have resolved on any other machine
+    (or username) anyway. A real per-user bibliography path belongs in
+    the per-user override file once that mechanism is rebuilt (see the
+    audit); until then, open a bib file manually with =ebib= or =C-c b=
+    once point is on a citation key.
+
 #+name: ebib-load
 #+begin_src emacs-lisp
  (use-package ebib
   :commands (ebib)
-  :init
-  (setq ebib-preload-bib-files '("/Users/ljs46/Documents/bibs/masterbib.bib"))
   :hook (LaTeX-mode . (lambda ()
                         (local-set-key "\C-cb" 'ebib-insert-bibtex-key))))
 
