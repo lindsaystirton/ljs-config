@@ -255,6 +255,18 @@ This section contains all code implementing Lindsay's emacs configuration.
 ;;; -*- lexical-binding: t; -*-
 #+end_src
 
+*** Preamble: where Customize saves things
+
+Moved here from =init.el= as part of the init.el/early-init.el
+minimisation (see the audit, §31) -- nothing about this needs to run
+before Org itself loads, only before Customize might try to save or
+load something, and this file runs immediately after =init.el='s
+bootstrap with no gap in between.
+
+#+begin_src emacs-lisp
+(setq custom-file (concat dotfiles-dir "custom.el"))
+#+end_src
+
 *** straight.el bootstrap (package-manager migration, Phase 2, moved after first restart)
 
 Two real bugs turned up on the first restart after Phase 2, both fixed
@@ -416,13 +428,13 @@ aspell workaround in [[file:ljs-config-aspell.org][ljs-config-aspell]]
 
 #+end_src
 
-#+srcname: ljs-config-load-elpa
+#+srcname: ljs-config-load-packages
 #+begin_src emacs-lisp
-    (ljs-config-load "./ljs-config/ljs-config-elpa.org")
+    (ljs-config-load "./ljs-config/ljs-config-packages.org")
  #+end_src
 
- #+results: ljs-config-elpa
-: loaded ljs-config-elpa.el
+ #+results: ljs-config-packages
+: loaded ljs-config-packages.el
 #+end_src
 
 

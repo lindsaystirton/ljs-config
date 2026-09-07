@@ -1,8 +1,13 @@
-#+TITLE: LJS Config ELPA
+#+TITLE: LJS Config Packages
 #+OPTIONS: toc:nil num:nil ^:nil
 
 This file is part of the [[file:ljs-config.org][Lindsay Stirton's Emacs Configurations]].
 
+Renamed from =ljs-config-elpa.org= -- "elpa" was a leftover from
+before the straight.el migration (this file declares what to
+install, not how; the mechanism installing it is straight.el, not
+package.el/ELPA). Content and behaviour unchanged, see the audit,
+§28.
 
 ** Packages to Download
 
@@ -11,7 +16,7 @@ package installation and package configuration. This provides a
 modular and consistent approach to package management, making it
 easier to manage and update your Emacs configuration.
 
-#+srcname: ljs-config-elpa-download-packages
+#+srcname: ljs-config-packages-download-packages
 #+srcname: lexical-binding-cookie
 #+begin_src emacs-lisp
 ;;; -*- lexical-binding: t; -*-
@@ -54,9 +59,9 @@ easier to manage and update your Emacs configuration.
 #+end_src
 
 
-#+srcname: ljs-config-elpa-install-packages
+#+srcname: ljs-config-packages-install-packages
 #+begin_src emacs-lisp
-  (defun ljs-config-elpa-install ()
+  (defun ljs-config-packages-install ()
     "Install all ljs-config packages that aren't installed."
     (interactive)
     (dolist (package ljs-config-packages)
@@ -93,5 +98,5 @@ easier to manage and update your Emacs configuration.
 
 
 #+begin_src emacs-lisp
-(message "ljs-config-elpa loaded.")
+(message "ljs-config-packages loaded.")
 #+end_src

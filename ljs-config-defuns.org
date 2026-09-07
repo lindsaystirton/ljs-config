@@ -8,15 +8,34 @@ the Social Sciences]].
 * Starter Kit Defuns
 Function definitions
 
+** Preamble
+Small bootstrap-adjacent settings that don't need to be in =init.el=
+-- moved here from there as part of the init.el/early-init.el
+minimisation (see the audit, §31). =cl-lib= is required here rather
+than in =init.el= since this file (via =esk-online?='s =cl-some= and
+similar) is one of the actual consumers; the two =put= calls just
+silence the "region can be dangerous" confirmation prompts for
+=upcase-region=/=downcase-region= and have no dependency on load
+order at all.
+
+The =lexical-binding= cookie used to live further down, in a
+dedicated block under "Network" -- but Emacs only honours that
+cookie when it's on the file's actual first line, and once this
+Preamble section started tangling first (audit §31), the cookie
+was no longer first and Emacs started warning about it on every
+startup. It has to be the very first line this block tangles, so it
+lives here now instead.
+
+#+begin_src emacs-lisp
+;;; -*- lexical-binding: t; -*-
+(require 'cl-lib)
+(put 'upcase-region 'disabled nil)
+(put 'downcase-region 'disabled nil)
+#+end_src
 
 ** Network
 
 #+srcname: ljs-config-view-url
-#+srcname: lexical-binding-cookie
-#+begin_src emacs-lisp
-;;; -*- lexical-binding: t; -*-
-#+end_src
-
 #+begin_src emacs-lisp 
   (defun view-url ()
     "Open a new buffer containing the contents of URL."

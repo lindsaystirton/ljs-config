@@ -44,6 +44,19 @@ papers. Plus a function for removing any hard-returns in a document.
   ;; renders through eww -- Emacs's own built-in browser -- so there's
   ;; no external app or browser tab involved, and it updates live as
   ;; you edit. Ships with markdown-mode itself; nothing to install.
+  ;; Requires an external markdown-to-HTML converter on `exec-path'
+  ;; (`markdown-command', default "markdown") -- Pandoc works fine as
+  ;; a drop-in if that's what's installed.
+  ;;
+  ;; The eww preview window opens doubled/split-right, the same way a
+  ;; PDF does: `markdown-split-window-direction' defaults to `any',
+  ;; which -- because `display-buffer-alist' is non-nil in this config
+  ;; -- routes eww's buffer through the shared
+  ;; `ljs/display-buffer-doubled-right' (ljs-config-appearance.org)
+  ;; rather than a Markdown-specific copy. That entry matches on the
+  ;; eww buffer's default name ("*eww*"), so it applies to any eww
+  ;; buffer this config opens, not just Markdown previews -- see the
+  ;; audit, §25.
   (use-package markdown-mode
     :mode (("\\.md\\'" . markdown-mode)
            ("README\\.md\\'" . gfm-mode)

@@ -97,8 +97,9 @@ Note this clones the config into a `ljs-config/` subdirectory of
 `~/.emacs.d`, not `~/.emacs.d` itself -- unlike ESKSS, this repo is
 just the literate `.org` config files, not the whole `.emacs.d` tree.
 You'll also need `init.el` and `early-init.el` at the top level of
-`~/.emacs.d` (see the next section and the caveat below -- these
-aren't in this git repo yet).
+`~/.emacs.d` (see the next section) -- these aren't tracked as files
+in this repo, but their exact contents are given in full below, so
+creating them is a copy-paste, not a favour to ask anyone.
 
 ## Installation
 
@@ -107,22 +108,106 @@ currently developed and tested against Emacs 31. [Homebrew](https://brew.sh)
 (`brew install emacs-plus` or similar) or [emacsformacosx.com](https://emacsformacosx.com/)
 both work.
 
-**2. Put `init.el` and `early-init.el` in place.** These two files
-belong at the top level of `~/.emacs.d` (as siblings of the
-`ljs-config/` directory you just cloned), and are what actually boots
-everything else:
+**2. Create `init.el` and `early-init.el`.** These two files belong
+at the top level of `~/.emacs.d` (as siblings of the `ljs-config/`
+directory you just cloned), and are what actually boots everything
+else. Both are deliberately minimal -- everything that isn't required
+to run at this exact point in Emacs's startup lives in `ljs-config.org`
+and the modules it loads instead -- so rather than asking anyone to
+track down a copy, here's the entire contents of each. Create the two
+files and paste these in verbatim:
 
-- `early-init.el` disables `package.el`'s own startup activation, so
-  it doesn't fight with `straight.el` (the only package manager this
-  config uses).
-- `init.el` sets up fonts and a couple of startup tweaks, then calls
-  `(org-babel-load-file ".../ljs-config/ljs-config.org")`, which is
-  what actually loads every module below.
+`~/.emacs.d/early-init.el`:
 
-For now these two files need to be copied over by hand (ask Lindsay,
-or see [Known limitations](#known-limitations-if-youre-not-lindsay))
--- getting them into this repo, with a proper per-user override
-mechanism, is the next piece of work planned for this project.
+```elisp
+;;; early-init.el --- Runs before init.el, before package.el, before the GUI frame  -*- lexical-binding: t; -*-
+;;
+;; Part of ljs-config, Lindsay Stirton's personal emacs configuration.
+;;
+;; Emacs's actual startup order is: this file loads, then packages
+;; activate (skipped below), then the initial frame is created, and
+;; only after all of that does init.el load (GNU Emacs Lisp Reference
+;; Manual, "Startup Summary"). That ordering is why the settings below
+;; live here rather than in init.el: they only make sense, or only
+;; take effect cleanly, if they run before package.el activates or
+;; before the frame exists. init.el, by contrast, only runs after the
+;; frame is already on screen, which is where the heavier work of
+;; loading ljs-config.org belongs. See the audit, §31.
+;;
+;; Font selection used to live here too, on the theory that setting it
+;; before frame creation would avoid a startup flicker. That broke
+;; font selection outright, because the font-availability check isn't
+;; reliable this early on the macOS build of Emacs -- see the audit,
+;; §32. It now lives in ljs-config-appearance.org instead, alongside
+;; the rest of the frame/appearance settings.
+
+;; Prevents Emacs's own startup sequence from activating package.el
+;; and every package sitting in elpa/ before init.el even runs --
+;; straight.el is the only package manager this config uses (see
+;; ljs-config.org's "straight.el bootstrap" section). The old elpa/
+;; directory has been left in place deliberately rather than deleted
+;; -- see the audit for when it's safe to remove.
+(setq package-enable-at-startup nil)
+
+;; Raised here, rather than at the end of init.el after everything's
+;; already loaded, so garbage collection doesn't slow down the load
+;; of ljs-config.org's dozen-plus modules in the first place.
+(setq gc-cons-threshold 20000000)
+
+;; Line-spacing tweak
+;; Set this to a different number depending on taste and the font
+;; selected. The value can be an integer or decimal number.
+;; if integer: it means pixels, added below each line.
+;; if float (e.g 0.02): a scaling factor relative to current window's default line height.
+;; if nil: add no extra spacing.
+
+(setq-default line-spacing 0.06) ;; tuned for Pragmata Pro
+
+;;; early-init.el ends here
+```
+
+`~/.emacs.d/init.el`:
+
+```elisp
+;;; init.el --- Where all the magic begins  -*- lexical-binding: t; -*-
+;;
+;; Part of ljs-config, Lindsay Stirton's personal emacs configuration.
+;;
+;; Kept deliberately minimal: this file's only job is to get from
+;; "Emacs just started" to "Org is loaded and can read
+;; ljs-config.org" -- everything else lives in ljs-config.org and the
+;; ljs-config-*.org modules it loads, or (for anything that has to
+;; happen before the frame even exists) in early-init.el. See the
+;; audit, §31, for the reasoning behind the split.
+
+(setq dotfiles-dir user-emacs-directory)
+(add-to-list 'load-path (expand-file-name
+                         "lisp" (expand-file-name
+                                 "org" (expand-file-name
+                                        "src" dotfiles-dir))))
+
+(require 'server)
+(unless (server-running-p)
+  (server-start)) ; start emacs in server mode, if not already running --
+                   ; kept here, before ljs-config.org's own (larger,
+                   ; and historically not always crash-free) module
+                   ; chain loads, so `emacsclient' can still reach in
+                   ; even if something later in that chain fails to
+                   ; load.
+
+;; Load up Org Mode and Babel
+;; load up the main file
+;; org-mode windmove compatibility
+(setq org-replace-disputed-keys t)
+(require 'org)
+(org-babel-load-file (expand-file-name "./ljs-config/ljs-config.org" dotfiles-dir))
+
+;;; init.el ends here
+```
+
+That's genuinely everything in both files -- nothing has been
+trimmed from this listing for space. If either file's real content
+ever changes, this section is the thing to update to match.
 
 **3. Launch Emacs.** On first launch, `straight.el` will clone and
 build every package this config declares -- this needs an internet
@@ -147,7 +232,7 @@ assuming it's a bug.
 
 | File | What it configures |
 |---|---|
-| `ljs-config-elpa.org` | Package-list bootstrap (legacy name -- predates the straight.el migration) |
+| `ljs-config-packages.org` | Package declarations -- what to install, fetched and pinned by straight.el |
 | `ljs-config-aspell.org` | Spell-checking (`flyspell`, `ispell`/`aspell`) |
 | `ljs-config-defuns.org` | Small utility functions used elsewhere in the config |
 | `ljs-config-appearance.org` | Theme, modeline, fonts, frame behaviour |
@@ -176,9 +261,6 @@ and the whole thing restarts without errors -- but it hasn't yet had
 the specific things done to it that would make it a true drop-in kit
 for someone else, the way ESKSS was. Concretely, as of this writing:
 
-- **`init.el` and `early-init.el` aren't in this repo.** They live
-  only on Lindsay's machine. If you clone `ljs-config/` alone, you
-  won't have an entry point yet.
 - **There's no working per-user override file.** ESKSS solved this by
   having you rename a template file to `%your-username%.org`; this
   config has the beginnings of the same idea (`ljs46.org`), but it

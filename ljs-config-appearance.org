@@ -32,6 +32,58 @@ Basic setting preferences, including size and positioning of emacs frames.
 #+end_src
 
 
+** Fonts
+
+This used to live in =early-init.el=, on the theory that setting the
+font before the frame is created would avoid a visible flash of the
+wrong font followed by a resize. In practice that broke font
+selection outright: =x-list-fonts= (and so =font-existsp=, below)
+isn't reliable that early in startup on the macOS/NS build of
+Emacs -- it was silently returning nil for *every* font, including
+ones definitely installed (Menlo included), so the whole
+=cond= fell through and Emacs was left showing its own untouched
+default face rather than any of the fonts below. See the audit,
+§32.
+
+Moving it back here means the old flash-then-resize on startup
+returns -- that's the normal, longstanding Emacs experience prior to
+this rebuild, not a regression -- in exchange for the font selection
+actually working.
+
+Check the availability of a some default fonts, in order of
+preference. The first of these alternatives to be found is set as
+the default font, together with a base size. If none of the
+preferred fonts is found, nothing happens and Emacs carries on with
+the default setup. You can reorder or replace the options here with
+the names of your preferred choices.
+
+#+begin_src emacs-lisp
+(defun font-existsp (font)
+  "Check to see if the named FONT is available."
+  (if (null (x-list-fonts font))
+      nil t))
+
+;; Set default font. First one found is selected.
+(cond
+ ((eq window-system nil) nil)
+ ((font-existsp "IBM Plex Mono Text")
+  (set-face-attribute 'default nil :height 141 :font "IBM Plex Mono Text"))
+ ((font-existsp "Input Mono Compressed")
+  (set-face-attribute 'default nil :height 141 :font "Input Mono Compressed"))
+ ((font-existsp "PragmataPro")
+  (set-face-attribute 'default nil :height 141 :font "PragmataPro"))
+ ((font-existsp "Source Code Pro")
+  (set-face-attribute 'default nil :height 141 :font "Source Code Pro"))
+ ((font-existsp "Menlo")
+  (set-face-attribute 'default nil :height 141 :font "Menlo"))
+ ((font-existsp "Consolas")
+  (set-face-attribute 'default nil :height 141 :font "Consolas"))
+ ((font-existsp "Inconsolata")
+  (set-face-attribute 'default nil :height 141 :font "Inconsolata"))
+ ((font-existsp "Envy Code R")
+  (set-face-attribute 'default nil :height 141 :font "Envy Code R")))
+#+end_src
+
 ** Themes
 
 Using Prot's ef-themes. Someone on Reddit said, "ef-themes is the
@@ -160,7 +212,16 @@ The pdf-tools packages provides an emacs pdf viewer that replaces the standard d
 
 I found the idea and code for this on a [[https://christiantietze.de/posts/2022/02/split-and-resize-frame/][blog post by Christian
 Tietze]]. Basically douples the width of the window when splitting the
-frame vertically. The problem with the original code is that if you closed the right frame, the window retained the same dimenions. This version retains the frame width and reduces the window size accordingly. 
+frame vertically. The problem with the original code is that if you closed the right frame, the window retained the same dimenions. This version retains the frame width and reduces the window size accordingly.
+
+This is also the single canonical home for frame-doubling/restoring
+logic used everywhere else in the config -- LaTeX compilation
+(=ljs-config-latex.org=), starting R (=ljs-config-stats.org=), and
+opening a PDF or a Markdown live-preview in eww (both registered
+below, via =display-buffer-alist=, rather than each having its own
+copy). Previously this was reimplemented four separate times across
+four files with two different naming conventions; see the audit,
+§11C/§25.
 
 #+srcname: ljs-config-appearance-split-right-resize
 #+begin_src emacs-lisp
@@ -174,20 +235,48 @@ frame vertically. The problem with the original code is that if you closed the r
                              (* 2 current_width))))
        (set-frame-width frame double_width nil t)))
 
-(defun ljs/split-right-and-resize-frame ()
-  (interactive)
-  (setq ljs/original-frame-width (frame-pixel-width))
-  (split-window-right)
-  (ljs/frame-double-width))
+(defun ljs/frame-remember-and-double (&optional frame)
+  "Remember FRAME's current width in `ljs/original-frame-width', then double it.
+This is the shared \"about to show something in a split-right
+window\" step -- see the call sites in ljs-config-latex.org,
+ljs-config-stats.org, and `ljs/display-buffer-doubled-right' below."
+  (setq ljs/original-frame-width (frame-pixel-width frame))
+  (ljs/frame-double-width frame))
 
-(defun ljs/restore-original-dimensions ()
-  (interactive)
-  (delete-other-windows)
+(defun ljs/frame-restore-original-dimensions (&optional keep-current-window)
+  "Restore the frame to its width from before the last doubling.
+Also closes any extra windows the split created, unless
+KEEP-CURRENT-WINDOW is non-nil (interactively, with a prefix
+argument). This is the shared restore step used by the PDF, R, and
+Markdown/eww call sites."
+  (interactive "P")
+  (unless keep-current-window
+    (delete-other-windows))
   (when ljs/original-frame-width
     (set-frame-width (selected-frame) ljs/original-frame-width nil t)))
 
+(defun ljs/split-right-and-resize-frame ()
+  (interactive)
+  (split-window-right)
+  (ljs/frame-remember-and-double))
+
+(defun ljs/display-buffer-doubled-right (buffer alist)
+  "Show BUFFER in a new window to the right, after doubling the frame.
+A `display-buffer-alist' action function -- registered below for
+both PDF buffers and the Markdown live-preview's eww buffer, so
+there's one canonical place for this rather than a copy per
+consumer. Originally lived in ljs-config-org.org as
+`ljs/display-pdf-to-right', PDF-only."
+  (ljs/frame-remember-and-double (window-frame (selected-window)))
+  (display-buffer-in-direction
+   buffer
+   (append alist '((direction . right) (window-width . 0.5)))))
+
+(add-to-list 'display-buffer-alist '("\\.pdf\\'" . (ljs/display-buffer-doubled-right)))
+(add-to-list 'display-buffer-alist '("\\`\\*eww\\*\\'" . (ljs/display-buffer-doubled-right)))
+
 (global-set-key (kbd "C-x 3") 'ljs/split-right-and-resize-frame)
-(global-set-key (kbd "C-x 1") 'ljs/restore-original-dimensions)
+(global-set-key (kbd "C-x 1") 'ljs/frame-restore-original-dimensions)
 #+end_src
 
 #+source: message-line

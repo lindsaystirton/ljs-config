@@ -78,8 +78,7 @@ Polymode is a package that supports multiple modes inside a single buffer. It is
      (R)
      (set-window-buffer w2 "*R*")
      (set-window-buffer w1 w1name)
-     (setq ljs/original-frame-width (frame-pixel-width))
-     (ljs/frame-double-width)))) ; Double the frame width
+     (ljs/frame-remember-and-double)))) ; Double the frame width, via ljs-config-appearance.org
   (defun my-ess-eval ()
     (interactive)
     (my-ess-start-R)
@@ -100,16 +99,44 @@ Polymode is a package that supports multiple modes inside a single buffer. It is
 Following the behaviour of my-ess-start-r, the following code makes
 sure that the window dimensions revert with R is killed.
 
+NOTE (§25/§27 consolidation): this was called
+=my-restore-original-dimensions=, the *exact same name* as an
+unrelated function in ljs-config-latex.org. Emacs Lisp functions
+aren't file-scoped, so whichever file loaded later (this one, per
+the load order in ljs-config.org) silently won and overrode LaTeX's
+version everywhere -- a live conflict, not just a stylistic
+duplicate. Renamed to `ljs/ess-restore-or-restart-R' to end that
+collision.
+
+Separately: despite the section heading, this was never actually
+wired to fire when R is killed -- no `kill-buffer-hook' on the *R*
+buffer called it, unlike the equivalent PDF setup in
+ljs-config-latex.org. Now fixed below, but *not* by hooking
+`ljs/ess-restore-or-restart-R' itself: a `kill-buffer-hook' runs with
+the buffer being killed as `current-buffer', so if that function ran
+as the hook, its own "*R*" check would always match the very buffer
+being killed and take the "restart R" branch -- meaning killing *R*
+would immediately relaunch it instead of ever restoring anything.
+`ljs/ess-restore-or-restart-R' is kept as-is, available to call
+manually from elsewhere (e.g. from the source buffer, to either
+restart R or just restore, depending where you are when you call
+it); the automatic kill-buffer-hook below calls the shared
+=ljs/frame-restore-original-dimensions= directly instead, which is
+the behaviour the section heading actually describes.
+
 #+src-name: ess-restore-frame-dimensions
 #+begin_src emacs-lisp
-(defun my-restore-original-dimensions ()
+(defun ljs/ess-restore-or-restart-R ()
+  "Restore the pre-R frame width, or restart R if called from *R* itself."
   (interactive)
   (if (string-match-p "\\*R\\*" (buffer-name (current-buffer)))
       (my-ess-start-R)
-    (progn
-      (delete-other-windows)
-      (when ljs/original-frame-width
-        (set-frame-width (selected-frame) ljs/original-frame-width nil t)))))
+    (ljs/frame-restore-original-dimensions)))
+
+(add-hook 'inferior-ess-mode-hook
+          (lambda ()
+            (add-hook 'kill-buffer-hook
+                      #'ljs/frame-restore-original-dimensions nil 'local)))
 #+end_src
 
 

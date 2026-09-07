@@ -174,17 +174,14 @@ Make yasnippet work properly with org-mode.
 #+end_src
 
 ** Open PDFs in a frame on the right using pdf-tools
-#+begin_src emacs-lisp
-(defun ljs/display-pdf-to-right (buffer alist)
-  (let ((frame (window-frame (selected-window))))
-    (setq ljs/original-frame-width (frame-pixel-width frame))
-    (ljs/frame-double-width frame))
-  (display-buffer-in-direction
-   buffer
-   (append alist '((direction . right) (window-width . 0.5)))))
 
-(add-to-list 'display-buffer-alist '("\\.pdf\\'" . (ljs/display-pdf-to-right)))
-#+end_src
+The frame-doubling/window-splitting action function and its
+=display-buffer-alist= registration now live in
+ljs-config-appearance.org's "Splitting frames" section
+(=ljs/display-buffer-doubled-right=), registered there for both PDF
+buffers and the Markdown live-preview's eww buffer, so there's one
+canonical place for this logic instead of a PDF-only copy here.
+Formerly =ljs/display-pdf-to-right=; see the audit, §11C/§25.
 
 ** Confirmation Message
 #+begin_src emacs-lisp

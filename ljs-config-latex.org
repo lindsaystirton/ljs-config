@@ -272,56 +272,54 @@ In the end what woked for me was running the following in terminal emacs:
 
 ** Window behaviour
 
-This function runs stores the screen width as variable  ljs/original-frame-width and runs ljs/frame-double-width before running TeX-command-run-all (bound to C-c C-a). Forces emacs to open the pdf viewer on the right and doubles the width. 
+This function pre-emptively doubles the frame width, via the shared
+=ljs/frame-remember-and-double= (ljs-config-appearance.org), before
+running TeX-command-run-all (bound to C-c C-a).
 
-NOTE: the actual splitting-and-placing-on-the-right now happens via
-=ljs/display-pdf-to-right= (see ljs-config-org.org), invoked
-automatically through =display-buffer-alist= whenever a PDF buffer is
-shown -- it used to be restricted to org-mode only, which is why this
-never worked from LaTeX. The frame-doubling below still runs
-pre-emptively before compiling, which is harmless (capped at monitor
-width) but is now somewhat redundant with that function.
+NOTE: the actual splitting-and-placing-on-the-right happens via
+=ljs/display-buffer-doubled-right= (see ljs-config-appearance.org),
+invoked automatically through =display-buffer-alist= whenever a PDF
+buffer is shown -- it used to be restricted to org-mode only, which
+is why this never worked from LaTeX. The frame-doubling below still
+runs pre-emptively before compiling, which is harmless (capped at
+monitor width) but is now somewhat redundant with that function.
 
 #+name: frame-behaviour
 #+begin_src emacs-lisp
 (defun my-advice-before-TeX-command-run-all (orig-fun &rest args)
   "Run custom actions before TeX-command-run-all'."
-  (setq ljs/original-frame-width (frame-pixel-width))
-  (ljs/frame-double-width)
+  (ljs/frame-remember-and-double)
   (apply orig-fun args))
 
 (advice-add 'TeX-command-run-all :around #'my-advice-before-TeX-command-run-all)
 
 (defun my-advice-before-TeX-view (orig-fun &rest args)
   "Run custom actions before TeX-view."
-  (setq ljs/original-frame-width (frame-pixel-width))
-  (ljs/frame-double-width)
+  (ljs/frame-remember-and-double)
   (apply orig-fun args))
 
 (advice-add 'TeX-view :around #'my-advice-before-TeX-view)
-
-(defun my-restore-original-dimensions-after-pdf-kill ()
-  "Restore original dimensions after killing a PDF buffer."
-  (delete-other-windows)
-  (when ljs/original-frame-width
-    (set-frame-width (selected-frame) ljs/original-frame-width nil t)))
 #+end_src
 
 
-The code below deletes the window when you kill a buffer in pdf-view-mode. Useful for editing LaTeX files in AucTeX. We'll see how it works alongside other uses of pdf-view mode like org-noter, etc. 
+The code below deletes the window when you kill a buffer in pdf-view-mode. Useful for editing LaTeX files in AucTeX. We'll see how it works alongside other uses of pdf-view mode like org-noter, etc.
+
+NOTE: this used to define its own =my-restore-original-dimensions=,
+which -- unnoticed until the §25 consolidation pass -- shared its
+exact name with a *different* function of the same name in
+ljs-config-stats.org. Since Emacs Lisp functions aren't file-scoped,
+whichever file loaded later (stats.org, per the load order in
+ljs-config.org) was silently overriding this one everywhere, for
+every caller, not just its own. Now delegates to the shared
+=ljs/frame-restore-original-dimensions= (ljs-config-appearance.org)
+instead, which closes this collision for good.
 
 #+name: delete-window-on-kill-pdf-view-buffer
 #+begin_src emacs-lisp
-(defun my-restore-original-dimensions ()
-  "Restore original dimensions of the frame."
-  (when ljs/original-frame-width
-    (set-frame-width (selected-frame) ljs/original-frame-width nil t)))
-
 (defun my-kill-pdf-buffer ()
   "Function to run before killing a PDF buffer."
   (when (eq major-mode 'pdf-view-mode)
-    (my-restore-original-dimensions)
-    (delete-other-windows)))
+    (ljs/frame-restore-original-dimensions)))
 
 (add-hook 'pdf-view-mode-hook
           (lambda ()
