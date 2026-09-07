@@ -13,3 +13,4 @@ ljs-config*.el
 #*
 /#ljs-config-org.org#
 .#*.*
+*.html
