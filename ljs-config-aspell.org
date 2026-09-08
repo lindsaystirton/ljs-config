@@ -52,7 +52,7 @@ flyspell doesn't start properly. Putting this customization in
            ("\\(figure\\|table\\)\\*?"        ispell-tex-arg-end 0)
            ("list"                            ispell-tex-arg-end 2)
            ("program"             . "\\\\end[ \t\n]*{[ \t\n]*program[ \t\n]*}")
-           ("verbatim\\*?"        . "\\\\end[ \t\n]*{[ \t\n]*verbatim\\*?[ \t\n]*}"))))
+           ("verbatim\\*?"        . "\\\\end[ \t\n]*{[ \t\n]*verbatim\\*?[ \t\n]*}")))))
 #+end_src
 
 ** Turn on inline spell-checking for LaTeX by default
@@ -64,11 +64,10 @@ flyspell doesn't start properly. Putting this customization in
 
 #+begin_src emacs-lisp
   ;; More efforts to speed up flyspell
-  ;; See http://www.brool.com/index.php/speeding-up-flyspell-region 
-  (defadvice flyspell-region (around fast-flyspell-region)
-    (cl-flet ((sit-for (x) t))
-      ad-do-it))
-  (ad-activate 'flyspell-region))
+  ;; See http://www.brool.com/index.php/speeding-up-flyspell-region
+  (define-advice flyspell-region (:around (orig-fn &rest args) fast-flyspell-region)
+    (cl-flet ((sit-for (&rest _) t))
+      (apply orig-fn args)))
 
 #+end_src
 

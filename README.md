@@ -131,43 +131,23 @@ files and paste these in verbatim:
 ;;
 ;; Part of ljs-config, Lindsay Stirton's personal emacs configuration.
 ;;
-;; Emacs's actual startup order is: this file loads, then packages
-;; activate (skipped below), then the initial frame is created, and
-;; only after all of that does init.el load (GNU Emacs Lisp Reference
-;; Manual, "Startup Summary"). That ordering is why the settings below
-;; live here rather than in init.el: they only make sense, or only
-;; take effect cleanly, if they run before package.el activates or
-;; before the frame exists. init.el, by contrast, only runs after the
-;; frame is already on screen, which is where the heavier work of
-;; loading ljs-config.org belongs. See the audit, §31.
-;;
-;; Font selection used to live here too, on the theory that setting it
-;; before frame creation would avoid a startup flicker. That broke
-;; font selection outright, because the font-availability check isn't
-;; reliable this early on the macOS build of Emacs -- see the audit,
-;; §32. It now lives in ljs-config-appearance.org instead, alongside
-;; the rest of the frame/appearance settings.
+;; Startup order is: this file, then package activation (skipped
+;; below), then the frame, then init.el -- so anything here has to
+;; make sense running before package.el or the frame exist. Font
+;; selection used to live here too, to avoid a startup flicker, but
+;; moved to ljs-config-appearance.org once the early font-availability
+;; check proved unreliable this soon on macOS.
 
-;; Prevents Emacs's own startup sequence from activating package.el
-;; and every package sitting in elpa/ before init.el even runs --
-;; straight.el is the only package manager this config uses (see
-;; ljs-config.org's "straight.el bootstrap" section). The old elpa/
-;; directory has been left in place deliberately rather than deleted
-;; -- see the audit for when it's safe to remove.
+;; straight.el is the only package manager this config uses, so
+;; package.el's own startup activation is disabled.
 (setq package-enable-at-startup nil)
 
-;; Raised here, rather than at the end of init.el after everything's
-;; already loaded, so garbage collection doesn't slow down the load
-;; of ljs-config.org's dozen-plus modules in the first place.
+;; Raised early so GC doesn't slow down ljs-config.org's own module
+;; loading further down.
 (setq gc-cons-threshold 20000000)
 
-;; Line-spacing tweak
-;; Set this to a different number depending on taste and the font
-;; selected. The value can be an integer or decimal number.
-;; if integer: it means pixels, added below each line.
-;; if float (e.g 0.02): a scaling factor relative to current window's default line height.
-;; if nil: add no extra spacing.
-
+;; Extra pixels below each line -- integer = pixels, float = scale
+;; factor, nil = none. See `C-h v line-spacing'.
 (setq-default line-spacing 0.06) ;; tuned for Pragmata Pro
 
 ;;; early-init.el ends here
@@ -180,12 +160,10 @@ files and paste these in verbatim:
 ;;
 ;; Part of ljs-config, Lindsay Stirton's personal emacs configuration.
 ;;
-;; Kept deliberately minimal: this file's only job is to get from
-;; "Emacs just started" to "Org is loaded and can read
-;; ljs-config.org" -- everything else lives in ljs-config.org and the
-;; ljs-config-*.org modules it loads, or (for anything that has to
-;; happen before the frame even exists) in early-init.el. See the
-;; audit, §31, for the reasoning behind the split.
+;; Kept minimal: this file's only job is getting from "Emacs just
+;; started" to "Org can read ljs-config.org". Everything else lives
+;; in ljs-config.org and the modules it loads, or, if it must run
+;; before the frame exists, in early-init.el.
 
 (setq dotfiles-dir user-emacs-directory)
 (add-to-list 'load-path (expand-file-name
@@ -193,18 +171,12 @@ files and paste these in verbatim:
                                  "org" (expand-file-name
                                         "src" dotfiles-dir))))
 
+;; Started before ljs-config.org's module chain loads, so
+;; `emacsclient' can still reach in even if something later fails.
 (require 'server)
 (unless (server-running-p)
-  (server-start)) ; start emacs in server mode, if not already running --
-                   ; kept here, before ljs-config.org's own (larger,
-                   ; and historically not always crash-free) module
-                   ; chain loads, so `emacsclient' can still reach in
-                   ; even if something later in that chain fails to
-                   ; load.
+  (server-start))
 
-;; Load up Org Mode and Babel
-;; load up the main file
-;; org-mode windmove compatibility
 (setq org-replace-disputed-keys t)
 (require 'org)
 (org-babel-load-file (expand-file-name "./ljs-config/ljs-config.org" dotfiles-dir))

@@ -47,12 +47,12 @@ I have also added support for Vertico, Consult, Orderless, Marginalia (candidate
   ;; to happen the first time a project-scoped consult command ran.
   (setq consult-line-prompts
         `(,buffer-file-name
-          ,(when-let ((proj (project-current)))
+          ,(when-let* ((proj (project-current)))
              (file-name-nondirectory (directory-file-name (project-root proj))))
           ,(abbreviate-file-name default-directory)))
   :custom
   (consult-project-root-function
-   (lambda () (when-let ((proj (project-current))) (project-root proj))))
+   (lambda () (when-let* ((proj (project-current))) (project-root proj))))
   (consult-narrow-key "<"))
 #+end_src
 
