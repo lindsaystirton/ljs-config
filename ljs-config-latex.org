@@ -216,13 +216,17 @@ info at the following:
 
 In the end what woked for me was running the following in terminal emacs:
 
-#+begin_src emacs-lisp :eval never
-(use-package pdf-tools
-   :config
-   (setenv "PKG_CONFIG_PATH" "/opt/homebrew/Cellar/zlib/1.2.13/lib/pkgconfig:/opt/homebrew/lib/pkgconfig:/opt/X11/lib/pkgconfig/:/opt/homebrew/Cellar/poppler/23.01.0/lib/pkgconfig:/opt/X11/share/pkgconfig")
-   (pdf-tools-install)
-   (custom-set-variables
-    '(pdf-tools-handle-upgrades t)))
+#+begin_src emacs-lisp :tangle no
+;; pdf-tools itself is configured once, centrally, in
+;; ljs-config-appearance.org (which loads before this file). This
+;; block used to redeclare it here too, with a stale hardcoded
+;; Homebrew Cellar path from the troubleshooting note above -- and,
+;; because ":eval never" only blocks interactive C-c C-c evaluation
+;; rather than tangling, that stale, mistakenly-live block was
+;; actually running on every single startup, silently clobbering the
+;; canonical block's PKG_CONFIG_PATH. It's now folded into the
+;; canonical declaration and this block is marked ":tangle no" so it
+;; stays inert documentation, as originally intended.
 #+end_src
 
 

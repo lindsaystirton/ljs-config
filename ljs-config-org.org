@@ -152,9 +152,9 @@ Make yasnippet work properly with org-mode.
 
 ** PDF-Tools Setup for Org and Org-Roam
 #+begin_src emacs-lisp
-(use-package pdf-tools
-  :config
-  (message "pdf-tools loaded"))
+;; pdf-tools itself is configured once, centrally, in
+;; ljs-config-appearance.org (which loads before this file) -- it used
+;; to be redeclared here too, with no actual config of its own.
 
 (use-package org-pdftools
   :hook (org-mode . org-pdftools-setup-link)
@@ -163,6 +163,30 @@ Make yasnippet work properly with org-mode.
   (setq org-file-apps
         '(("\\.pdf\\'" . emacsclient)))
   (message "org-pdftools loaded"))
+
+(use-package org-noter
+  ;; org-pdftools already pulls this in as a dependency (it's what
+  ;; teaches org-noter to use pdf-tools instead of doc-view), but
+  ;; nothing used to actually configure or bind it -- see the audit.
+  ;; Left at org-noter's own defaults for where notes live
+  ;; (`org-noter-notes-search-path'/`org-noter-default-notes-file-names',
+  ;; ~/Documents/Notes.org) rather than overridden here, since those
+  ;; defaults are already portable -- no personal path needed here,
+  ;; unlike `citar-bibliography'.
+  ;;
+  ;; NOTE: deliberately only `:after pdf-tools', not org-pdftools too
+  ;; -- org-pdftools itself only loads lazily, on first entering
+  ;; org-mode (see its own `:hook' below), so gating this on it meant
+  ;; the binding below silently never got installed if a PDF was
+  ;; opened before any org buffer was visited in the session. pdf-tools
+  ;; itself eagerly requires pdf-view (so pdf-view-mode-map already
+  ;; exists once pdf-tools has loaded, right at startup), which is all
+  ;; this actually needs.
+  :after pdf-tools
+  :bind (:map pdf-view-mode-map
+         ("C-c C-n" . org-noter))
+  :config
+  (message "org-noter loaded"))
 
 (use-package org-roam-bibtex
   :after org-roam

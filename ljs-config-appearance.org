@@ -190,7 +190,25 @@ The pdf-tools packages provides an emacs pdf viewer that replaces the standard d
   (exec-path-from-shell-initialize))
 
 (use-package pdf-tools
+  :custom
+  (pdf-tools-handle-upgrades t) ;; don't prompt on every epdfinfo version bump
   :config
+  ;; Homebrew's zlib/poppler are "keg-only" and won't be found by
+  ;; pkg-config without this, which pdf-tools-install needs the first
+  ;; time it builds the epdfinfo server (or after an upgrade). Uses
+  ;; Homebrew's own stable `opt/' symlinks rather than a specific
+  ;; Cellar version, and HOMEBREW_PREFIX rather than a hardcoded
+  ;; /opt/homebrew, so this doesn't need updating on every package
+  ;; bump or break on an Intel Mac. (This used to be duplicated, with
+  ;; a stale versioned Cellar path, in ljs-config-latex.org -- see
+  ;; the audit.)
+  (let ((brew (or (getenv "HOMEBREW_PREFIX") "/opt/homebrew")))
+    (setenv "PKG_CONFIG_PATH"
+            (concat brew "/opt/zlib/lib/pkgconfig:"
+                    brew "/lib/pkgconfig:"
+                    brew "/opt/poppler/lib/pkgconfig:"
+                    "/opt/X11/lib/pkgconfig:/opt/X11/share/pkgconfig")))
+
   ;; Install pdf-tools
   (pdf-tools-install)
   (setq org-pdftools-command (or (executable-find "pdfinfo") "pdfinfo"))
