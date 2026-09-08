@@ -85,10 +85,9 @@ Zotero is the shared library (so co-authors who don't use Emacs or
 LaTeX can still add references), Better BibTeX exports it to a `.bib`
 file on disk, and Emacs just reads that file via `citar`.
 
-**Note your username and hostname.** Open Terminal and run `whoami`
-and `hostname`. You'll want these for the per-user customisation step
-below -- see the caveat in [Known limitations](#known-limitations-if-youre-not-lindsay)
-about the current state of that mechanism.
+**Note your username.** Open Terminal and run `whoami`. You'll want
+this for the per-user customisation step below -- see [What's
+Inside](#whats-inside).
 
 ## Getting the Config
 
@@ -195,11 +194,14 @@ after that just loads from your local `~/.emacs.d/straight/` cache.
 If a package fails to build on the first attempt, quit and relaunch
 Emacs and it will usually pick up where it left off.
 
-**4. (Optional) Add your own customisations.** Once the per-user
-override mechanism described below is rebuilt, this is where you'll
-be able to drop in your own bibliography paths, Python environment
-paths, and other personal settings without editing the shared config
-files directly.
+**4. (Optional) Add your own customisations.** Create a file named
+after your own `user-login-name` (from step 0.4 above) -- e.g.
+`ljs-config/yourname.org` -- and it'll be loaded automatically on
+every startup. This is where your own bibliography paths,
+`org-directory`, and any other personal, machine-specific settings
+go, rather than into the shared config files. `ljs46.org` and
+`ljs.org` in this repo are Lindsay's own, real examples of what one
+looks like.
 
 ## What's Inside
 
@@ -219,45 +221,50 @@ assuming it's a bug.
 | `ljs-config-bibliography.org` | Zotero + Better BibTeX as the shared reference library, `citar` for citation completion/insertion in AUCTeX (works alongside RefTeX, which still handles labels and cross-references) |
 | `ljs-config-latex.org` | AUCTeX, RefTeX, Biber, and the SyncTeX/PDF-pane workflow |
 | `ljs-config-stats.org` | R, ESS, and Stan (`stan-mode`, `company-stan`, `flycheck-stan`) |
-| `ljs-config-text.org` | Markdown, CSV, and general text-file handling |
+| `ljs-config-text.org` | Markdown, Pandoc, CSV, and general text-file handling |
+| `ljs-config-dired.org` | Dired extras and iBuffer's saved filter groups |
 | `ljs-config-git.org` | Magit and Forge |
 | `ljs-config-org.org` | Org-mode, Org-roam, and the shared PDF/frame-splitting logic used by both Org and LaTeX |
 | `ljs-config-eshell.org` | Eshell configuration |
 | `ljs-config-python.org` | Python via Elpy/ESS and Jupyter |
 | `ljs-config-lisp.org` | Emacs Lisp editing conveniences |
 
-Two further `.org` files exist in the repo but aren't currently
-loaded by anything -- `ljs46.org` (a per-user override file) and
-`ljs-config-bindings.org` (custom keybindings, including
-`expand-region`, `multiple-cursors`, and the silver-searcher search
-integration). Reviving these properly, rather than re-enabling them
-as-is, is on the to-do list -- see the audit notes.
+**Personal, per-user overrides** live outside this list, in a file
+named after your `user-login-name` -- `ljs46.org` and `ljs.org` in
+this repo, one per machine Lindsay actually uses (see the audit,
+§41). `ljs-config.org` loads whichever one matches automatically, and
+silently loads nothing if none matches -- so on a fresh clone, or
+someone else's machine, create `<your-username>.org` next to these
+and put your own destination paths there (a bibliography location,
+an `org-directory`) rather than editing any of the files above.
+
+One further `.org` file exists in the repo but isn't currently loaded
+by anything -- `ljs-config-bindings.org` (custom keybindings,
+including `expand-region`, `multiple-cursors`, and the
+silver-searcher search integration). Reviving it properly, rather
+than re-enabling it as-is, is on the to-do list -- see the audit
+notes.
 
 ## Known limitations (if you're not Lindsay)
 
 This config is further along than a typical personal dotfiles repo --
 every package is declared once, installs cleanly via `straight.el`,
-and the whole thing restarts without errors -- but it hasn't yet had
-the specific things done to it that would make it a true drop-in kit
-for someone else, the way ESKSS was. Concretely, as of this writing:
+the whole thing restarts without errors, and the per-user override
+mechanism actually works -- but it hasn't yet had every last thing
+done to it that would make it a true drop-in kit for someone else,
+the way ESKSS was. Concretely, as of this writing:
 
-- **There's no working per-user override file.** ESKSS solved this by
-  having you rename a template file to `%your-username%.org`; this
-  config has the beginnings of the same idea (`ljs46.org`), but it
-  isn't actually wired up to load. Personal absolute paths (a
-  bibliography location, a Python virtualenv) have been kept out of
-  the shared files rather than hardcoded, which just moves the gap
-  rather than closing it: `citar-bibliography`
-  (`ljs-config-bibliography.org`) starts out empty and won't find any
-  references until you set it yourself, the same way Elpy's Python
-  interpreter (`ljs-config-python.org`) falls back to whatever
-  `python3`/`jupyter` resolve to on `PATH` rather than a specific
-  virtualenv. Both belong in the per-user override file once that
-  mechanism is rebuilt.
 - **A couple of custom keybindings described in the code aren't
   actually active** -- `ljs-config-bindings.org` looks fully
   configured but is never loaded, so don't be surprised if a binding
   mentioned in a comment somewhere doesn't do anything yet.
+- **Elpy's Python interpreter has no per-user override yet**
+  (`ljs-config-python.org`) -- it falls back to whatever
+  `python3`/`jupyter` resolve to on `PATH`. That's a deliberate
+  choice for now (nothing forces a specific virtualenv), not a gap
+  like the bibliography path used to be -- but if you need a specific
+  interpreter, that's exactly the kind of thing your own
+  `<your-username>.org` is for.
 - **The startup frame size is hardcoded to Lindsay's own screen.**
   `ljs-config-appearance.org`'s `initial-frame-alist` pins every new
   frame to 85 columns by 54 rows at the screen's top-left corner --

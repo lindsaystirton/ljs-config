@@ -21,14 +21,50 @@ Basic setting preferences, including size and positioning of emacs frames.
   (setq inhibit-startup-message t)
   (add-to-list 'initial-frame-alist '(top . 0))
   (add-to-list 'initial-frame-alist '(left . 0))
-  (add-to-list 'initial-frame-alist '(width . 85))
-  (add-to-list 'initial-frame-alist '(height . 54))
   (scroll-bar-mode -1)
   (tool-bar-mode -1)
   (tooltip-mode -1)
   (set-fringe-mode 10)
   (setq visible-bell t)
   (electric-indent-mode 1))
+#+end_src
+
+The initial frame's width and height used to be hardcoded here (85
+columns x 54 rows) -- tuned specifically to Lindsay's 13.3-inch
+MacBook screen, and wrong on the office iMac's larger display or any
+other machine (see the audit, §41). Sized dynamically instead, the
+same way `ljs/frame-double-width' below sizes a split-right window:
+from the real screen, via `frame-monitor-workarea', rather than a
+guess. This has to run from `window-setup-hook' rather than going
+into `initial-frame-alist' directly, since there's no frame yet to
+ask `frame-monitor-workarea' about until the first one exists.
+
+#+name: ljs-config-appearance-dynamic-initial-size
+#+begin_src emacs-lisp
+(defun ljs/frame-set-initial-size (&optional frame)
+  "Size the initial frame from the real screen, once it exists.
+Just under half the available screen width -- comfortably fits an
+80-column buffer with room to spare on any screen size, unlike a
+number tuned to one specific laptop, while leaving room to view
+another window/app alongside it. `ljs/frame-double-width' below
+clamps a doubled frame to the monitor's full workarea width, so
+starting from exactly half would put the doubled frame's right
+edge, scrollbar included, flush against the physical screen edge;
+starting a little under half leaves it some breathing room instead.
+90% of the available screen height: `frame-monitor-workarea'
+already excludes the menu bar and Dock on macOS, so this fills most
+of the screen vertically with a little headroom to spare, well
+short of ever overlapping the Dock."
+  (let ((frame (or frame (selected-frame))))
+    (when (display-graphic-p frame)
+      (let* ((workarea (frame-monitor-workarea frame))
+             (mon-width-px (nth 2 workarea))
+             (mon-height-px (nth 3 workarea))
+             (cols (max 80 (floor (* 0.47 mon-width-px) (frame-char-width frame))))
+             (rows (max 40 (floor (* 0.9 mon-height-px) (frame-char-height frame)))))
+        (set-frame-size frame cols rows)))))
+
+(add-hook 'window-setup-hook #'ljs/frame-set-initial-size)
 #+end_src
 
 
@@ -94,7 +130,7 @@ do so, enter M-x ef-themes-toggle.
 
 
 
- #+srcname: ljs-config-appearance-themes
+ #+name: ljs-config-appearance-themes
 #+begin_src emacs-lisp
    ;; NOTE: :ensure t added because Emacs 31 tightened its face-inheritance
    ;; checks (see Emacs bug#79672) and the modus-themes snapshot bundled
@@ -106,6 +142,33 @@ do so, enter M-x ef-themes-toggle.
    (use-package modus-themes
      :init
      (load-theme 'modus-vivendi t))
+#+end_src
+
+*** Heading sizes in Org and LaTeX buffers
+
+Folded in from the old, never-loaded ljs46.org (see the audit, §41).
+AUCTeX defaults to a flat, sans-serif look for LaTeX sectioning
+commands; this restores a visual hierarchy, and gives Org's own
+heading levels a matching size progression.
+
+#+name: ljs-config-appearance-heading-sizes
+#+begin_src emacs-lisp
+(add-hook 'latex-mode-hook
+          (lambda ()
+            (set-face-attribute 'font-latex-sectioning-5-face nil :inherit nil :foreground "#b58900")
+            (set-face-attribute 'font-latex-sectioning-0-face nil :height 3)
+            (set-face-attribute 'font-latex-sectioning-1-face nil :height 2)
+            (set-face-attribute 'font-latex-sectioning-2-face nil :height 1.5)
+            (set-face-attribute 'font-latex-sectioning-3-face nil :height 1.2)
+            (set-face-attribute 'font-latex-sectioning-4-face nil :height 1.0)))
+
+(add-hook 'org-mode-hook
+          (lambda ()
+            (set-face-attribute 'org-level-1 nil :height 1.5)
+            (set-face-attribute 'org-level-2 nil :height 1.2)
+            (set-face-attribute 'org-level-3 nil :height 1.1)
+            (set-face-attribute 'org-level-4 nil :height 1.1)
+            (set-face-attribute 'org-level-5 nil :height 1.1)))
 #+end_src
 
 ** All the icons

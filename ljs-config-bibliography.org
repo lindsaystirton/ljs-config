@@ -58,17 +58,15 @@ in AUCTeX doesn't distinguish between them.
 ** Where the =.bib= files live
 
 No path is hardcoded here, matching the ebib note this section
-replaces in =ljs-config-latex.org=, and the per-user-override caveat
-in the README: =citar-bibliography= is left at its default (nil)
-below, so citar has nothing to search until you set it. Once the
-per-user override mechanism is rebuilt (see the audit), set it there;
-until then, set it directly, e.g. in your system- or user-specific
-file:
+replaces in =ljs-config-latex.org=. =citar-bibliography= is left at
+its default (nil) below -- it's set instead in your per-user override
+file (=ljs46.org= or =ljs.org=, see the audit, §41), alongside the
+matching =reftex-default-bibliography= fallback:
 
 #+begin_src emacs-lisp :tangle no
 (setq citar-bibliography
-      (list "~/Dropbox/bibliography/library.bib"  ; Better BibTeX auto-export from Zotero
-            "~/Dropbox/bibliography/cases.bib"))   ; hand-maintained oscola case/legislation entries
+      (list "~/Dropbox/bibliography/Zotero.bib"  ; Better BibTeX auto-export from Zotero
+            "~/Dropbox/bibliography/cases.bib")) ; hand-maintained oscola case/legislation entries
 #+end_src
 
 ** Install and configure citar

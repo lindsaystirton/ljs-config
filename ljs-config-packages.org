@@ -58,9 +58,11 @@ easier to manage and update your Emacs configuration.
   (use-package modus-themes)
   (use-package nov)
   (use-package org-bullets)
+  (use-package pandoc-mode)
   (use-package rainbow-delimiters)
   (use-package reftex :straight nil)
   (use-package smartparens)
+  (use-package stripe-buffer)
   (use-package thingatpt :straight nil)
   (use-package corfu)
   (use-package cape)
@@ -79,7 +81,7 @@ easier to manage and update your Emacs configuration.
         (package-install package))))
   #+end_src
 
-  #+srcname: ljs-config-esk-online
+  #+name: ljs-config-esk-online
   #+begin_src emacs-lisp
   ;; NOTE: this block was silently dead for a long time (see the
   ;; #+end-src typo fix elsewhere in this file) -- fixing that typo

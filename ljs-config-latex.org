@@ -209,6 +209,23 @@ Enables pdf-tools with AUCTeX.
 (add-hook 'latex-mode-hook 'turn-off-auto-fill)
 #+end_src
 
+** XeTeX defaults and in-text smart quotes
+
+Folded in from the old, never-loaded ljs46.org (see the audit, §41)
+-- universal preferences, not personal settings, so they belong here
+rather than in the per-user override file. XeLaTeX is the default
+engine; `LaTeX-XeTeX-command' matches the `latexmk'/`xelatexmk'
+commands registered above. The smart-quote substitution is XeLaTeX-only
+(it relies on Unicode quote characters passing through untouched) --
+drop it if you ever compile with pdfLaTeX instead.
+
+#+begin_src emacs-lisp
+(setq TeX-engine 'xetex)
+(setq LaTeX-XeTeX-command "xelatex -synctex=1")
+(setq TeX-open-quote "“")
+(setq TeX-close-quote "”")
+#+end_src
+
 
 NOTE that there is an issue compiling pdf-tools on MacOS. There is
 info at the following:
