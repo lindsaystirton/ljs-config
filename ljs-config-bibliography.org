@@ -105,10 +105,19 @@ just with fuzzy completion for finding the reference itself.
   ;; live completion candidates the same way any other capf source
   ;; does.
   (LaTeX-mode . citar-capf-setup)
-  ;; Takes over the key RefTeX used for citation insertion, the same
-  ;; way ebib's binding used to live in a LaTeX-mode hook below.
-  (LaTeX-mode . (lambda ()
-                  (local-set-key (kbd "C-c [") 'citar-insert-citation))))
+  :config
+  ;; Takes over the key RefTeX used for citation insertion. A plain
+  ;; `local-set-key' from a LaTeX-mode-hook (the previous approach)
+  ;; never actually won this: RefTeX turns itself on as a minor mode
+  ;; (`reftex-mode'), and an active minor mode's keymap always takes
+  ;; precedence over a major mode's local map for the same key --
+  ;; regardless of hook order -- so RefTeX's own C-c [ ->
+  ;; `reftex-citation' binding kept winning silently. Confirmed live:
+  ;; C-c [ was popping RefTeX's "SELECT A CITATION FORMAT" picker
+  ;; instead of citar. Rebinding the key directly inside
+  ;; `reftex-mode-map' itself is what actually shadows it.
+  (with-eval-after-load 'reftex
+    (define-key reftex-mode-map (kbd "C-c [") #'citar-insert-citation)))
 #+end_src
 
 ** citar-embark integration
