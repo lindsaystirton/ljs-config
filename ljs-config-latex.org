@@ -67,27 +67,18 @@ the social sciences]]. I have made some effort to implement use-package. Impleme
         reftex-cite-cleanup-optional-args t))
 #+end_src
 
-*** Load ebib
-    ebib is a bibtex database manager that works inside emacs. It can
-    talk to org-mode. See [[http://ebib.sourceforge.net/][the ebib project page]] for more. When Ebib is
-    loaded, you can run it with =M-x ebib=.
+*** Bibliography and citation insertion
 
-    No bibliography is preloaded here -- the previous setting hardcoded
-    a personal path (=/Users/ljs46/...=) to a file Lindsay isn't
-    actually using, and it wouldn't have resolved on any other machine
-    (or username) anyway. A real per-user bibliography path belongs in
-    the per-user override file once that mechanism is rebuilt (see the
-    audit); until then, open a bib file manually with =ebib= or =C-c b=
-    once point is on a citation key.
-
-#+name: ebib-load
-#+begin_src emacs-lisp
- (use-package ebib
-  :commands (ebib)
-  :hook (LaTeX-mode . (lambda ()
-                        (local-set-key "\C-cb" 'ebib-insert-bibtex-key))))
-
-#+end_src
+Moved out to its own module, =ljs-config-bibliography.org= (Zotero +
+Better BibTeX + citar), loaded separately -- see there for the full
+setup and the reasoning behind it. ebib, which used to live here as
+the in-Emacs bibliography browser and citation-key inserter, has been
+removed: citar takes over citation insertion with completion that
+matches the rest of this config's Vertico/Corfu-based UI, and the
+bibliography database itself now lives in Zotero rather than in a raw
+=.bib= file managed by hand inside Emacs. RefTeX (above) is unaffected
+-- it still handles labels, cross-references, and everything else it
+always did.
 
 
 * Configure AucTeX

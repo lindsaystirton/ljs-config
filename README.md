@@ -78,6 +78,13 @@ your `PATH`, or findable via Homebrew).
 the config assumes you're using [Magit](https://magit.vc/) day to day
 rather than the command line.
 
+**Zotero, with the [Better BibTeX](https://retorque.re/zotero-better-bibtex/)
+plugin, for bibliography management.** This config doesn't manage
+your reference database itself -- see `ljs-config-bibliography.org`.
+Zotero is the shared library (so co-authors who don't use Emacs or
+LaTeX can still add references), Better BibTeX exports it to a `.bib`
+file on disk, and Emacs just reads that file via `citar`.
+
 **Note your username and hostname.** Open Terminal and run `whoami`
 and `hostname`. You'll want these for the per-user customisation step
 below -- see the caveat in [Known limitations](#known-limitations-if-youre-not-lindsay)
@@ -237,7 +244,8 @@ assuming it's a bug.
 | `ljs-config-defuns.org` | Small utility functions used elsewhere in the config |
 | `ljs-config-appearance.org` | Theme, modeline, fonts, frame behaviour |
 | `ljs-config-completion.org` | Vertico + Consult + Orderless + Marginalia + Embark (minibuffer completion) and Corfu + Cape (in-buffer completion) |
-| `ljs-config-latex.org` | AUCTeX, RefTeX, ebib, Biber, and the SyncTeX/PDF-pane workflow |
+| `ljs-config-bibliography.org` | Zotero + Better BibTeX as the shared reference library, `citar` for citation completion/insertion in AUCTeX (works alongside RefTeX, which still handles labels and cross-references) |
+| `ljs-config-latex.org` | AUCTeX, RefTeX, Biber, and the SyncTeX/PDF-pane workflow |
 | `ljs-config-stats.org` | R, ESS, and Stan (`stan-mode`, `company-stan`, `flycheck-stan`) |
 | `ljs-config-text.org` | Markdown, CSV, and general text-file handling |
 | `ljs-config-git.org` | Magit and Forge |
@@ -264,11 +272,16 @@ for someone else, the way ESKSS was. Concretely, as of this writing:
 - **There's no working per-user override file.** ESKSS solved this by
   having you rename a template file to `%your-username%.org`; this
   config has the beginnings of the same idea (`ljs46.org`), but it
-  isn't actually wired up to load, and personal absolute paths (a
-  bibliography location, a Python virtualenv) are hardcoded into the
-  shared files instead. If you fork this, expect to find and replace
-  a small number of `/Users/ljs46/...`-style paths in
-  `ljs-config-latex.org` and `ljs-config-python.org`.
+  isn't actually wired up to load. Personal absolute paths (a
+  bibliography location, a Python virtualenv) have been kept out of
+  the shared files rather than hardcoded, which just moves the gap
+  rather than closing it: `citar-bibliography`
+  (`ljs-config-bibliography.org`) starts out empty and won't find any
+  references until you set it yourself, the same way Elpy's Python
+  interpreter (`ljs-config-python.org`) falls back to whatever
+  `python3`/`jupyter` resolve to on `PATH` rather than a specific
+  virtualenv. Both belong in the per-user override file once that
+  mechanism is rebuilt.
 - **A couple of custom keybindings described in the code aren't
   actually active** -- `ljs-config-bindings.org` looks fully
   configured but is never loaded, so don't be surprised if a binding

@@ -512,6 +512,14 @@ LJS Config function definitions in [[file:ljs-config-defuns][ljs-comfig-defuns]]
   (ljs-config-load "./ljs-config/ljs-config-completion.org")
 #+end_src
 
+*** LJS Config Bibliography
+Located in [[file:ljs-config-bibliography.org][ljs-config-bibliography]]
+
+#+srcname: ljs-config-load-bibliography
+#+begin_src emacs-lisp
+  (ljs-config-load "./ljs-config/ljs-config-bibliography.org")
+#+end_src
+
 *** LJS Config LaTeX
 Located in [[file:ljs-config-latex.org][ljs-config-latex]]
 

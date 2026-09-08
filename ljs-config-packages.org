@@ -35,10 +35,18 @@ easier to manage and update your Emacs configuration.
   (use-package auctex)
   (use-package all-the-icons)
   (use-package all-the-icons-dired)
+  ;; citar and citar-embark are deliberately NOT declared here.
+  ;; A bare (use-package citar-embark) with nothing to defer it loads
+  ;; immediately, right in this early-loading file -- and since
+  ;; citar-embark requires embark, that forced embark to load before
+  ;; ljs-config-completion.org (where consult/embark/embark-consult
+  ;; actually get configured) had even run, which is what caused the
+  ;; spurious "embark-consult should be installed" startup warning.
+  ;; Both are installed and properly deferred already, via their own
+  ;; use-package declarations in ljs-config-bibliography.org.
   (use-package cl-lib :straight nil)
   (use-package csv-mode)
   (use-package djvu)
-  (use-package ebib)
   (use-package ess)
   (use-package exec-path-from-shell)
   (use-package flycheck)
