@@ -12,7 +12,7 @@ the social sciences]]. I have made some effort to implement use-package. Impleme
 *** Prettify Math in Buffers
 
 #+name: latex-pretty-symbols
-#+srcname: lexical-binding-cookie
+#+name: lexical-binding-cookie
 #+begin_src emacs-lisp
 ;;; -*- lexical-binding: t; -*-
 #+end_src
@@ -143,8 +143,8 @@ always did.
                        "Run LaTeX again to get citations right."))))
     (setq TeX-command-next TeX-command-default))
 
-  (eval-after-load "tex"
-    '(add-to-list 'TeX-command-list '("Biber" "biber %s" TeX-run-Biber nil t :help "Run Biber"))
+  (with-eval-after-load 'tex
+    (add-to-list 'TeX-command-list '("Biber" "biber %s" TeX-run-Biber nil t :help "Run Biber"))
   )
 )
 #+end_src
@@ -171,11 +171,11 @@ always did.
 #+begin_src emacs-lisp
 (use-package tex :straight nil
   :config
-  (eval-after-load "tex"
-    '(add-to-list 'TeX-command-list '("latexmk" "latexmk -synctex=1 -shell-escape -pdf %s" TeX-run-TeX nil t :help "Process file with latexmk")))
-  (eval-after-load "tex"
-    '(add-to-list 'TeX-command-list '("xelatexmk" "latexmk -synctex=1 -shell-escape -xelatex %s" TeX-run-TeX nil t :help "Process file with xelatexmk")))
-  (add-hook 'TeX-mode-hook '(lambda () (setq TeX-command-default "latexmk"))))
+  (with-eval-after-load 'tex
+    (add-to-list 'TeX-command-list '("latexmk" "latexmk -synctex=1 -shell-escape -pdf %s" TeX-run-TeX nil t :help "Process file with latexmk")))
+  (with-eval-after-load 'tex
+    (add-to-list 'TeX-command-list '("xelatexmk" "latexmk -synctex=1 -shell-escape -xelatex %s" TeX-run-TeX nil t :help "Process file with xelatexmk")))
+  (add-hook 'TeX-mode-hook (lambda () (setq TeX-command-default "latexmk"))))
 #+end_src
 
 ** Set a Path to Executables (optional)

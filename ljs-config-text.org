@@ -10,8 +10,8 @@ Markdown and Pandoc, as well as spellchecking and line-wrapping.
 Sane line wrapping and scrolling for long documents and
 papers. Plus a function for removing any hard-returns in a document.
 
-#+srcname: line-modes
-#+srcname: lexical-binding-cookie
+#+name: line-modes
+#+name: lexical-binding-cookie
 #+begin_src emacs-lisp
 ;;; -*- lexical-binding: t; -*-
 #+end_src
@@ -97,7 +97,7 @@ In CSV mode, the following commands are available:
 
 
 
-#+src_name: csv-mode
+#+name: csv-mode
 #+begin_src emacs-lisp
 (use-package csv-mode
   :mode ("\\.[Cc][Ss][Vv]\\'" . csv-mode)
@@ -124,7 +124,7 @@ In CSV mode, the following commands are available:
 #+end_src
 
 
-#+source: message-line
+#+name: message-line
 #+begin_src emacs-lisp
   (message "Starter Kit Text loaded.")
 #+end_src

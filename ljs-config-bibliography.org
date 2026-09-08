@@ -87,7 +87,7 @@ citation still prompts for which macro to use (=\cite=, =\textcite=,
 RefTeX's =reftex-cite-format= keys (=C-m=, =t=, =a=, =p=...) below,
 just with fuzzy completion for finding the reference itself.
 
-#+srcname: lexical-binding-cookie
+#+name: lexical-binding-cookie
 #+begin_src emacs-lisp
 ;;; -*- lexical-binding: t; -*-
 #+end_src

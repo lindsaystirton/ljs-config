@@ -16,8 +16,8 @@ package installation and package configuration. This provides a
 modular and consistent approach to package management, making it
 easier to manage and update your Emacs configuration.
 
-#+srcname: ljs-config-packages-download-packages
-#+srcname: lexical-binding-cookie
+#+name: ljs-config-packages-download-packages
+#+name: lexical-binding-cookie
 #+begin_src emacs-lisp
 ;;; -*- lexical-binding: t; -*-
 #+end_src
@@ -67,7 +67,7 @@ easier to manage and update your Emacs configuration.
 #+end_src
 
 
-#+srcname: ljs-config-packages-install-packages
+#+name: ljs-config-packages-install-packages
 #+begin_src emacs-lisp
   (defun ljs-config-packages-install ()
     "Install all ljs-config packages that aren't installed."

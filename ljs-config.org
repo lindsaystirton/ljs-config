@@ -249,8 +249,8 @@ This section contains all code implementing Lindsay's emacs configuration.
 
 ** ljs-config basics
 
-#+srcname: ljs-config-load-on-startup
-#+srcname: lexical-binding-cookie
+#+name: ljs-config-load-on-startup
+#+name: lexical-binding-cookie
 #+begin_src emacs-lisp
 ;;; -*- lexical-binding: t; -*-
 #+end_src
@@ -294,7 +294,7 @@ here rather than patched around:
    for =org= as satisfied by whatever ships built into Emacs, before
    anything else can ask straight for it.
 
-#+srcname: ljs-config-straight-bootstrap
+#+name: ljs-config-straight-bootstrap
 #+begin_src emacs-lisp
   (defvar bootstrap-version)
   (let ((bootstrap-file
@@ -357,7 +357,7 @@ since they are likely to be used in every session
 #+end_src
 
 *** Function for loading/compiling ljs-config-*
-#+srcname: ljs-config-load
+#+name: ljs-config-load
 #+begin_src emacs-lisp 
   (defun ljs-config-load (file)
     "This function is to be used to load ljs-config-*.org files."
@@ -365,7 +365,7 @@ since they are likely to be used in every session
                                            dotfiles-dir)))
 #+end_src
 
-#+source: ljs-config-compile
+#+name: ljs-config-compile
 #+begin_src emacs-lisp
   (defun ljs-config-compile (&optional arg)
     "Tangle and Byte compile all ljs-config files."
@@ -410,7 +410,7 @@ aspell workaround in [[file:ljs-config-aspell.org][ljs-config-aspell]]
 
 [[http://elpa.gnu.org/][Emacs List Package Archive]] (ELPA).
 
-#+srcname: ljs-config-package
+#+name: ljs-config-package
 #+begin_src emacs-lisp 
 
   ;; package.el retired here as of Phase 2 of the straight.el migration
@@ -428,7 +428,7 @@ aspell workaround in [[file:ljs-config-aspell.org][ljs-config-aspell]]
 
 #+end_src
 
-#+srcname: ljs-config-load-packages
+#+name: ljs-config-load-packages
 #+begin_src emacs-lisp
     (ljs-config-load "./ljs-config/ljs-config-packages.org")
  #+end_src
@@ -442,9 +442,9 @@ aspell workaround in [[file:ljs-config-aspell.org][ljs-config-aspell]]
 
 Putting this here for now. Eventually we will have ljs-org-bindings. 
 
-#+srcname: ljs-config-osX-workaround
+#+name: ljs-config-osX-workaround
 #+begin_src emacs-lisp 
- (global-set-key (kbd "M-3") '(lambda () (interactive) (insert "#")))
+ (global-set-key (kbd "M-3") (lambda () (interactive) (insert "#")))
 #+end_src
 
 
@@ -453,7 +453,7 @@ Putting this here for now. Eventually we will have ljs-org-bindings.
 
 Work around a bug on OS X where system-name is FQDN (Fully Qualified
 Domain Name)
-#+srcname: ljs-config-osX-workaround
+#+name: ljs-config-osX-workaround
 #+begin_src emacs-lisp 
   (if (eq system-type 'darwin)
       (setq system-name (car (split-string system-name "\\."))))
@@ -465,7 +465,7 @@ You can keep system- or user-specific customizations here in either
 raw emacs-lisp files or as embedded elisp in org-mode files (as done
 in this document).
 
-#+srcname: ljs-config/system-setup
+#+name: ljs-config/system-setup
 #+begin_src emacs-lisp 
   (setq system-specific-config (concat dotfiles-dir system-name ".el")
         system-specific-literate-config (concat dotfiles-dir system-name ".org")
@@ -480,7 +480,7 @@ from here will override those installed by ELPA.  This is useful if
 you want to track the development versions of a project, or if a
 project is not in elpa.
 
-#+srcname: ljs-config-load-elisp-dir
+#+name: ljs-config-load-elisp-dir
 #+begin_src emacs-lisp
 (setq elisp-source-dir (concat dotfiles-dir "src"))
 (add-to-list 'load-path elisp-source-dir)
@@ -493,21 +493,21 @@ ljs-config.  All of the code in this section should be loaded.
 
 *** LJS Config Defuns
 LJS Config function definitions in [[file:ljs-config-defuns][ljs-comfig-defuns]].
-#+srcname: ljs-config-load-defuns
+#+name: ljs-config-load-defuns
 #+begin_src emacs-lisp
 (ljs-config-load "./ljs-config/ljs-config-defuns.org")
 #+end_src
 
 *** LJS Config Appearance
 [[file:ljs-config-appearance.org][ljs-config-appearance]].
-#+srcname: ljs-config-load-appearance
+#+name: ljs-config-load-appearance
 #+begin_src emacs-lisp
   (ljs-config-load "./ljs-config/ljs-config-appearance.org")
 #+end_src
 
 *** LJS Config Completion
 [[file:ljs-config-completion.org][ljs-config-completion]].
-#+srcname: ljs-config-load-completion
+#+name: ljs-config-load-completion
 #+begin_src emacs-lisp
   (ljs-config-load "./ljs-config/ljs-config-completion.org")
 #+end_src
@@ -515,7 +515,7 @@ LJS Config function definitions in [[file:ljs-config-defuns][ljs-comfig-defuns]]
 *** LJS Config Bibliography
 Located in [[file:ljs-config-bibliography.org][ljs-config-bibliography]]
 
-#+srcname: ljs-config-load-bibliography
+#+name: ljs-config-load-bibliography
 #+begin_src emacs-lisp
   (ljs-config-load "./ljs-config/ljs-config-bibliography.org")
 #+end_src
@@ -523,7 +523,7 @@ Located in [[file:ljs-config-bibliography.org][ljs-config-bibliography]]
 *** LJS Config LaTeX
 Located in [[file:ljs-config-latex.org][ljs-config-latex]]
 
-#+srcname: ljs-config-load-latex
+#+name: ljs-config-load-latex
 #+begin_src emacs-lisp
   (ljs-config-load "./ljs-config/ljs-config-latex.org")
 #+end_src
@@ -546,7 +546,7 @@ Located in [[file:ljs-config-text.org][ljs-config-text]]
 *** LJS Config Git
 Located in [[file:ljs-config-git.org][ljs-config-git]]
 
-#+srcname: ljs-config-load-git
+#+name: ljs-config-load-git
 #+begin_src emacs-lisp
   (ljs-config-load "./ljs-config/ljs-config-git.org")
 #+end_src
@@ -555,7 +555,7 @@ Located in [[file:ljs-config-git.org][ljs-config-git]]
 *** LJS Config Org
 Located in [[file:ljs-config-org.org][ljs-config-org]]
 
-#+srcname: ljs-config-load-org
+#+name: ljs-config-load-org
 #+begin_src emacs-lisp
   (ljs-config-load "./ljs-config/ljs-config-org.org")
 #+end_src
@@ -563,7 +563,7 @@ Located in [[file:ljs-config-org.org][ljs-config-org]]
 *** *LJS Config Eshell
 Located in [[file:ljs-config-eshell.org][ljs-config-eshell]]
 
-#+srcname: ljs-config-load-eshell
+#+name: ljs-config-load-eshell
 #+begin_src emacs-lisp
   (ljs-config-load "./ljs-config/ljs-config-eshell.org")
 #+end_src
@@ -571,7 +571,7 @@ Located in [[file:ljs-config-eshell.org][ljs-config-eshell]]
 *** LJS Config Python
 Located in [[ljs-config-python.org][ljs-config-python]]
 
-#+srcname: ljs-config-load-python
+#+name: ljs-config-load-python
 #+begin_src emacs-lisp
   (ljs-config-load "./ljs-config/ljs-config-python.org")
 #+end_src
@@ -579,7 +579,7 @@ Located in [[ljs-config-python.org][ljs-config-python]]
 *** LJS Config Lisp
 Located in [[ljs-config-lisp.org][ljs-config-lisp]]
 
-#+srcname: ljs-config-load-lisp
+#+name: ljs-config-load-lisp
 #+begin_src emacs-lisp
   (ljs-config-load "./ljs-config/ljs-config-lisp.org")
 #+end_src
@@ -587,7 +587,7 @@ Located in [[ljs-config-lisp.org][ljs-config-lisp]]
 
 
 
-#+source: message-line
+#+name: message-line
 #+begin_src emacs-lisp
   (message "LJS Config main file loaded.")
 #+end_src

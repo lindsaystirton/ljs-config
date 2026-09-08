@@ -12,7 +12,7 @@ flyspell doesn't start properly. Putting this customization in
 - This file is loaded by a special line added to [[file:ljs-config.org][ljs-config.org]].
 
 ** Specify aspell
-#+srcname: lexical-binding-cookie
+#+name: lexical-binding-cookie
 #+begin_src emacs-lisp
 ;;; -*- lexical-binding: t; -*-
 #+end_src
@@ -71,7 +71,7 @@ flyspell doesn't start properly. Putting this customization in
 
 #+end_src
 
-#+source: message-line
+#+name: message-line
 #+begin_src emacs-lisp
   (message "ljs-config-aspell loaded.")
 #+end_src

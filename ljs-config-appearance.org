@@ -9,8 +9,8 @@ This file is part of the [[file:ljs-config.org][Lindsay Stirton's Emacs Configur
 
 Basic setting preferences, including size and positioning of emacs frames. 
 
-#+srcname: ljs-config-appearance-startup
-#+srcname: lexical-binding-cookie
+#+name: ljs-config-appearance-startup
+#+name: lexical-binding-cookie
 #+begin_src emacs-lisp
 ;;; -*- lexical-binding: t; -*-
 #+end_src
@@ -110,7 +110,7 @@ do so, enter M-x ef-themes-toggle.
 
 ** All the icons
 
-#+srcname: ljs-config-appearance-all-the-icons
+#+name: ljs-config-appearance-all-the-icons
 #+begin_src emacs-lisp
 (use-package all-the-icons
   :if (display-graphic-p))
@@ -118,7 +118,7 @@ do so, enter M-x ef-themes-toggle.
 
 ** Doom modeline
 
-#+srcname: ljs-config-appearance-doom-modeline
+#+name: ljs-config-appearance-doom-modeline
 #+begin_src emacs-lisp
  ;; NOTE: this block used to close the use-package form one paren too
  ;; early (right after :custom), leaving `(doom-modeline-mode 1)' and the
@@ -241,7 +241,7 @@ copy). Previously this was reimplemented four separate times across
 four files with two different naming conventions; see the audit,
 §11C/§25.
 
-#+srcname: ljs-config-appearance-split-right-resize
+#+name: ljs-config-appearance-split-right-resize
 #+begin_src emacs-lisp
 (defvar ljs/original-frame-width nil
   "Variable to store the original frame width.")
@@ -297,7 +297,7 @@ consumer. Originally lived in ljs-config-org.org as
 (global-set-key (kbd "C-x 1") 'ljs/frame-restore-original-dimensions)
 #+end_src
 
-#+source: message-line
+#+name: message-line
 #+begin_src emacs-lisp
        (message "LJS Config Appearance.")
 #+end_src

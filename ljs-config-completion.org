@@ -11,7 +11,7 @@ I have also added support for Vertico, Consult, Orderless, Marginalia (candidate
 
 ** Install Vertico
 #+NAME: vertico-installation
-#+srcname: lexical-binding-cookie
+#+name: lexical-binding-cookie
 #+begin_src emacs-lisp
 ;;; -*- lexical-binding: t; -*-
 #+end_src
@@ -182,7 +182,7 @@ company-math and company-stan (see ljs-config-stats.org) -- are kept,
 not dropped: Cape's =cape-company-to-capf= wraps a Company backend so
 it can still be used as a capf source under Corfu.
 
-#+source: corfu-mode
+#+name: corfu-mode
 #+begin_src emacs-lisp
 (use-package corfu
   :custom
@@ -203,7 +203,7 @@ it can still be used as a capf source under Corfu.
   (global-corfu-mode))
 #+end_src
 
-#+source: cape-mode
+#+name: cape-mode
 #+begin_src emacs-lisp
 (use-package cape
   :init
@@ -216,7 +216,7 @@ it can still be used as a capf source under Corfu.
   (add-hook 'completion-at-point-functions #'cape-elisp-block 100))
 #+end_src
 
-#+source: company-math-bridge
+#+name: company-math-bridge
 #+begin_src emacs-lisp
 ;; company-math has no native capf backend, so bridge it via Cape
 ;; instead of dropping it. Registered globally, matching its old
@@ -228,7 +228,7 @@ it can still be used as a capf source under Corfu.
             (cape-company-to-capf #'company-math-symbols-unicode)))
 #+end_src
 
-#+source: browse-kill-ring-mode
+#+name: browse-kill-ring-mode
 #+begin_src emacs-lisp
 ;; Unrelated to completion -- this used to live nested inside Company's
 ;; :config block for no real reason. Given its own top-level
