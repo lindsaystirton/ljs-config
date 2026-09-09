@@ -235,6 +235,41 @@ buffers and the Markdown live-preview's eww buffer, so there's one
 canonical place for this logic instead of a PDF-only copy here.
 Formerly =ljs/display-pdf-to-right=; see the audit, §11C/§25.
 
+** Org-Capture (Inbox)
+
+Deliberately minimal, by design (not a first pass at something
+bigger): one binding to capture a flat TODO into a single
+=inbox.org=, and one binding to open that file directly. No
+categorisation prompt, no org-agenda configuration, no per-role
+files -- those are explicitly out of scope for now (see the audit).
+=org-directory= itself is already set per-machine in your per-user
+file (=ljs46.org=/=ljs.org=), so this just points a notes file at
+it.
+
+#+name: ljs-config-org-capture
+#+begin_src emacs-lisp
+(setq org-default-notes-file (expand-file-name "inbox.org" org-directory))
+
+(defun ljs/open-inbox ()
+  "Open the inbox file directly, without going through org-capture."
+  (interactive)
+  (find-file org-default-notes-file))
+
+(use-package org-capture
+  :straight nil
+  :custom
+  ;; Exactly one template on purpose: org-capture skips its template
+  ;; selection prompt entirely when org-capture-templates has just
+  ;; one entry, which is what makes C-c c go straight to a blank
+  ;; capture buffer with no categorisation step at all. Adding a
+  ;; second template later brings that prompt back.
+  (org-capture-templates
+   '(("t" "Task" entry (file org-default-notes-file)
+      "* TODO %?\n")))
+  :bind (("C-c c" . org-capture)
+         ("C-c o" . ljs/open-inbox)))
+#+end_src
+
 ** Confirmation Message
 #+begin_src emacs-lisp
 (message "LJS Config Org loaded.")
