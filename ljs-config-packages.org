@@ -50,7 +50,6 @@ easier to manage and update your Emacs configuration.
   (use-package ess)
   (use-package exec-path-from-shell)
   (use-package flycheck)
-  (use-package flyspell :straight nil)
   (use-package forge)
   (use-package imenu :straight nil)
   (use-package latex-pretty-symbols)

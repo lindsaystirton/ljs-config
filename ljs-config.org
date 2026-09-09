@@ -303,6 +303,38 @@ here rather than patched around:
   (setq straight-use-package-by-default t)
 #+end_src
 
+*** Fix macOS GUI Emacs's PATH, before anything else needs it
+
+macOS GUI Emacs doesn't inherit the shell's PATH the way Terminal
+does, so anything installed via Homebrew is invisible to Emacs until
+something fixes this. It has to happen this early, right after the
+straight.el bootstrap and before anything else: jinx (next section,
+=ljs-config-spelling.org=) needs =pkg-config= and =enchant= on PATH
+to build its native module the very first time it loads, and
+"Ubiquitous Packages" immediately below already does an
+=executable-find= for Homebrew's =gls=. Previously this lived much
+later, in =ljs-config-appearance.org= (loaded fifth) -- too late for
+either of those, and the reason jinx's build failed with "pkgconf or
+pkg-config not found" the first time it was tried, even though both
+were installed via Homebrew (see the audit, §43). A second, inert
+(=:tangle no=) copy documented as optional in =ljs-config-latex.org=
+is left alone -- it was never actually live.
+
+#+name: ljs-config-exec-path-from-shell
+#+begin_src emacs-lisp
+(use-package exec-path-from-shell
+  :if (memq window-system '(mac ns x))
+  :config
+  ;; macOS GUI Emacs doesn't inherit your shell's PATH by default, so
+  ;; without this, anything installed via Homebrew (or asdf, pyenv,
+  ;; etc) can be invisible to Emacs even though it works fine in
+  ;; Terminal. This also means paths elsewhere in this config never
+  ;; need to hardcode a specific Homebrew prefix (/opt/homebrew vs
+  ;; /usr/local) -- whichever one is on your shell's PATH is the one
+  ;; Emacs will find.
+  (exec-path-from-shell-initialize))
+#+end_src
+
 *** Ubiquitous Packages
 
 These should be loaded on startup rather than autoloaded on demand
@@ -417,10 +449,10 @@ since they are likely to be used in every session
 
 
 
-*** LJS Emacs Config  aspell (Spell checking with flyspell)
-aspell workaround in [[file:ljs-config-aspell.org][ljs-config-aspell]]
+*** LJS Config Spelling
+Fast, syntax-aware spell-checking via jinx -- located in [[file:ljs-config-spelling.org][ljs-config-spelling]]
 #+begin_src emacs-lisp
-  (ljs-config-load "./ljs-config/ljs-config-aspell.org")
+  (ljs-config-load "./ljs-config/ljs-config-spelling.org")
 #+end_src
 
 

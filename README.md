@@ -63,6 +63,16 @@ Git, and the rest -- you'll need them installed on your Mac first:
 xcode-select --install
 ```
 
+**If you're on a Homebrew-built native Emacs (e.g. `emacs-plus`) with
+native-compilation enabled**, make sure `gcc` and `libgccjit` are the
+*same* version (`brew list --versions gcc libgccjit`) -- they're
+built together and a mismatch produces bizarre, hard-to-place native
+compiler errors (`ld: library '...' not found`) on every startup,
+not just when installing something new. `brew upgrade gcc` if
+they've drifted apart. `early-init.el` below also has a Homebrew/Xcode
+linker-path fix that's needed alongside this -- see the audit, §44,
+for the full story if you hit this.
+
 **A modern TeX distribution and a PDF reader with SyncTeX support.**
 [MacTeX](https://www.tug.org/mactex/) and the built-in
 [pdf-tools](https://github.com/vedang/pdf-tools) (which this config
@@ -136,6 +146,20 @@ files and paste these in verbatim:
 ;; selection used to live here too, to avoid a startup flicker, but
 ;; moved to ljs-config-appearance.org once the early font-availability
 ;; check proved unreliable this soon on macOS.
+
+;; Native-comp toolchain fix, needed on a Homebrew-built native
+;; Emacs (e.g. emacs-plus): gcc's native-comp driver can't link
+;; without help finding two things -- its own runtime libraries, and
+;; macOS's own `-lSystem' (which lives in the Xcode SDK, not in
+;; Homebrew's gcc at all). Without this you'll see native-comp
+;; errors like "ld: library 'System' not found" on every startup.
+;; Computed rather than hardcoded, since both paths depend on which
+;; machine/Homebrew-prefix/Xcode-SDK-version this happens to be
+;; running on, not on who's logged in.
+(let ((brew (or (getenv "HOMEBREW_PREFIX") "/opt/homebrew"))
+      (sdk (string-trim (shell-command-to-string "xcrun --show-sdk-path"))))
+  (setenv "LIBRARY_PATH"
+          (concat brew "/opt/gcc/lib/gcc/current" ":" sdk "/usr/lib")))
 
 ;; straight.el is the only package manager this config uses, so
 ;; package.el's own startup activation is disabled.

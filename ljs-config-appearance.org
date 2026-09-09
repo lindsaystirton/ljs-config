@@ -240,18 +240,13 @@ The pdf-tools packages provides an emacs pdf viewer that replaces the standard d
   After making changes, restart Emacs to apply the configuration.
   
 
-#+begin_src emacs-lisp
-(use-package exec-path-from-shell
-  :if (memq window-system '(mac ns x))
-  :config
-  ;; macOS GUI Emacs doesn't inherit your shell's PATH by default, so
-  ;; without this, anything installed via Homebrew (or asdf, pyenv,
-  ;; etc) can be invisible to Emacs even though it works fine in
-  ;; Terminal. This also means paths below never need to hardcode a
-  ;; specific Homebrew prefix (/opt/homebrew vs /usr/local) -- whichever
-  ;; one is on your shell's PATH is the one Emacs will find.
-  (exec-path-from-shell-initialize))
+=exec-path-from-shell= itself now lives much earlier, right after
+the straight.el bootstrap in =ljs-config.org= -- it has to run
+before anything that might shell out to a Homebrew tool during its
+own package installation, which turned out to include things loaded
+well before this file (see the audit, §43).
 
+#+begin_src emacs-lisp
 (use-package pdf-tools
   :custom
   (pdf-tools-handle-upgrades t) ;; don't prompt on every epdfinfo version bump

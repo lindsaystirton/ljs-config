@@ -1,0 +1,48 @@
+#+TITLE: LJS Config Spelling
+#+OPTIONS: toc:nil num:nil ^:nil
+
+This file is part of the [[file:ljs-config.org][Lindsay Stirton's Emacs Configurations]].
+On-the-fly spell-checking, via jinx rather than flyspell/aspell (see
+the audit, §42) -- jinx is a modern, much faster replacement: it
+checks against libenchant instead of shelling out to aspell one
+word at a time, and works out which parts of a buffer to check from
+Emacs's own syntax/face information, so it doesn't need flyspell's
+old per-mode regex skip-lists (the LaTeX-specific
+=ispell-tex-skip-alist= this file used to carry) or the speed-hack
+advice this file also used to carry around =flyspell-region= to
+work around flyspell's own slowness.
+
+*Prerequisite, on the Mac itself, not verifiable from here*: jinx's
+backend is libenchant, a C library, not an Emacs package -- install
+it once via Homebrew, =brew install enchant=, before restarting.
+Without it, jinx's native module (compiled the first time it's
+used) will fail to build.
+
+#+name: lexical-binding-cookie
+#+begin_src emacs-lisp
+;;; -*- lexical-binding: t; -*-
+#+end_src
+
+#+name: ljs-config-spelling-jinx
+#+begin_src emacs-lisp
+(use-package jinx
+  :hook (emacs-startup . global-jinx-mode)
+  :bind (("M-$" . jinx-correct)
+         ("C-M-$" . jinx-languages))
+  :custom
+  (jinx-languages "en_GB"))
+#+end_src
+
+Personal-dictionary additions (=jinx-correct='s "save word" action)
+are handled by Enchant itself, not by an Emacs-side variable the way
+=ispell-personal-dictionary= used to be -- Enchant keeps its own
+per-language word list on disk, so there's nothing to set here.
+=global-jinx-mode= already covers =LaTeX-mode= automatically (it
+derives from =text-mode=), so the old explicit "turn flyspell on for
+.tex files" hook is no longer needed either -- jinx just runs
+everywhere =global-jinx-mode= applies once enabled.
+
+#+name: message-line
+#+begin_src emacs-lisp
+  (message "LJS Config Spelling loaded.")
+#+end_src
