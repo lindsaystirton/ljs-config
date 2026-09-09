@@ -73,6 +73,15 @@ they've drifted apart. `early-init.el` below also has a Homebrew/Xcode
 linker-path fix that's needed alongside this -- see the audit, §44,
 for the full story if you hit this.
 
+**`pkg-config` and `enchant`, for spell-checking.** This config uses
+[jinx](https://github.com/minad/jinx) rather than the older
+flyspell/aspell combination, which builds a small native module
+against `libenchant` the first time it loads. Install both via
+Homebrew (`brew install pkg-config enchant`) before first launch --
+`exec-path-from-shell` (loaded first, specifically so tools like this
+are visible to GUI Emacs at all) takes care of the rest automatically
+once they're installed.
+
 **A modern TeX distribution and a PDF reader with SyncTeX support.**
 [MacTeX](https://www.tug.org/mactex/) and the built-in
 [pdf-tools](https://github.com/vedang/pdf-tools) (which this config
@@ -219,7 +228,7 @@ If a package fails to build on the first attempt, quit and relaunch
 Emacs and it will usually pick up where it left off.
 
 **4. (Optional) Add your own customisations.** Create a file named
-after your own `user-login-name` (from step 0.4 above) -- e.g.
+after your own `user-login-name` (the `whoami` step above) -- e.g.
 `ljs-config/yourname.org` -- and it'll be loaded automatically on
 every startup. This is where your own bibliography paths,
 `org-directory`, and any other personal, machine-specific settings
@@ -238,15 +247,16 @@ assuming it's a bug.
 | File | What it configures |
 |---|---|
 | `ljs-config-packages.org` | Package declarations -- what to install, fetched and pinned by straight.el |
-| `ljs-config-aspell.org` | Spell-checking (`flyspell`, `ispell`/`aspell`) |
+| `ljs-config-spelling.org` | Spell-checking via [jinx](https://github.com/minad/jinx) |
 | `ljs-config-defuns.org` | Small utility functions used elsewhere in the config |
 | `ljs-config-appearance.org` | Theme, modeline, fonts, frame behaviour |
 | `ljs-config-completion.org` | Vertico + Consult + Orderless + Marginalia + Embark (minibuffer completion) and Corfu + Cape (in-buffer completion) |
+| `ljs-config-discoverability.org` | which-key (keybinding hints), casual (Transient menus for Calc/Info/isearch), and avy (jump-to-visible-text navigation) |
 | `ljs-config-bibliography.org` | Zotero + Better BibTeX as the shared reference library, `citar` for citation completion/insertion in AUCTeX (works alongside RefTeX, which still handles labels and cross-references) |
 | `ljs-config-latex.org` | AUCTeX, RefTeX, Biber, and the SyncTeX/PDF-pane workflow |
 | `ljs-config-stats.org` | R, ESS, and Stan (`stan-mode`, `company-stan`, `flycheck-stan`) |
 | `ljs-config-text.org` | Markdown, Pandoc, CSV, and general text-file handling |
-| `ljs-config-dired.org` | Dired extras and iBuffer's saved filter groups |
+| `ljs-config-dired.org` | Dired extras, iBuffer's saved filter groups, and casual-dired's Transient menu |
 | `ljs-config-git.org` | Magit and Forge |
 | `ljs-config-org.org` | Org-mode, Org-roam, and the shared PDF/frame-splitting logic used by both Org and LaTeX |
 | `ljs-config-eshell.org` | Eshell configuration |
@@ -289,17 +299,6 @@ the way ESKSS was. Concretely, as of this writing:
   like the bibliography path used to be -- but if you need a specific
   interpreter, that's exactly the kind of thing your own
   `<your-username>.org` is for.
-- **The startup frame size is hardcoded to Lindsay's own screen.**
-  `ljs-config-appearance.org`'s `initial-frame-alist` pins every new
-  frame to 85 columns by 54 rows at the screen's top-left corner --
-  numbers tuned by eye to fill Lindsay's 13.3-inch MacBook display
-  exactly, not computed from the actual screen. On a differently
-  sized or positioned display this will either leave a lot of unused
-  screen or not fit at all. `ljs/frame-double-width`, defined just
-  below it in the same file, already does this properly -- it reads
-  the real monitor size via `frame-monitor-workarea` rather than
-  assuming one -- and doing the same for the initial frame size is on
-  the to-do list rather than something to copy as-is.
 
 None of this affects day-to-day use on Lindsay's own machine, but if
 you're setting this up fresh, expect a bit of manual path-fixing

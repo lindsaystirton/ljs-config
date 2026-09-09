@@ -39,6 +39,7 @@ casual/which-key discoverability work lives -- see the audit, §47/§48.
 #+name: casual-dired
 #+begin_src emacs-lisp
 (use-package casual-dired
+  :straight casual
   :after dired
   :bind (:map dired-mode-map ("C-o" . casual-dired-tmenu)))
 #+end_src

@@ -43,24 +43,33 @@ pointer back to this file.
 
 CONFIDENCE CAVEAT, same shape as jinx's in the audit (§42): written
 from casual's documented interface, not verified against the
-installed source, since it isn't built on this machine yet. If any
-binding below turns out wrong once straight fetches and builds it,
-read the installed =casual-*.el= files directly
-(=~/.emacs.d/straight/repos/casual*/=) the way every other
-misbehaving package in this project has been fixed, rather than
-guess again.
+installed source. This caveat already earned its keep once -- the
+first version of this file declared each menu as if it were its own
+installable package (=casual-dired=, =casual-calc=, etc.), which
+failed on Lindsay's actual restart with "Could not find package
+casual-dired": all of these menus live inside one consolidated
+package, =casual=, as separate features rather than separate
+packages. Fixed the same way =tex=/=auctex= is already handled in
+=ljs-config-latex.org= -- =:straight casual= on each =use-package=
+form tells straight which package to fetch for a feature name that
+doesn't match it. If anything else here still turns out wrong, read
+the installed source directly (=~/.emacs.d/straight/repos/casual/=)
+rather than guess a third time.
 
 #+name: ljs-config-casual
 #+begin_src emacs-lisp
 (use-package casual-calc
+  :straight casual
   :after calc
   :bind (:map calc-mode-map ("C-o" . casual-calc-tmenu)))
 
 (use-package casual-info
+  :straight casual
   :after info
   :bind (:map Info-mode-map ("C-o" . casual-info-tmenu)))
 
 (use-package casual-isearch
+  :straight casual
   :after isearch
   :bind (:map isearch-mode-map ("C-o" . casual-isearch-tmenu)))
 #+end_src
