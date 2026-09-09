@@ -80,7 +80,8 @@ Make yasnippet work properly with org-mode.
 (org-babel-do-load-languages
  'org-babel-load-languages
  '((emacs-lisp . t)
-   (shell . t)))
+   (shell . t)
+   (R . t)))
 #+end_src
 
 #+begin_src emacs-lisp

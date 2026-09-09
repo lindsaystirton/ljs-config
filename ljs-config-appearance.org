@@ -250,6 +250,18 @@ well before this file (see the audit, §43).
 (use-package pdf-tools
   :custom
   (pdf-tools-handle-upgrades t) ;; don't prompt on every epdfinfo version bump
+  ;; pdf-view.el's own top-level code (not doom-modeline's) unconditionally
+  ;; probes whether the current font set can display two specific unicode
+  ;; glyphs (a print/eject symbol and a crescent moon, for its own
+  ;; mode-line lighter) every single time pdf-tools loads -- which, since
+  ;; this use-package block has no :defer, is every startup. That font
+  ;; probe (char-displayable-p) is the exact call crashing Emacs outright
+  ;; (EXC_BAD_ACCESS/SIGABRT, a pointer-authentication failure -- real
+  ;; memory corruption, not just a normal "no font found" result) -- see
+  ;; the audit, §57. pdf-view.el's own author anticipated this could be
+  ;; slow/risky and ships this off-switch for exactly that reason; setting
+  ;; it nil skips the probe (and the mode-line lighter) entirely.
+  (pdf-view-use-unicode-ligther nil)
   :config
   ;; Homebrew's zlib/poppler are "keg-only" and won't be found by
   ;; pkg-config without this, which pdf-tools-install needs the first

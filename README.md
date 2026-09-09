@@ -70,8 +70,10 @@ built together and a mismatch produces bizarre, hard-to-place native
 compiler errors (`ld: library '...' not found`) on every startup,
 not just when installing something new. `brew upgrade gcc` if
 they've drifted apart. `early-init.el` below also has a Homebrew/Xcode
-linker-path fix that's needed alongside this -- see the audit, §44,
-for the full story if you hit this.
+linker-path fix that's needed alongside this -- see the audit, §44 and
+§50, for the full story if you hit this (§50 covers a third missing
+library, `emutls_w`, that can turn up even when `gcc`/`libgccjit`
+already match).
 
 **`pkg-config` and `enchant`, for spell-checking.** This config uses
 [jinx](https://github.com/minad/jinx) rather than the older
@@ -81,6 +83,13 @@ Homebrew (`brew install pkg-config enchant`) before first launch --
 `exec-path-from-shell` (loaded first, specifically so tools like this
 are visible to GUI Emacs at all) takes care of the rest automatically
 once they're installed.
+
+**`cmake` and `libtool`, for the terminal (`vterm`).** `vterm` also
+builds a small native module locally the first time it loads (this
+one against `libvterm`, for real terminal emulation -- see
+`ljs-config-shell.org`). Install both via Homebrew (`brew install
+cmake libtool`) before first launch, same as the jinx prerequisites
+above.
 
 **A modern TeX distribution and a PDF reader with SyncTeX support.**
 [MacTeX](https://www.tug.org/mactex/) and the built-in
@@ -158,17 +167,28 @@ files and paste these in verbatim:
 
 ;; Native-comp toolchain fix, needed on a Homebrew-built native
 ;; Emacs (e.g. emacs-plus): gcc's native-comp driver can't link
-;; without help finding two things -- its own runtime libraries, and
+;; without help finding three things -- its own top-level runtime
+;; libraries, its version/target-triple-specific internal runtime
+;; libraries (where things like `libemutls_w.a' actually live), and
 ;; macOS's own `-lSystem' (which lives in the Xcode SDK, not in
 ;; Homebrew's gcc at all). Without this you'll see native-comp
-;; errors like "ld: library 'System' not found" on every startup.
-;; Computed rather than hardcoded, since both paths depend on which
-;; machine/Homebrew-prefix/Xcode-SDK-version this happens to be
-;; running on, not on who's logged in.
-(let ((brew (or (getenv "HOMEBREW_PREFIX") "/opt/homebrew"))
-      (sdk (string-trim (shell-command-to-string "xcrun --show-sdk-path"))))
+;; errors like "ld: library 'System' not found" or "ld: library
+;; 'emutls_w' not found" on every startup. All three computed rather
+;; than hardcoded, since none of them are stable across a machine,
+;; Homebrew prefix, Xcode SDK version, or gcc version bump -- the
+;; internal runtime directory is found with `find' rather than
+;; assembled from a guessed version/target-triple path, so this
+;; survives the next `gcc' bump the same way `lib/gcc/current'
+;; (Homebrew's own stable symlink) already does.
+(let* ((brew (or (getenv "HOMEBREW_PREFIX") "/opt/homebrew"))
+       (sdk (string-trim (shell-command-to-string "xcrun --show-sdk-path")))
+       (gcc-lib (concat brew "/opt/gcc/lib/gcc/current"))
+       (gcc-internal (string-trim
+                      (shell-command-to-string
+                       (concat "dirname \"$(find " gcc-lib
+                               " -name libemutls_w.a 2>/dev/null | head -1)\"")))))
   (setenv "LIBRARY_PATH"
-          (concat brew "/opt/gcc/lib/gcc/current" ":" sdk "/usr/lib")))
+          (concat gcc-lib ":" gcc-internal ":" sdk "/usr/lib")))
 
 ;; straight.el is the only package manager this config uses, so
 ;; package.el's own startup activation is disabled.
@@ -259,7 +279,7 @@ assuming it's a bug.
 | `ljs-config-dired.org` | Dired extras, iBuffer's saved filter groups, and casual-dired's Transient menu |
 | `ljs-config-git.org` | Magit and Forge |
 | `ljs-config-org.org` | Org-mode, Org-roam, and the shared PDF/frame-splitting logic used by both Org and LaTeX |
-| `ljs-config-eshell.org` | Eshell configuration |
+| `ljs-config-shell.org` | Shell/terminal: eshell for everyday use, vterm (+ vterm-toggle) for anything needing a real terminal |
 | `ljs-config-python.org` | Python via Elpy/ESS and Jupyter |
 | `ljs-config-lisp.org` | Emacs Lisp editing conveniences |
 

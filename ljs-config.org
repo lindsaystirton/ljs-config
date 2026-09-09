@@ -637,12 +637,12 @@ Located in [[file:ljs-config-org.org][ljs-config-org]]
   (ljs-config-load "./ljs-config/ljs-config-org.org")
 #+end_src
 
-*** *LJS Config Eshell
-Located in [[file:ljs-config-eshell.org][ljs-config-eshell]]
+*** *LJS Config Shell
+Located in [[file:ljs-config-shell.org][ljs-config-shell]] -- eshell and vterm.
 
-#+name: ljs-config-load-eshell
+#+name: ljs-config-load-shell
 #+begin_src emacs-lisp
-  (ljs-config-load "./ljs-config/ljs-config-eshell.org")
+  (ljs-config-load "./ljs-config/ljs-config-shell.org")
 #+end_src
 
 *** LJS Config Python

@@ -1,7 +1,7 @@
-#+TITLE: LJS Config Eshell
+#+TITLE: LJS Config Shell
 #+OPTIONS: toc:nil num:nil ^:nil
 
-This is part of the [[file:ljs-config.org][LJS-Config]]. These configurations borrow heavily from Kieran Healy's [[https://github.com/kjhealy/emacs-starter-kit][emacs starter-kit for
+This is part of the [[file:ljs-config.org][LJS-Config]]. Shell/terminal configuration: [[https://www.gnu.org/software/emacs/manual/html_node/eshell/][eshell]] for everyday, Lisp-integrated shell use, and [[https://github.com/akermu/emacs-libvterm][vterm]] for anything that needs a real terminal emulator (full-screen/curses programs -- =vim=, =htop=, =less -R=, an interactive REPL that draws boxes -- which eshell can't render properly). The eshell setup below borrows heavily from Kieran Healy's [[https://github.com/kjhealy/emacs-starter-kit][emacs starter-kit for
 the social sciences]]. 
 
 
@@ -79,7 +79,50 @@ is pre-populated with some generally applicable aliases.
 #+end_src
 
 
+* Vterm
+
+A real terminal emulator, backed by a compiled native module
+([[https://github.com/neovim/libvterm][libvterm]], the same terminal-emulation engine Neovim's own built-in
+terminal uses) rather than eshell's Lisp-native command handling.
+Reach for this specifically for anything that needs genuine terminal
+behaviour -- full-screen/curses programs (=vim=, =htop=, =less -R=),
+an interactive REPL that draws boxes, =docker exec -it=, and so on --
+that eshell can't render correctly.
+
+Needs =cmake= and =libtool= on the build machine (see "Before You
+Begin" in the README) -- the native module compiles the first time
+=vterm= loads.
+
+#+begin_src emacs-lisp
+(use-package vterm
+  :commands (vterm vterm-other-window)
+  :init
+  (setq vterm-shell "/bin/zsh"        ; match eshell's shell choice above
+        vterm-max-scrollback 10000
+        vterm-kill-buffer-on-exit t))
+#+end_src
+
+** Vterm-toggle
+
+A quick show/hide drop-down-style terminal, rather than treating a
+vterm buffer like any other window: one command pops a vterm buffer
+in (creating it if needed) and the same command hides it again,
+returning to whatever was on screen before, so it behaves like a
+dedicated scratch terminal rather than a normal buffer to manage.
+
+No keybinding assigned yet -- deliberately left unbound, since
+Lindsay wants to design keybindings as a whole rather than pick them
+file by file (this is also the open =ljs-config-bindings.org=
+decision's territory, item 11 in the audit's open-items list). Until
+then, reach it via =M-x vterm-toggle=.
+
+#+begin_src emacs-lisp
+(use-package vterm-toggle
+  :after vterm
+  :commands (vterm-toggle vterm-toggle-cd))
+#+end_src
+
 #+name: message-line
 #+begin_src emacs-lisp
-  (message "LJS Config Eshell loaded.")
+  (message "LJS Config Shell loaded.")
 #+end_src
