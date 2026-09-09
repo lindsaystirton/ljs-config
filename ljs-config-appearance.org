@@ -342,17 +342,50 @@ A `display-buffer-alist' action function -- registered below for
 both PDF buffers and the Markdown live-preview's eww buffer, so
 there's one canonical place for this rather than a copy per
 consumer. Originally lived in ljs-config-org.org as
-`ljs/display-pdf-to-right', PDF-only."
+`ljs/display-pdf-to-right', PDF-only.
+
+The window this creates is tagged with the `ljs/doubled-frame'
+window parameter, so the `quit-window'/`delete-window' advice below
+can notice when it goes away and restore the frame -- see the audit,
+§30, on why a plain `kill-buffer-hook' (as used for PDF/R elsewhere
+in this config) only catches half the ways this window can close."
   (ljs/frame-remember-and-double (window-frame (selected-window)))
-  (display-buffer-in-direction
-   buffer
-   (append alist '((direction . right) (window-width . 0.5)))))
+  (let ((window (display-buffer-in-direction
+                 buffer
+                 (append alist '((direction . right) (window-width . 0.5))))))
+    (when window
+      (set-window-parameter window 'ljs/doubled-frame t))
+    window))
 
 (add-to-list 'display-buffer-alist '("\\.pdf\\'" . (ljs/display-buffer-doubled-right)))
 (add-to-list 'display-buffer-alist '("\\`\\*eww\\*\\'" . (ljs/display-buffer-doubled-right)))
 
 (global-set-key (kbd "C-x 3") 'ljs/split-right-and-resize-frame)
 (global-set-key (kbd "C-x 1") 'ljs/frame-restore-original-dimensions)
+
+;; Closing the *window* `ljs/display-buffer-doubled-right' created --
+;; `q' (pdf-tools' and eww's own binding, `quit-window') or `C-x 0'
+;; (`delete-window') -- without killing its buffer used to leave the
+;; frame stuck doubled, since only a `kill-buffer-hook' was wired up
+;; (PDF: ljs-config-latex.org; R: ljs-config-stats.org). Advising
+;; both functions, rather than adding a third bespoke hook, covers
+;; PDF and eww uniformly with the same mechanism. See the audit, §30.
+(defun ljs/window-tagged-doubled-p (window)
+  "Non-nil if WINDOW carries the `ljs/doubled-frame' parameter."
+  (and (window-live-p window)
+       (window-parameter window 'ljs/doubled-frame)))
+
+(define-advice quit-window (:around (orig-fn &optional kill window) ljs/restore-on-doubled-window-close)
+  "Restore the frame if the window `quit-window' is closing is a doubled one."
+  (let ((tagged (ljs/window-tagged-doubled-p (or window (selected-window)))))
+    (prog1 (funcall orig-fn kill window)
+      (when tagged (ljs/frame-restore-original-dimensions)))))
+
+(define-advice delete-window (:around (orig-fn &optional window) ljs/restore-on-doubled-window-close)
+  "Restore the frame if the window `delete-window' is closing is a doubled one."
+  (let ((tagged (ljs/window-tagged-doubled-p (or window (selected-window)))))
+    (prog1 (funcall orig-fn window)
+      (when tagged (ljs/frame-restore-original-dimensions)))))
 #+end_src
 
 #+name: message-line

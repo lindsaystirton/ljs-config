@@ -1,0 +1,59 @@
+#+TITLE: Personal overrides -- ljs (Mac Mini)
+#+OPTIONS: toc:nil num:nil ^:nil
+
+Per-user override file, loaded automatically by ljs-config.org's
+=ljs-config/user-setup= block on any machine where =user-login-name=
+is "ljs" -- currently the Mac Mini. See the audit, §41, for why this
+is keyed on username rather than hostname, and =ljs46.org= for the
+MacBook/office-iMac sibling file.
+
+Anything that names a real location on disk belongs in a file like
+this one, not in the shared, tracked config files -- even a path
+like =~/Dropbox/...= that happens to resolve the same way regardless
+of which machine you're on. =~= already handles the "which account
+am I logged in as" question by itself; this file's job isn't to work
+around that, it's to be the one place all of this config's
+destination paths live, full stop, so nothing personal ever has to
+be hardcoded into a tracked file.
+
+The content here is currently identical to ljs46.org's -- that's
+expected, not a sign one of the two is redundant. It exists as its
+own file so that anything which genuinely does differ on this
+specific machine (a different bibliography location, say) has an
+obvious place to go without disturbing the other one.
+
+#+name: lexical-binding-cookie
+#+begin_src emacs-lisp
+;;; -*- lexical-binding: t; -*-
+#+end_src
+
+* Bibliography
+
+Two files, matching the split set up in ljs-config-bibliography.org:
+Zotero's own auto-export (kept continuously updated by the Better
+BibTeX plugin) plus a second, hand-maintained file for cases and
+legislation, since Zotero/Better BibTeX's own export isn't
+OSCOLA-correct for those. Used both by citar (citation completion)
+and as RefTeX's fallback for any document that doesn't declare its
+own =\bibliography{}=/=\addbibresource{}= -- see the audit, §37, on
+when that fallback actually matters, given most documents don't need
+it.
+
+#+name: ljs-bibliography
+#+begin_src emacs-lisp
+(setq citar-bibliography
+      (list "~/Dropbox/bibliography/Zotero.bib"
+            "~/Dropbox/bibliography/cases.bib"))
+
+(setq reftex-default-bibliography
+      (list "~/Dropbox/bibliography/Zotero.bib"
+            "~/Dropbox/bibliography/cases.bib"))
+#+end_src
+
+* Org
+
+#+name: ljs-org-directory
+#+begin_src emacs-lisp
+(setq org-directory "~/Dropbox/Org")
+(setq org-archive-location "~/Dropbox/Org/archive.org::From %s")
+#+end_src
