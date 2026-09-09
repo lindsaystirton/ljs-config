@@ -82,13 +82,40 @@ Make yasnippet work properly with org-mode.
  '((emacs-lisp . t)
    (shell . t)
    (R . t)))
+;; Stan deliberately isn't listed above: org-babel-do-load-languages
+;; requires (require 'ob-stan) for any entry it's given, and no such
+;; loadable library exists (that's the whole reason ob-stan had to be
+;; written from scratch -- see ljs-config-stats.org's "Org-babel
+;; execution (ob-stan)" section, and the audit, §59). Confirmed by
+;; reading org-babel-execute-src-block's own dispatch code directly:
+;; it only checks (fboundp 'org-babel-execute:stan), never consults
+;; org-babel-load-languages at all -- so defining that function
+;; ourselves (which ljs-config-stats.org does, unconditionally, at
+;; startup) is already sufficient on its own. Adding a (stan . t)
+;; entry here would only break startup by trying to require a file
+;; that doesn't exist.
 #+end_src
 
 #+begin_src emacs-lisp
+;; org-src-get-lang-mode (Org's own function that resolves a source
+;; block's language to a real major mode) *always* appends "-mode"
+;; itself to whatever this alist maps to -- so the value here has to
+;; be the bare stem (ess-r, stan), not the already-complete mode name
+;; (ess-r-mode, stan-mode). Getting this wrong doesn't error -- it
+;; silently resolves to a nonexistent symbol (ess-r-mode-mode,
+;; stan-mode-mode) and falls back to fundamental-mode, which is why
+;; blocks were highlighting only partially (R) or not at all (Stan)
+;; even though the mapping looked reasonable -- see the audit, §60.
+;;
+;; "r" maps (via the bare stem "ess-r") to ess-r-mode, not the generic
+;; ess-mode -- ess-mode is ESS's shared parent across all its
+;; languages and only carries base font-lock; the real R-specific
+;; keyword/function fontification lives in ess-r-mode itself (R-mode
+;; is just an alias to it).
 (add-to-list 'org-src-lang-modes
-             '("r" . ess-mode))
+             '("r" . ess-r))
 (add-to-list 'org-src-lang-modes
-             '("stan" . stan-mode))
+             '("stan" . stan))
 #+end_src
 
 ** Code block fontification

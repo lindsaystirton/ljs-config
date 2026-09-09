@@ -298,6 +298,73 @@ inside stan-mode buffers, not globally.
 (add-hook 'stan-mode-hook #'rainbow-delimiters-mode)
 #+end_src
 
+** Org-babel execution (ob-stan)
+
+No package ships an ob-stan for a modern Emacs/Org -- confirmed (see
+the audit, §55): not bundled with Org itself (unlike R), not in the
+actively-maintained org-contrib, not on MELPA. The only one that ever
+existed lived in the long-retired =org-plus-contrib= bundle. This
+reimplements it from that original's own design (read directly from
+its source, not guessed), because the design is already right for
+what Stan actually needs: a Stan block on its own has no data or
+sampler settings, so executing one can never sample a model -- it can
+only produce a model artifact (a =.stan= file, or a CmdStan-compiled
+executable) for a /following/ R (rstan) or shell (CmdStan CLI) block
+to actually run. A =:file= header argument is therefore required,
+the same convention =ob-ditaa=/=ob-dot=/=ob-gnuplot= use for their own
+file-producing blocks -- the function itself returns nil and lets
+org-babel's standard =:results file= handling build the
+=[[file:...]]= link, which is what makes the result usable as a
+variable in the next block down. One improvement over the original:
+this actually checks whether the CmdStan compile succeeded, rather
+than silently leaving no executable behind on failure.
+
+#+name: ljs-config-ob-stan
+#+begin_src emacs-lisp
+  (defcustom org-babel-stan-cmdstan-directory
+    (car (last (sort (file-expand-wildcards
+                       (expand-file-name "~/.cmdstan/cmdstan-*"))
+                      #'string<)))
+    "CmdStan installation directory used by ob-stan to compile Stan blocks.
+
+  Auto-detected from ~/.cmdstan/cmdstan-* (the highest-numbered version,
+  if more than one is installed) -- override directly if that picks the
+  wrong one, CmdStan lives somewhere else, or you'd rather ob-stan just
+  dump `.stan' files without compiling (set to nil)."
+    :group 'org-babel
+    :type '(choice (directory :tag "Compilation directory")
+                   (const :tag "Dump to a file" nil)))
+
+  (defvar org-babel-default-header-args:stan
+    '((:results . "file"))
+    "Stan blocks produce a file artifact, not a printed value.")
+
+  (defun org-babel-execute:stan (body params)
+    "Generate a Stan model file (and optionally compile it) from BODY.
+
+  A :file header argument is required. When
+  `org-babel-stan-cmdstan-directory' is set and FILE has no `.stan'
+  extension, BODY is saved to FILE.stan and compiled via CmdStan's own
+  `make' into an executable at FILE; otherwise BODY is written to FILE
+  verbatim. Either way this never samples the model -- see the audit,
+  §59, for why that's a following R/rstan or shell/CmdStan-CLI block's
+  job, not this one's."
+    (let ((file (expand-file-name
+                 (or (cdr (assq :file params))
+                     (user-error "Set a :file header argument to execute a Stan block")))))
+      (if (or (not org-babel-stan-cmdstan-directory)
+              (string-match-p "\\.stan\\'" file))
+          (with-temp-file file (insert body))
+        (with-temp-file (concat file ".stan") (insert body))
+        (let ((default-directory org-babel-stan-cmdstan-directory)
+              (buf (get-buffer-create "*ob-stan-compile*")))
+          (with-current-buffer buf (erase-buffer))
+          (unless (zerop (call-process "make" nil buf t file))
+            (pop-to-buffer buf)
+            (error "CmdStan compile failed for %s -- see *ob-stan-compile*" file))))
+      nil))
+#+end_src
+
 
 * Message
 #+name: message-config
