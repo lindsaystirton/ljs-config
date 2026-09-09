@@ -620,6 +620,15 @@ Located in [[file:ljs-config-text.org][ljs-config-text]]
 #+end_src
 
 
+*** LJS Config Security
+GPG-backed file encryption, password-store, and (documented, not
+configured) commit signing -- located in [[file:ljs-config-security.org][ljs-config-security]]
+
+#+name: ljs-config-load-security
+#+begin_src emacs-lisp
+  (ljs-config-load "./ljs-config/ljs-config-security.org")
+#+end_src
+
 *** LJS Config Git
 Located in [[file:ljs-config-git.org][ljs-config-git]]
 

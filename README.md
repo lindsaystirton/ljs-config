@@ -106,6 +106,29 @@ your `PATH`, or findable via Homebrew).
 the config assumes you're using [Magit](https://magit.vc/) day to day
 rather than the command line.
 
+**`gnupg`, `pinentry-mac`, and `pass`, for encryption/signing/password
+management.** Install via Homebrew (`brew install gnupg pinentry-mac
+pass`), then point `gpg-agent` at `pinentry-mac` so it can actually
+prompt for your passphrase:
+
+```
+mkdir -p ~/.gnupg && chmod 700 ~/.gnupg
+echo "pinentry-program $(brew --prefix)/bin/pinentry-mac" >> ~/.gnupg/gpg-agent.conf
+gpgconf --kill gpg-agent
+```
+
+Generate a real key with `gpg --full-generate-key` (RSA and RSA,
+4096 bits is a sensible default) if you don't already have one --
+this is interactive and asks for a passphrase via the `pinentry-mac`
+dialog above, not the terminal. Leave the optional Comment field
+blank; it adds nothing useful to the key's user ID. Once you have a
+key, `pass init <your-email-or-key-id>` creates the password store
+`password-store.el` actually reads and writes. `ljs-config-security.org`
+covers what this buys you inside Emacs (EasyPG file encryption,
+`password-store.el`); commit signing and the forge/GitHub token are
+both `git config`/`~/.authinfo.gpg` steps outside this config
+entirely -- see the audit for the exact commands.
+
 **Zotero, with the [Better BibTeX](https://retorque.re/zotero-better-bibtex/)
 plugin, for bibliography management.** This config doesn't manage
 your reference database itself -- see `ljs-config-bibliography.org`.
@@ -276,6 +299,7 @@ assuming it's a bug.
 | `ljs-config-latex.org` | AUCTeX, RefTeX, Biber, and the SyncTeX/PDF-pane workflow |
 | `ljs-config-stats.org` | R, ESS, and Stan (`stan-mode`, `company-stan`, `flycheck-stan`) |
 | `ljs-config-text.org` | Markdown, Pandoc, CSV, and general text-file handling |
+| `ljs-config-security.org` | GPG-backed file encryption (EasyPG), password-store.el (`pass`), and (documented, not configured) commit signing |
 | `ljs-config-dired.org` | Dired extras, iBuffer's saved filter groups, and casual-dired's Transient menu |
 | `ljs-config-git.org` | Magit and Forge |
 | `ljs-config-org.org` | Org-mode, Org-roam, and the shared PDF/frame-splitting logic used by both Org and LaTeX |

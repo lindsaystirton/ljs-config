@@ -57,3 +57,22 @@ it.
 (setq org-directory "~/Dropbox/Org")
 (setq org-archive-location "~/Dropbox/Org/archive.org::From %s")
 #+end_src
+
+
+* Security (GPG)
+
+Real key, generated 2026-09-09 (RSA4096, expires 2027-09-09 --
+worth a calendar reminder to renew before then). Only
+=epa-file-encrypt-to= goes here -- the actual private key material
+still has to be exported/imported onto each machine separately
+(=gpg --export-secret-keys=/=gpg --import=, or a USB stick/one-time
+transfer, never over plain email or Dropbox); encrypting *to* this
+identity works from any machine that has the public key, decrypting
+needs the private key physically present. Not yet confirmed which
+machines actually have the secret key beyond the one it was
+generated on.
+
+#+name: ljs-security
+#+begin_src emacs-lisp
+(setq epa-file-encrypt-to '("lindsaystirton@gmail.com"))
+#+end_src
