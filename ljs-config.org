@@ -582,6 +582,13 @@ Buffer/file listing -- located in [[file:ljs-config-dired.org][ljs-config-dired]
   (ljs-config-load "./ljs-config/ljs-config-completion.org")
 #+end_src
 
+*** LJS Config Discoverability
+which-key and casual -- located in [[file:ljs-config-discoverability.org][ljs-config-discoverability]]
+#+name: ljs-config-load-discoverability
+#+begin_src emacs-lisp
+  (ljs-config-load "./ljs-config/ljs-config-discoverability.org")
+#+end_src
+
 *** LJS Config Bibliography
 Located in [[file:ljs-config-bibliography.org][ljs-config-bibliography]]
 

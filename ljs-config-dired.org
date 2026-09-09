@@ -29,6 +29,20 @@ extras are worth having loaded).
   :after dired)
 #+end_src
 
+** Casual Dired
+
+A discoverable, Transient-based (pop-up menu) front end for Dired,
+bound to =C-o=. Kept here with the rest of Dired's own config rather
+than in ljs-config-discoverability.org, where the rest of the
+casual/which-key discoverability work lives -- see the audit, §47/§48.
+
+#+name: casual-dired
+#+begin_src emacs-lisp
+(use-package casual-dired
+  :after dired
+  :bind (:map dired-mode-map ("C-o" . casual-dired-tmenu)))
+#+end_src
+
 ** Open all marked files at once
 
 Bound to =F= in a Dired buffer: visits every marked file (or the file
