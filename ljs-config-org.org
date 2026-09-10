@@ -270,6 +270,98 @@ it.
          ("C-c o" . ljs/open-inbox)))
 #+end_src
 
+** Org-Attach (email/file attachments on inbox.org items)
+
+Real friction, not a speculative feature: reading email outside
+Emacs (Outlook web -- mu4e for BIEN is still a toe-dip, not built;
+see the workflow doc) and wanting to save an attachment and link it
+onto an inbox.org item, whether that's the item just captured or one
+already sitting there. Deliberately answered without touching the
+capture template above -- the whole point of that template being a
+single flat entry was removing any decision point between C-c c and
+typing, and "attach a file?" is exactly that kind of decision point.
+
+Attaching is a separate, later step instead: =org-capture= only ever
+makes a /new/ item; to attach to an /existing/ one, skip capture,
+open the inbox with C-c o, move point to that heading, and run
+=org-attach= there. Same command either way, so "new vs existing" is
+just a question of which heading point is on, not something the
+capture flow needs to ask.
+
+Checked first, the same way C-c c/C-c o were checked against the
+whole repo before binding (see the audit, §64): C-c C-a is free in
+=org-mode-map= specifically. It's taken twice over elsewhere --
+AUCTeX's own =TeX-command-run-all= in LaTeX-mode, and
+=csv-align-fields= in csv-mode -- but keymaps are per-major-mode, so
+neither reaches an Org buffer. Bound explicitly below rather than
+relied on as an assumed Org default, on the same "check, don't
+assume" principle as the rest of this config.
+
+Two settings changed from org-attach's own defaults, deliberately:
+the attachment store is pointed inside =org-directory= itself
+(=~/Dropbox/Org/attachments/=) rather than wherever org-attach would
+otherwise put it, so attachments sync via Dropbox alongside
+=inbox.org= instead of living somewhere unsynced; and the method is
+=mv= rather than the default =cp=, so the copy org-attach picks up
+from =~/Downloads= is moved into place rather than left behind as a
+stale duplicate.
+
+On first real use, tried on a real heading, org-attach did exactly
+what its own source says it does and nothing more: tagged the
+heading =:ATTACH:=, added the =:ID:= property that maps it to its
+attachment folder -- and inserted no link at all. That surprised
+Lindsay's intuition (a natural expectation that attaching a file
+would leave something to click), so rather than leave the tag as the
+only visible trace, a link is now inserted automatically too --
+trading a little efficiency (one extra line written every time) for
+something that reads as obviously correct at a glance, which matters
+more here.
+
+#+name: ljs-config-org-attach
+#+begin_src emacs-lisp
+(use-package org-attach
+  :straight nil
+  :after org
+  :custom
+  ;; Keep attachments inside org-directory so they travel with
+  ;; inbox.org under Dropbox, rather than org-attach's own default
+  ;; location (outside the synced tree).
+  (org-attach-id-dir (expand-file-name "attachments/" org-directory))
+  ;; Move rather than copy: once a file is attached to a heading, the
+  ;; copy in ~/Downloads is just clutter, not a second source of truth.
+  (org-attach-method 'mv)
+  :bind (:map org-mode-map
+         ("C-c C-a" . org-attach))
+  :config
+  ;; `org-attach-attach' always computes an attachment link -- (LINK
+  ;; DESCRIPTION) -- as its return value, but by design never writes
+  ;; it into the buffer itself; ordinarily that link only becomes
+  ;; visible if `org-attach-store-link-p' is set and you separately
+  ;; run `C-c C-l' to pull it in. Confirmed directly (Lindsay's first
+  ;; real attach left only the :ATTACH: tag, no link) that the bare
+  ;; tag alone isn't intuitive, so this inserts the link
+  ;; automatically instead, right after the heading's properties
+  ;; drawer. Deliberately scoped to `org-attach-attach' itself, which
+  ;; is what every dispatcher key for attaching an actual file (a/c/
+  ;; m/l/y) funnels through -- org-attach-url/-new/-buffer are separate
+  ;; entry points, not part of the email-attachment workflow this was
+  ;; built for, so left alone for now rather than guessed at.
+  (defun ljs/org-attach-insert-link (result)
+    "Insert the (LINK DESCRIPTION) RESULT from `org-attach-attach'
+into the entry body, right after its properties drawer, since
+`org-attach-attach' computes this link but never writes it anywhere
+itself."
+    (when result
+      (let ((link (nth 0 result))
+            (desc (nth 1 result)))
+        (save-excursion
+          (org-back-to-heading t)
+          (org-end-of-meta-data t)
+          (insert (format "[[%s][%s]]\n" link desc)))))
+    result)
+  (advice-add 'org-attach-attach :filter-return #'ljs/org-attach-insert-link))
+#+end_src
+
 ** Confirmation Message
 #+begin_src emacs-lisp
 (message "LJS Config Org loaded.")
