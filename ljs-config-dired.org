@@ -1,0 +1,108 @@
+#+TITLE: LJS Config Dired and iBuffer
+#+OPTIONS: toc:nil num:nil ^:nil
+
+This file is part of the [[file:ljs-config.org][Lindsay Stirton's Emacs Configurations]].
+Buffer- and file-listing settings -- Dired extras and iBuffer's
+saved filter groups -- folded in from the old, never-loaded
+ljs46.org (see the audit, §41). None of this is personal or
+machine-specific, so it lives here in the tracked config rather than
+in the per-user override file.
+
+* Dired
+
+#+name: lexical-binding-cookie
+#+begin_src emacs-lisp
+;;; -*- lexical-binding: t; -*-
+#+end_src
+
+** Dired-x
+
+Dired extensions -- adds, among other things, =C-x C-j= (jump to
+Dired at the current file) and =C-x C-q= (Dired's own wdired,
+editable-filename mode already covers the common case, but dired-x's
+extras are worth having loaded).
+
+#+name: dired-x
+#+begin_src emacs-lisp
+(use-package dired-x
+  :straight nil
+  :after dired)
+#+end_src
+
+** Casual Dired
+
+A discoverable, Transient-based (pop-up menu) front end for Dired,
+bound to =C-o=. Kept here with the rest of Dired's own config rather
+than in ljs-config-discoverability.org, where the rest of the
+casual/which-key discoverability work lives -- see the audit, §47/§48.
+
+#+name: casual-dired
+#+begin_src emacs-lisp
+(use-package casual-dired
+  :straight casual
+  :after dired
+  :bind (:map dired-mode-map ("C-o" . casual-dired-tmenu)))
+#+end_src
+
+** Open all marked files at once
+
+Bound to =F= in a Dired buffer: visits every marked file (or the file
+under point, or the next N files with a prefix argument) in one go.
+
+#+name: dired-open-marked-files
+#+begin_src emacs-lisp
+(with-eval-after-load 'dired
+  (defun my-dired-find-file (&optional arg)
+    "Open each of the marked files, or the file under the point, or
+with a prefix arg, the next N files."
+    (interactive "P")
+    (mapc 'find-file (dired-get-marked-files nil arg)))
+  (define-key dired-mode-map "F" 'my-dired-find-file))
+#+end_src
+
+** Stripe Dired and Org table buffers
+
+Alternating row highlighting, via the =stripe-buffer= package.
+
+#+name: stripe-dired
+#+begin_src emacs-lisp
+(use-package stripe-buffer
+  :hook ((dired-mode . stripe-listify-buffer)
+         (org-mode . org-table-stripes-enable)))
+#+end_src
+
+* iBuffer
+
+Manage buffers with =C-x C-b=, grouped by project/mode rather than as
+one flat list.
+
+#+name: ibuffer-custom
+#+begin_src emacs-lisp
+(use-package ibuffer
+  :straight nil
+  :hook (ibuffer-mode . (lambda ()
+                           (ibuffer-auto-mode 1)
+                           (ibuffer-switch-to-saved-filter-groups "home")))
+  :config
+  (setq ibuffer-saved-filter-groups
+        '(("home"
+           ("emacs-config" (or (filename . ".emacs.d")
+                                (filename . "emacs-config")))
+           ("Org" (or (mode . org-mode)
+                      (filename . "OrgMode")))
+           ("Web Dev" (or (mode . html-mode)
+                          (mode . css-mode)))
+           ("Magit" (name . "\*magit"))
+           ("ESS" (mode . ess-mode))
+           ("LaTeX" (mode . latex-mode))
+           ("Help" (or (name . "\*Help\*")
+                       (name . "\*Apropos\*")
+                       (name . "\*info\*"))))))
+  (setq ibuffer-show-empty-filter-groups nil)
+  (setq ibuffer-expert t))
+#+end_src
+
+#+name: message-line
+#+begin_src emacs-lisp
+  (message "LJS Config Dired loaded.")
+#+end_src

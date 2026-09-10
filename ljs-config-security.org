@@ -1,0 +1,129 @@
+#+TITLE: LJS Config Security
+#+OPTIONS: toc:nil num:nil ^:nil
+
+This file is part of the [[file:ljs-config.org][Lindsay Stirton's Emacs Configurations]].
+Everything here assumes GPG itself is already set up on the real
+machine -- a real key, and =gpg-agent= wired to =pinentry-mac= so it
+can actually ask for your passphrase -- none of which this file, or
+anything else in this repo, can do for you; see the audit for the
+Terminal-side steps. Once that's in place, this file covers three
+things GPG buys you inside Emacs: transparent file encryption,
+password management via =pass=, and (documented rather than
+configured, see below) commit signing.
+
+#+name: lexical-binding-cookie
+#+begin_src emacs-lisp
+;;; -*- lexical-binding: t; -*-
+#+end_src
+
+* Encrypted files and credentials (EasyPG)
+
+=epa-file= is part of Emacs itself (the EasyPG Assistant), not a
+package to install -- once enabled, any file whose name ends in
+=.gpg= is encrypted on save and decrypted transparently on open,
+prompting via =gpg-agent=/=pinentry-mac= exactly the way a normal
+=gpg= command line would. This is what makes =~/.authinfo.gpg= (the
+forge/GitHub token file, audit §10 item 14) work with no extra
+Emacs-side config at all -- =auth-source='s own default
+=auth-sources= list already includes it -- and it's equally
+available for any personal note, draft, or other file you want kept
+encrypted at rest: just save it with a =.gpg= extension.
+
+#+name: ljs-config-epa-file
+#+begin_src emacs-lisp
+(use-package epa-file
+  :straight nil
+  :custom
+  (epa-file-select-keys 'silent)
+  :config
+  (epa-file-enable))
+#+end_src
+
+=epa-file-select-keys= set to ='silent= is what actually makes
+=epa-file-encrypt-to= (below) work silently for a genuinely new
+file. Found the hard way: EasyPG only skips the "Select recipients"
+prompt on its own when =epa-file-encrypt-to= is a *buffer-local*
+variable -- a plain top-level =setq= (which is what the per-user
+files use, since the value is the same regardless of which buffer
+you're in) only sets its global default, which doesn't count.
+='silent= takes a different code path in =epa-file-write-region=
+that reads =epa-file-encrypt-to='s value directly, with no
+buffer-local requirement at all -- the fix, not a workaround.
+
+=epg-pinentry-mode= is deliberately left at its default (nil) rather
+than set to ='loopback= -- the default is what lets =gpg-agent=
+invoke =pinentry-mac='s own native macOS dialog for the passphrase,
+which is the whole point of installing =pinentry-mac= in the first
+place. If Emacs ever seems to hang rather than pop a passphrase
+dialog, that's a =gpg-agent.conf=/=pinentry-mac= wiring problem to
+fix outside Emacs, not something to patch here.
+
+New =.gpg= files need to know who to encrypt to. That's a personal
+fact (your own key), so it belongs in your per-user file
+(=ljs46.org=/=ljs.org=, per the audit §41), not here -- the pattern,
+left as an example rather than live code so nothing crashes before
+you've actually generated a key:
+
+#+begin_src emacs-lisp :tangle no
+;; In your per-user file, once you have a real key:
+(setq epa-file-encrypt-to '("your-email@example.com"))
+#+end_src
+
+* Password management (pass / password-store.el)
+
+=pass= (installed via Homebrew, not by this config) is the standard
+Unix password manager -- itself just a thin wrapper around GPG,
+storing each secret as its own small encrypted file under
+=~/.password-store=. =password-store.el= is the Emacs front end for
+it: copy a password to the kill-ring without ever displaying it,
+insert or generate a new one, or edit an entry, all from inside
+Emacs rather than a terminal.
+
+CONFIDENCE CAVEAT, same shape as jinx's and casual's (audit §42/§48):
+=password-store= isn't installed on this machine yet, so this is
+written from its documented interface, not verified against the
+installed source the way most of this project's fixes have been. If
+any of these function names turn out wrong once straight actually
+fetches it, the fix is reading =~/.emacs.d/straight/repos/password-store/=
+directly rather than guessing again.
+
+#+name: ljs-config-password-store
+#+begin_src emacs-lisp
+(use-package password-store
+  :bind (("C-c P c" . password-store-copy)
+         ("C-c P i" . password-store-insert)
+         ("C-c P g" . password-store-generate)
+         ("C-c P e" . password-store-edit)))
+#+end_src
+
+Bound under =C-c P= (capital) rather than the lowercase =C-c p=
+already taken by pandoc-mode's hydra (=ljs-config-text.org=) --
+checked directly against every other binding in this repo first,
+the same discipline as avy's own binding choice
+(=ljs-config-discoverability.org=). Which-key (§48) will show all
+four the moment you press =C-c P= and pause, so there's nothing
+separate to memorise.
+
+Before any of this works, =pass= itself needs initialising once on
+each machine, from Terminal, against your real key -- not something
+this config can do, since it needs to run after a real key exists:
+=pass init <your-key-id-or-email>=. After that, =pass insert
+<name>=/=pass generate <name>= (Terminal) and
+=password-store-insert=/=password-store-generate= (Emacs, the
+bindings above) both read and write the exact same store.
+
+* Git commit signing
+
+Deliberately not configured here at all -- signing is a =git
+config= setting (=user.signingkey=, =commit.gpgsign=), which Magit
+already honours automatically the moment it's set; there's nothing
+for =ljs-config= itself to declare, and no personal key ID belongs
+hardcoded into a tracked file either way. See the audit / README for
+the exact =git config --global= commands to run once you have a real
+key, and for adding the matching public key to GitHub so signed
+commits show as Verified.
+
+#+name: message-line
+#+begin_src emacs-lisp
+  (message "LJS Config Security loaded.")
+#+end_src

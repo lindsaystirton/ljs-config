@@ -71,20 +71,16 @@ that lets you convert easily between many different forms of
 plain-text markup (such as Markdown, HTML, LaTeX, and
 others). [[johnmacfarlanet/pandoc/][Get Pandoc here]].
 
-*0.4 Note your user name* or the name of your computer. If you don't
-know either, open the Terminal application and do
+*0.4 Note your user name*. If you don't know it, open the Terminal
+application and do
 
 #+begin_src sh
  whoami
 #+end_src
 
-for your user name and
-
-#+begin_src sh
- hostname
-#+end_src
-
-for the system name. You will need to know your login name to activate the final customization file properly. You can use the system name as well (or instead).
+You will need this to activate your own personal customisation file
+-- see the "Per-user customisations" note near the end of this
+document.
 
 *** Setup
 
@@ -178,32 +174,19 @@ pull down general ljs-config updates without conflict.
      never have to worry about accidentally =git push='ing up a patch
      with all of your gnus email passwords.
 
-- User specific config :: Your personal configuration information can
-     be stored in a user-specific-config file.  This is the file named
-     after your user with the extensions =.el= or =.org= [2].  If
-     you're unsure of your user name evaluate the following code block
-     to find out.
+- Per-user config :: Personal, machine-specific settings -- a
+     bibliography path, `org-directory' -- go in a file named after
+     your user login name, with a =.org= extension, living alongside
+     this file (=ljs-config/<username>.org=). It's loaded
+     automatically on startup if it exists, and silently skipped if
+     it doesn't. If you're unsure of your user name:
      #+begin_src sh
-       echo $USER
+       whoami
      #+end_src
-       
-     If your configuration starts to feel cramped in a single file
-     (although with the nested headlines of an Org-mode file, that
-     could take a while) and you want to stretch your config's legs,
-     you can also create a directory named after your system user
-     name.  If a such a directory exists, it will be added to the
-     load-path, and any elisp or org-mode w/embedded elisp files in it
-     will be loaded.
-
-- System specific config :: Finally, you may want to configure
-     different settings for different machines. Ljs-config will
-     look for a file named after the current hostname ending in =.el=
-     or =.org= which will allow host-specific configuration.  If
-     you're unsure of your hostname the following can be executed to
-     find out.
-     #+begin_src sh
-       hostname
-     #+end_src
+     =ljs46.org= and =ljs.org=, in this same directory, are Lindsay's
+     own real examples of what one looks like -- see the audit, §41,
+     for the fuller reasoning behind keying this on username rather
+     than on the machine's hostname.
 
 - Installing more elisp libraries :: While my includes
      many useful Emacs lisp libraries, you are bound to find more that
@@ -249,8 +232,8 @@ This section contains all code implementing Lindsay's emacs configuration.
 
 ** ljs-config basics
 
-#+srcname: ljs-config-load-on-startup
-#+srcname: lexical-binding-cookie
+#+name: ljs-config-load-on-startup
+#+name: lexical-binding-cookie
 #+begin_src emacs-lisp
 ;;; -*- lexical-binding: t; -*-
 #+end_src
@@ -294,7 +277,7 @@ here rather than patched around:
    for =org= as satisfied by whatever ships built into Emacs, before
    anything else can ask straight for it.
 
-#+srcname: ljs-config-straight-bootstrap
+#+name: ljs-config-straight-bootstrap
 #+begin_src emacs-lisp
   (defvar bootstrap-version)
   (let ((bootstrap-file
@@ -318,6 +301,38 @@ here rather than patched around:
   ;; straight to go fetch it from emacs-straight/org-mode instead.
   (straight-use-package '(org :type built-in))
   (setq straight-use-package-by-default t)
+#+end_src
+
+*** Fix macOS GUI Emacs's PATH, before anything else needs it
+
+macOS GUI Emacs doesn't inherit the shell's PATH the way Terminal
+does, so anything installed via Homebrew is invisible to Emacs until
+something fixes this. It has to happen this early, right after the
+straight.el bootstrap and before anything else: jinx (next section,
+=ljs-config-spelling.org=) needs =pkg-config= and =enchant= on PATH
+to build its native module the very first time it loads, and
+"Ubiquitous Packages" immediately below already does an
+=executable-find= for Homebrew's =gls=. Previously this lived much
+later, in =ljs-config-appearance.org= (loaded fifth) -- too late for
+either of those, and the reason jinx's build failed with "pkgconf or
+pkg-config not found" the first time it was tried, even though both
+were installed via Homebrew (see the audit, §43). A second, inert
+(=:tangle no=) copy documented as optional in =ljs-config-latex.org=
+is left alone -- it was never actually live.
+
+#+name: ljs-config-exec-path-from-shell
+#+begin_src emacs-lisp
+(use-package exec-path-from-shell
+  :if (memq window-system '(mac ns x))
+  :config
+  ;; macOS GUI Emacs doesn't inherit your shell's PATH by default, so
+  ;; without this, anything installed via Homebrew (or asdf, pyenv,
+  ;; etc) can be invisible to Emacs even though it works fine in
+  ;; Terminal. This also means paths elsewhere in this config never
+  ;; need to hardcode a specific Homebrew prefix (/opt/homebrew vs
+  ;; /usr/local) -- whichever one is on your shell's PATH is the one
+  ;; Emacs will find.
+  (exec-path-from-shell-initialize))
 #+end_src
 
 *** Ubiquitous Packages
@@ -354,10 +369,47 @@ since they are likely to be used in every session
       :straight nil
       :config
       (save-place-mode 1))
+
+    ;; A handful of small, universal preferences folded in from the
+    ;; old, never-actually-loaded ljs46.org (see the audit, §41) --
+    ;; none of these are personal or machine-specific, they're just
+    ;; preferences, true on every machine this config runs on.
+
+    ;; OS X ships BSD ls, which dired wants GNU ls's extra features
+    ;; for. Use it if `brew install coreutils' has put it on PATH;
+    ;; harmless no-op otherwise.
+    (when (executable-find "gls")
+      (setq insert-directory-program (executable-find "gls")))
+
+    ;; M-e sentence navigation without two spaces after a period.
+    (setq sentence-end-double-space nil)
+
+    ;; Keep scrolling to follow compilation output.
+    (setq compilation-scroll-output t)
+
+    ;; Minimize the fringe indicator for empty lines at buffer end.
+    (setq-default indicate-empty-lines nil)
+
+    ;; Comment/uncomment the region with either binding.
+    (global-set-key (kbd "C-c ;") 'comment-or-uncomment-region)
+    (global-set-key (kbd "M-'") 'comment-or-uncomment-region)
+
+    ;; Start `cd'd to home rather than wherever Emacs happened to launch.
+    (cd "~/")
+
+    ;; Was a hand-edited `custom-set-variables' kludge in the old
+    ;; ljs46.org -- that mechanism is meant to be machine-written by
+    ;; Customize, not hand-maintained; these are just plain settings.
+    ;; (The two AUCTeX-specific values from that same kludge,
+    ;; TeX-engine and LaTeX-XeTeX-command, live in
+    ;; ljs-config-latex.org instead, alongside the rest of AUCTeX's
+    ;; configuration.)
+    (setq blink-cursor-mode nil)
+    (add-hook 'text-mode-hook 'text-mode-hook-identify)
 #+end_src
 
 *** Function for loading/compiling ljs-config-*
-#+srcname: ljs-config-load
+#+name: ljs-config-load
 #+begin_src emacs-lisp 
   (defun ljs-config-load (file)
     "This function is to be used to load ljs-config-*.org files."
@@ -365,11 +417,17 @@ since they are likely to be used in every session
                                            dotfiles-dir)))
 #+end_src
 
-#+source: ljs-config-compile
+#+name: ljs-config-compile
 #+begin_src emacs-lisp
   (defun ljs-config-compile (&optional arg)
     "Tangle and Byte compile all ljs-config files."
     (interactive "P")
+    ;; `age' is seconds-elapsed-since-modified, so a *larger* number
+    ;; means *older* -- `(> (age file) (age el-file))' below reads as
+    ;; "the .org source is older than the .el", i.e. the .el is already
+    ;; up to date, which is the correct condition to *skip* recompiling.
+    ;; (Double-checked after an external review misread this comparison
+    ;; as backwards -- it isn't.)
     (cl-flet ((age (file)
                 (float-time
                  (time-subtract (current-time)
@@ -397,10 +455,10 @@ since they are likely to be used in every session
 
 
 
-*** LJS Emacs Config  aspell (Spell checking with flyspell)
-aspell workaround in [[file:ljs-config-aspell.org][ljs-config-aspell]]
+*** LJS Config Spelling
+Fast, syntax-aware spell-checking via jinx -- located in [[file:ljs-config-spelling.org][ljs-config-spelling]]
 #+begin_src emacs-lisp
-  (ljs-config-load "./ljs-config/ljs-config-aspell.org")
+  (ljs-config-load "./ljs-config/ljs-config-spelling.org")
 #+end_src
 
 
@@ -410,7 +468,7 @@ aspell workaround in [[file:ljs-config-aspell.org][ljs-config-aspell]]
 
 [[http://elpa.gnu.org/][Emacs List Package Archive]] (ELPA).
 
-#+srcname: ljs-config-package
+#+name: ljs-config-package
 #+begin_src emacs-lisp 
 
   ;; package.el retired here as of Phase 2 of the straight.el migration
@@ -428,59 +486,69 @@ aspell workaround in [[file:ljs-config-aspell.org][ljs-config-aspell]]
 
 #+end_src
 
-#+srcname: ljs-config-load-packages
+#+name: ljs-config-load-packages
 #+begin_src emacs-lisp
     (ljs-config-load "./ljs-config/ljs-config-packages.org")
  #+end_src
 
  #+results: ljs-config-packages
 : loaded ljs-config-packages.el
-#+end_src
 
 
 *** hash keybinding
 
 Putting this here for now. Eventually we will have ljs-org-bindings. 
 
-#+srcname: ljs-config-osX-workaround
+#+name: ljs-config-osX-workaround
 #+begin_src emacs-lisp 
- (global-set-key (kbd "M-3") '(lambda () (interactive) (insert "#")))
+ (global-set-key (kbd "M-3") (lambda () (interactive) (insert "#")))
 #+end_src
 
+*** Per-user customisations
 
+The rest of this config is identical for anyone who clones it. This
+is the one place that isn't: a small, tracked, per-username override
+file -- =ljs46.org= for the MacBook and office iMac, =ljs.org= for
+the Mac Mini, keyed on =user-login-name= rather than the machine's
+hostname, since that's the identity that actually varies here (the
+same person, three machines, two different OS usernames -- see the
+audit, §41, for the fuller reasoning). Anything that names a real
+location on disk -- a bibliography path, `org-directory' -- lives in
+whichever of these two files matches the machine you're on; nothing
+else should.
 
-*** Work around OS X bug
+This mechanism previously existed (as =user-specific-config=/
+=user-specific-literate-config=) but was broken two ways at once: it
+pointed at the wrong path (missing the =ljs-config/= directory
+component, so it looked for =~/.emacs.d/ljs46.org= when the file
+actually lives at =~/.emacs.d/ljs-config/ljs46.org=), and nothing
+ever actually loaded it even if the path had been right. A parallel
+hostname-keyed slot (=system-specific-config=) existed alongside it
+for machine-specific rather than person-specific settings -- removed
+here rather than fixed, since nothing turned out to need it: the one
+thing that genuinely varies by screen rather than by account (the
+initial frame size) is now detected dynamically instead (see
+=ljs-config-appearance.org=), so there's nothing left for a
+hostname-keyed file to hold.
 
-Work around a bug on OS X where system-name is FQDN (Fully Qualified
-Domain Name)
-#+srcname: ljs-config-osX-workaround
+On someone else's machine, or a fresh clone before you've made your
+own =<your-username>.org=, this is silently skipped -- see the
+README.
+
+#+name: ljs-config/user-setup
 #+begin_src emacs-lisp 
-  (if (eq system-type 'darwin)
-      (setq system-name (car (split-string system-name "\\."))))
+  (setq user-specific-config (concat dotfiles-dir "ljs-config/" user-login-name ".el")
+        user-specific-literate-config (concat dotfiles-dir "ljs-config/" user-login-name ".org"))
+  (when (file-exists-p user-specific-literate-config)
+    (ljs-config-load user-specific-literate-config))
 #+end_src
 
-*** System/User specific customizations
-
-You can keep system- or user-specific customizations here in either
-raw emacs-lisp files or as embedded elisp in org-mode files (as done
-in this document).
-
-#+srcname: ljs-config/system-setup
-#+begin_src emacs-lisp 
-  (setq system-specific-config (concat dotfiles-dir system-name ".el")
-        system-specific-literate-config (concat dotfiles-dir system-name ".org")
-        user-specific-config (concat dotfiles-dir user-login-name ".el")
-        user-specific-literate-config (concat dotfiles-dir user-login-name ".org")
-        user-specific-dir (concat dotfiles-dir user-login-name))
-  (add-to-list 'load-path user-specific-dir)
-#+end_src
-`
 You can keep elisp source in the =src= directory.  Packages loaded
 from here will override those installed by ELPA.  This is useful if
 you want to track the development versions of a project, or if a
 project is not in elpa.
 
-#+srcname: ljs-config-load-elisp-dir
+#+name: ljs-config-load-elisp-dir
 #+begin_src emacs-lisp
 (setq elisp-source-dir (concat dotfiles-dir "src"))
 (add-to-list 'load-path elisp-source-dir)
@@ -493,29 +561,43 @@ ljs-config.  All of the code in this section should be loaded.
 
 *** LJS Config Defuns
 LJS Config function definitions in [[file:ljs-config-defuns][ljs-comfig-defuns]].
-#+srcname: ljs-config-load-defuns
+#+name: ljs-config-load-defuns
 #+begin_src emacs-lisp
 (ljs-config-load "./ljs-config/ljs-config-defuns.org")
 #+end_src
 
+*** LJS Config Dired
+Buffer/file listing -- located in [[file:ljs-config-dired.org][ljs-config-dired]]
+#+name: ljs-config-load-dired
+#+begin_src emacs-lisp
+  (ljs-config-load "./ljs-config/ljs-config-dired.org")
+#+end_src
+
 *** LJS Config Appearance
 [[file:ljs-config-appearance.org][ljs-config-appearance]].
-#+srcname: ljs-config-load-appearance
+#+name: ljs-config-load-appearance
 #+begin_src emacs-lisp
   (ljs-config-load "./ljs-config/ljs-config-appearance.org")
 #+end_src
 
 *** LJS Config Completion
 [[file:ljs-config-completion.org][ljs-config-completion]].
-#+srcname: ljs-config-load-completion
+#+name: ljs-config-load-completion
 #+begin_src emacs-lisp
   (ljs-config-load "./ljs-config/ljs-config-completion.org")
+#+end_src
+
+*** LJS Config Discoverability
+which-key and casual -- located in [[file:ljs-config-discoverability.org][ljs-config-discoverability]]
+#+name: ljs-config-load-discoverability
+#+begin_src emacs-lisp
+  (ljs-config-load "./ljs-config/ljs-config-discoverability.org")
 #+end_src
 
 *** LJS Config Bibliography
 Located in [[file:ljs-config-bibliography.org][ljs-config-bibliography]]
 
-#+srcname: ljs-config-load-bibliography
+#+name: ljs-config-load-bibliography
 #+begin_src emacs-lisp
   (ljs-config-load "./ljs-config/ljs-config-bibliography.org")
 #+end_src
@@ -523,7 +605,7 @@ Located in [[file:ljs-config-bibliography.org][ljs-config-bibliography]]
 *** LJS Config LaTeX
 Located in [[file:ljs-config-latex.org][ljs-config-latex]]
 
-#+srcname: ljs-config-load-latex
+#+name: ljs-config-load-latex
 #+begin_src emacs-lisp
   (ljs-config-load "./ljs-config/ljs-config-latex.org")
 #+end_src
@@ -543,10 +625,19 @@ Located in [[file:ljs-config-text.org][ljs-config-text]]
 #+end_src
 
 
+*** LJS Config Security
+GPG-backed file encryption, password-store, and (documented, not
+configured) commit signing -- located in [[file:ljs-config-security.org][ljs-config-security]]
+
+#+name: ljs-config-load-security
+#+begin_src emacs-lisp
+  (ljs-config-load "./ljs-config/ljs-config-security.org")
+#+end_src
+
 *** LJS Config Git
 Located in [[file:ljs-config-git.org][ljs-config-git]]
 
-#+srcname: ljs-config-load-git
+#+name: ljs-config-load-git
 #+begin_src emacs-lisp
   (ljs-config-load "./ljs-config/ljs-config-git.org")
 #+end_src
@@ -555,23 +646,23 @@ Located in [[file:ljs-config-git.org][ljs-config-git]]
 *** LJS Config Org
 Located in [[file:ljs-config-org.org][ljs-config-org]]
 
-#+srcname: ljs-config-load-org
+#+name: ljs-config-load-org
 #+begin_src emacs-lisp
   (ljs-config-load "./ljs-config/ljs-config-org.org")
 #+end_src
 
-*** *LJS Config Eshell
-Located in [[file:ljs-config-eshell.org][ljs-config-eshell]]
+*** *LJS Config Shell
+Located in [[file:ljs-config-shell.org][ljs-config-shell]] -- eshell and vterm.
 
-#+srcname: ljs-config-load-eshell
+#+name: ljs-config-load-shell
 #+begin_src emacs-lisp
-  (ljs-config-load "./ljs-config/ljs-config-eshell.org")
+  (ljs-config-load "./ljs-config/ljs-config-shell.org")
 #+end_src
 
 *** LJS Config Python
 Located in [[ljs-config-python.org][ljs-config-python]]
 
-#+srcname: ljs-config-load-python
+#+name: ljs-config-load-python
 #+begin_src emacs-lisp
   (ljs-config-load "./ljs-config/ljs-config-python.org")
 #+end_src
@@ -579,7 +670,7 @@ Located in [[ljs-config-python.org][ljs-config-python]]
 *** LJS Config Lisp
 Located in [[ljs-config-lisp.org][ljs-config-lisp]]
 
-#+srcname: ljs-config-load-lisp
+#+name: ljs-config-load-lisp
 #+begin_src emacs-lisp
   (ljs-config-load "./ljs-config/ljs-config-lisp.org")
 #+end_src
@@ -587,7 +678,7 @@ Located in [[ljs-config-lisp.org][ljs-config-lisp]]
 
 
 
-#+source: message-line
+#+name: message-line
 #+begin_src emacs-lisp
   (message "LJS Config main file loaded.")
 #+end_src

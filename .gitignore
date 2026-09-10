@@ -1,4 +1,8 @@
 ljs-config*.el
+# Tangled output of the per-user override files (ljs46.org, ljs.org)
+# -- the .org sources are tracked, these generated .el files aren't.
+ljs46.el
+ljs.el
 *.el~
 *.org~
 /auto-save-list/

@@ -15,8 +15,8 @@ This file provides settings for ESS and R.
 
  Smart parens, and uses Meta-up to go to previous command. 
 
-#+source: load-ess
-#+srcname: lexical-binding-cookie
+#+name: load-ess
+#+name: lexical-binding-cookie
 #+begin_src emacs-lisp
 ;;; -*- lexical-binding: t; -*-
 #+end_src
@@ -42,7 +42,7 @@ This file provides settings for ESS and R.
 ** Use Polymode 
 Polymode is a package that supports multiple modes inside a single buffer. It is aimed particularly at literate programming approaches and supports, e.g., R and markdown in a single =.Rmd= file. So it is very useful with knitr in R.
 
-#+source: Polymode
+#+name: Polymode
 #+begin_src emacs-lisp 
 (use-package poly-R)
 
@@ -61,7 +61,7 @@ Polymode is a package that supports multiple modes inside a single buffer. It is
  FelipeCsaszar. Adapted to double the window with when R is opened in
  a frame on the right.
  
-#+src-name: ess-shift-enter
+#+name: ess-shift-enter
 #+begin_src emacs-lisp
 (defun my-ess-start-R ()
   "Start R and split the window horizontally, doubling the frame width."
@@ -86,10 +86,10 @@ Polymode is a package that supports multiple modes inside a single buffer. It is
 	(call-interactively 'ess-eval-region)
       (call-interactively 'ess-eval-line-and-step)))
   (add-hook 'ess-mode-hook
-	    '(lambda()
+	    (lambda()
 	       (local-set-key [(shift return)] 'my-ess-eval)))
   (add-hook 'inferior-ess-mode-hook
-	    '(lambda()
+	    (lambda()
 	       (local-set-key [C-up] 'comint-previous-input)
 	       (local-set-key [C-down] 'comint-next-input))) 
   (require 'ess-site)
@@ -124,7 +124,7 @@ it); the automatic kill-buffer-hook below calls the shared
 =ljs/frame-restore-original-dimensions= directly instead, which is
 the behaviour the section heading actually describes.
 
-#+src-name: ess-restore-frame-dimensions
+#+name: ess-restore-frame-dimensions
 #+begin_src emacs-lisp
 (defun ljs/ess-restore-or-restart-R ()
   "Restore the pre-R frame width, or restart R if called from *R* itself."
@@ -144,7 +144,7 @@ the behaviour the section heading actually describes.
 
 Assignment in ESS is shift-minus; by extension we'll use M-shift-minus for inserting the `%>%` operator.
 
-#+src-name: ess-pipe-shortcut
+#+name: ess-pipe-shortcut
 #+begin_src emacs-lisp
 
 (defun my_pipe_operator ()
@@ -160,7 +160,7 @@ Assignment in ESS is shift-minus; by extension we'll use M-shift-minus for inser
 
 ** Add a Keyboard Shortcut for Rmd chunks
 
-#+src-name: rmd-chunk-insert
+#+name: rmd-chunk-insert
 #+BEGIN_SRC emacs-lisp
 
 ;;;Insert new chunk for Rmarkdown
@@ -179,7 +179,7 @@ Assignment in ESS is shift-minus; by extension we'll use M-shift-minus for inser
 ** Uniquify Buffer Names
 This is useful for when you have buffers with many similar names, as when there are various open files from different folders named =analysis.R= or similar. 
 
-#+source: uniquify
+#+name: uniquify
 #+begin_src emacs-lisp
   (use-package uniquify :straight nil
   :config
@@ -189,7 +189,7 @@ This is useful for when you have buffers with many similar names, as when there 
 ** lintr and flycheck
 [[https://github.com/jimhester/lintr][lintr]] checks your R code for style and syntax errors. It's an R library that integrates with [[http://www.flycheck.org][flycheck]]. You must install lintr from R. Flycheck can also check code in many other languages. You will need to install linters for them separately as well. See the flycheck documentation for details.
 
-#+source: lintr
+#+name: lintr
 #+begin_src emacs-lisp 
   (add-hook 'after-init-hook #'global-flycheck-mode)
     (add-hook 'ess-mode-hook
@@ -206,7 +206,7 @@ This is useful for when you have buffers with many similar names, as when there 
 * Stan Mode Configurations
 
 ** Install and Configure Stan Mode
-#+srcname: ljs-config-stan-mode
+#+name: ljs-config-stan-mode
 #+begin_src emacs-lisp
 (use-package stan-mode
   :mode ("\\.stan\\'" . stan-mode)
@@ -242,7 +242,7 @@ completion-at-point-functions mechanism via Cape's
 =cape-company-to-capf=, registered buffer-locally so it only applies
 inside stan-mode buffers, not globally.
 
-#+srcname: ljs-config-company-stan
+#+name: ljs-config-company-stan
 #+begin_src emacs-lisp 
   (use-package company-stan
     :after stan-mode
@@ -255,13 +255,13 @@ inside stan-mode buffers, not globally.
 #+end_src
 
 ** Install and Configure stan-snippets
-#+srcname: ljs-config-stan-snippets
+#+name: ljs-config-stan-snippets
 #+begin_src emacs-lisp 
   (use-package stan-snippets)
 #+end_src
 
 ** Install and Configure Flycheck for Stan
-#+srcname: ljs-config-flycheck-stan
+#+name: ljs-config-flycheck-stan
 #+begin_src emacs-lisp 
 (use-package flycheck-stan
   ;; Add a hook to setup `flycheck-stan' upon `stan-mode' entry
@@ -278,7 +278,7 @@ inside stan-mode buffers, not globally.
 #+end_src
 
 ** Configure Imenu for Stan
-#+srcname: ljs-config-imenu-stan
+#+name: ljs-config-imenu-stan
 #+begin_src emacs-lisp 
   (add-hook 'stan-mode-hook
             (lambda ()
@@ -286,7 +286,7 @@ inside stan-mode buffers, not globally.
 #+end_src
 
 ** Configure Key Bindings for Stan Commands
-#+srcname: ljs-config-key-bindings-stan
+#+name: ljs-config-key-bindings-stan
 #+begin_src emacs-lisp 
   (add-hook 'stan-mode-hook
             (lambda ()
@@ -296,6 +296,73 @@ inside stan-mode buffers, not globally.
 ** Rainbow delimiters in Stan-mode
 #+begin_src emacs-lisp
 (add-hook 'stan-mode-hook #'rainbow-delimiters-mode)
+#+end_src
+
+** Org-babel execution (ob-stan)
+
+No package ships an ob-stan for a modern Emacs/Org -- confirmed (see
+the audit, §55): not bundled with Org itself (unlike R), not in the
+actively-maintained org-contrib, not on MELPA. The only one that ever
+existed lived in the long-retired =org-plus-contrib= bundle. This
+reimplements it from that original's own design (read directly from
+its source, not guessed), because the design is already right for
+what Stan actually needs: a Stan block on its own has no data or
+sampler settings, so executing one can never sample a model -- it can
+only produce a model artifact (a =.stan= file, or a CmdStan-compiled
+executable) for a /following/ R (rstan) or shell (CmdStan CLI) block
+to actually run. A =:file= header argument is therefore required,
+the same convention =ob-ditaa=/=ob-dot=/=ob-gnuplot= use for their own
+file-producing blocks -- the function itself returns nil and lets
+org-babel's standard =:results file= handling build the
+=[[file:...]]= link, which is what makes the result usable as a
+variable in the next block down. One improvement over the original:
+this actually checks whether the CmdStan compile succeeded, rather
+than silently leaving no executable behind on failure.
+
+#+name: ljs-config-ob-stan
+#+begin_src emacs-lisp
+  (defcustom org-babel-stan-cmdstan-directory
+    (car (last (sort (file-expand-wildcards
+                       (expand-file-name "~/.cmdstan/cmdstan-*"))
+                      #'string<)))
+    "CmdStan installation directory used by ob-stan to compile Stan blocks.
+
+  Auto-detected from ~/.cmdstan/cmdstan-* (the highest-numbered version,
+  if more than one is installed) -- override directly if that picks the
+  wrong one, CmdStan lives somewhere else, or you'd rather ob-stan just
+  dump `.stan' files without compiling (set to nil)."
+    :group 'org-babel
+    :type '(choice (directory :tag "Compilation directory")
+                   (const :tag "Dump to a file" nil)))
+
+  (defvar org-babel-default-header-args:stan
+    '((:results . "file"))
+    "Stan blocks produce a file artifact, not a printed value.")
+
+  (defun org-babel-execute:stan (body params)
+    "Generate a Stan model file (and optionally compile it) from BODY.
+
+  A :file header argument is required. When
+  `org-babel-stan-cmdstan-directory' is set and FILE has no `.stan'
+  extension, BODY is saved to FILE.stan and compiled via CmdStan's own
+  `make' into an executable at FILE; otherwise BODY is written to FILE
+  verbatim. Either way this never samples the model -- see the audit,
+  §59, for why that's a following R/rstan or shell/CmdStan-CLI block's
+  job, not this one's."
+    (let ((file (expand-file-name
+                 (or (cdr (assq :file params))
+                     (user-error "Set a :file header argument to execute a Stan block")))))
+      (if (or (not org-babel-stan-cmdstan-directory)
+              (string-match-p "\\.stan\\'" file))
+          (with-temp-file file (insert body))
+        (with-temp-file (concat file ".stan") (insert body))
+        (let ((default-directory org-babel-stan-cmdstan-directory)
+              (buf (get-buffer-create "*ob-stan-compile*")))
+          (with-current-buffer buf (erase-buffer))
+          (unless (zerop (call-process "make" nil buf t file))
+            (pop-to-buffer buf)
+            (error "CmdStan compile failed for %s -- see *ob-stan-compile*" file))))
+      nil))
 #+end_src
 
 

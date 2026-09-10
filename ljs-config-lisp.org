@@ -5,8 +5,8 @@ Part of [[file:ljs-config.org][LJS-Config]]. Borrows even more heavily than usua
 Healy's [[https://github.com/kjhealy/emacs-starter-kit][emacs starter-kit for the social sciences]].
 
 ** Define keys
-#+srcname: starter-kit-define-lisp-keys
-#+srcname: lexical-binding-cookie
+#+name: starter-kit-define-lisp-keys
+#+name: lexical-binding-cookie
 #+begin_src emacs-lisp
 ;;; -*- lexical-binding: t; -*-
 #+end_src
@@ -50,7 +50,7 @@ Healy's [[https://github.com/kjhealy/emacs-starter-kit][emacs starter-kit for th
 			'(("(\\|)" . 'esk-paren-face)))
 #+end_src
 
-#+source: message-line
+#+name: message-line
 #+begin_src emacs-lisp
   (message "LJS Config Lisp loaded.")
 #+end_src

@@ -10,8 +10,8 @@ Markdown and Pandoc, as well as spellchecking and line-wrapping.
 Sane line wrapping and scrolling for long documents and
 papers. Plus a function for removing any hard-returns in a document.
 
-#+srcname: line-modes
-#+srcname: lexical-binding-cookie
+#+name: line-modes
+#+name: lexical-binding-cookie
 #+begin_src emacs-lisp
 ;;; -*- lexical-binding: t; -*-
 #+end_src
@@ -45,8 +45,10 @@ papers. Plus a function for removing any hard-returns in a document.
   ;; no external app or browser tab involved, and it updates live as
   ;; you edit. Ships with markdown-mode itself; nothing to install.
   ;; Requires an external markdown-to-HTML converter on `exec-path'
-  ;; (`markdown-command', default "markdown") -- Pandoc works fine as
-  ;; a drop-in if that's what's installed.
+  ;; (`markdown-command') -- explicitly set to pandoc below, rather
+  ;; than left at the default "markdown" tool, since pandoc's own
+  ;; Markdown parsing handles tables, footnotes, and citations that
+  ;; the plainer default converter doesn't.
   ;;
   ;; The eww preview window opens doubled/split-right, the same way a
   ;; PDF does: `markdown-split-window-direction' defaults to `any',
@@ -63,7 +65,22 @@ papers. Plus a function for removing any hard-returns in a document.
            ("\\.markdown\\'" . markdown-mode)
            ("\\.MarkDown\\'" . markdown-mode)
            ("\\.Markdown\\'" . markdown-mode))
+    :custom
+    (markdown-command "pandoc")
     :hook (markdown-mode . latex-unicode-simplified))
+
+  ;; A Pandoc conversion menu for Markdown and LaTeX buffers, folded
+  ;; in from the old, never-loaded ljs46.org (see the audit, §41).
+  ;; Also completes a dangling reference already live in
+  ;; ljs-config-latex.org's RefTeX setup (:hook (pandoc-mode .
+  ;; turn-on-reftex)) -- that hook has had nothing to attach to since
+  ;; ljs46.org stopped loading, since pandoc-mode itself was never
+  ;; declared anywhere live until now.
+  (use-package pandoc-mode
+    :hook ((markdown-mode . pandoc-mode)
+           (TeX-mode . pandoc-mode)
+           (pandoc-mode . pandoc-load-default-settings))
+    :bind ("C-c p" . pandoc-main-hydra/body))
 
 #+end_src
 
@@ -97,7 +114,7 @@ In CSV mode, the following commands are available:
 
 
 
-#+src_name: csv-mode
+#+name: csv-mode
 #+begin_src emacs-lisp
 (use-package csv-mode
   :mode ("\\.[Cc][Ss][Vv]\\'" . csv-mode)
@@ -124,7 +141,7 @@ In CSV mode, the following commands are available:
 #+end_src
 
 
-#+source: message-line
+#+name: message-line
 #+begin_src emacs-lisp
   (message "Starter Kit Text loaded.")
 #+end_src

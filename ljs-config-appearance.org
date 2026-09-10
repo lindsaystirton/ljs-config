@@ -9,8 +9,8 @@ This file is part of the [[file:ljs-config.org][Lindsay Stirton's Emacs Configur
 
 Basic setting preferences, including size and positioning of emacs frames. 
 
-#+srcname: ljs-config-appearance-startup
-#+srcname: lexical-binding-cookie
+#+name: ljs-config-appearance-startup
+#+name: lexical-binding-cookie
 #+begin_src emacs-lisp
 ;;; -*- lexical-binding: t; -*-
 #+end_src
@@ -21,14 +21,50 @@ Basic setting preferences, including size and positioning of emacs frames.
   (setq inhibit-startup-message t)
   (add-to-list 'initial-frame-alist '(top . 0))
   (add-to-list 'initial-frame-alist '(left . 0))
-  (add-to-list 'initial-frame-alist '(width . 85))
-  (add-to-list 'initial-frame-alist '(height . 54))
   (scroll-bar-mode -1)
   (tool-bar-mode -1)
   (tooltip-mode -1)
   (set-fringe-mode 10)
   (setq visible-bell t)
   (electric-indent-mode 1))
+#+end_src
+
+The initial frame's width and height used to be hardcoded here (85
+columns x 54 rows) -- tuned specifically to Lindsay's 13.3-inch
+MacBook screen, and wrong on the office iMac's larger display or any
+other machine (see the audit, §41). Sized dynamically instead, the
+same way `ljs/frame-double-width' below sizes a split-right window:
+from the real screen, via `frame-monitor-workarea', rather than a
+guess. This has to run from `window-setup-hook' rather than going
+into `initial-frame-alist' directly, since there's no frame yet to
+ask `frame-monitor-workarea' about until the first one exists.
+
+#+name: ljs-config-appearance-dynamic-initial-size
+#+begin_src emacs-lisp
+(defun ljs/frame-set-initial-size (&optional frame)
+  "Size the initial frame from the real screen, once it exists.
+Just under half the available screen width -- comfortably fits an
+80-column buffer with room to spare on any screen size, unlike a
+number tuned to one specific laptop, while leaving room to view
+another window/app alongside it. `ljs/frame-double-width' below
+clamps a doubled frame to the monitor's full workarea width, so
+starting from exactly half would put the doubled frame's right
+edge, scrollbar included, flush against the physical screen edge;
+starting a little under half leaves it some breathing room instead.
+90% of the available screen height: `frame-monitor-workarea'
+already excludes the menu bar and Dock on macOS, so this fills most
+of the screen vertically with a little headroom to spare, well
+short of ever overlapping the Dock."
+  (let ((frame (or frame (selected-frame))))
+    (when (display-graphic-p frame)
+      (let* ((workarea (frame-monitor-workarea frame))
+             (mon-width-px (nth 2 workarea))
+             (mon-height-px (nth 3 workarea))
+             (cols (max 80 (floor (* 0.47 mon-width-px) (frame-char-width frame))))
+             (rows (max 40 (floor (* 0.9 mon-height-px) (frame-char-height frame)))))
+        (set-frame-size frame cols rows)))))
+
+(add-hook 'window-setup-hook #'ljs/frame-set-initial-size)
 #+end_src
 
 
@@ -94,7 +130,7 @@ do so, enter M-x ef-themes-toggle.
 
 
 
- #+srcname: ljs-config-appearance-themes
+ #+name: ljs-config-appearance-themes
 #+begin_src emacs-lisp
    ;; NOTE: :ensure t added because Emacs 31 tightened its face-inheritance
    ;; checks (see Emacs bug#79672) and the modus-themes snapshot bundled
@@ -108,9 +144,36 @@ do so, enter M-x ef-themes-toggle.
      (load-theme 'modus-vivendi t))
 #+end_src
 
+*** Heading sizes in Org and LaTeX buffers
+
+Folded in from the old, never-loaded ljs46.org (see the audit, §41).
+AUCTeX defaults to a flat, sans-serif look for LaTeX sectioning
+commands; this restores a visual hierarchy, and gives Org's own
+heading levels a matching size progression.
+
+#+name: ljs-config-appearance-heading-sizes
+#+begin_src emacs-lisp
+(add-hook 'latex-mode-hook
+          (lambda ()
+            (set-face-attribute 'font-latex-sectioning-5-face nil :inherit nil :foreground "#b58900")
+            (set-face-attribute 'font-latex-sectioning-0-face nil :height 3)
+            (set-face-attribute 'font-latex-sectioning-1-face nil :height 2)
+            (set-face-attribute 'font-latex-sectioning-2-face nil :height 1.5)
+            (set-face-attribute 'font-latex-sectioning-3-face nil :height 1.2)
+            (set-face-attribute 'font-latex-sectioning-4-face nil :height 1.0)))
+
+(add-hook 'org-mode-hook
+          (lambda ()
+            (set-face-attribute 'org-level-1 nil :height 1.5)
+            (set-face-attribute 'org-level-2 nil :height 1.2)
+            (set-face-attribute 'org-level-3 nil :height 1.1)
+            (set-face-attribute 'org-level-4 nil :height 1.1)
+            (set-face-attribute 'org-level-5 nil :height 1.1)))
+#+end_src
+
 ** All the icons
 
-#+srcname: ljs-config-appearance-all-the-icons
+#+name: ljs-config-appearance-all-the-icons
 #+begin_src emacs-lisp
 (use-package all-the-icons
   :if (display-graphic-p))
@@ -118,7 +181,7 @@ do so, enter M-x ef-themes-toggle.
 
 ** Doom modeline
 
-#+srcname: ljs-config-appearance-doom-modeline
+#+name: ljs-config-appearance-doom-modeline
 #+begin_src emacs-lisp
  ;; NOTE: this block used to close the use-package form one paren too
  ;; early (right after :custom), leaving `(doom-modeline-mode 1)' and the
@@ -177,21 +240,28 @@ The pdf-tools packages provides an emacs pdf viewer that replaces the standard d
   After making changes, restart Emacs to apply the configuration.
   
 
-#+begin_src emacs-lisp
-(use-package exec-path-from-shell
-  :if (memq window-system '(mac ns x))
-  :config
-  ;; macOS GUI Emacs doesn't inherit your shell's PATH by default, so
-  ;; without this, anything installed via Homebrew (or asdf, pyenv,
-  ;; etc) can be invisible to Emacs even though it works fine in
-  ;; Terminal. This also means paths below never need to hardcode a
-  ;; specific Homebrew prefix (/opt/homebrew vs /usr/local) -- whichever
-  ;; one is on your shell's PATH is the one Emacs will find.
-  (exec-path-from-shell-initialize))
+=exec-path-from-shell= itself now lives much earlier, right after
+the straight.el bootstrap in =ljs-config.org= -- it has to run
+before anything that might shell out to a Homebrew tool during its
+own package installation, which turned out to include things loaded
+well before this file (see the audit, §43).
 
+#+begin_src emacs-lisp
 (use-package pdf-tools
   :custom
   (pdf-tools-handle-upgrades t) ;; don't prompt on every epdfinfo version bump
+  ;; pdf-view.el's own top-level code (not doom-modeline's) unconditionally
+  ;; probes whether the current font set can display two specific unicode
+  ;; glyphs (a print/eject symbol and a crescent moon, for its own
+  ;; mode-line lighter) every single time pdf-tools loads -- which, since
+  ;; this use-package block has no :defer, is every startup. That font
+  ;; probe (char-displayable-p) is the exact call crashing Emacs outright
+  ;; (EXC_BAD_ACCESS/SIGABRT, a pointer-authentication failure -- real
+  ;; memory corruption, not just a normal "no font found" result) -- see
+  ;; the audit, §57. pdf-view.el's own author anticipated this could be
+  ;; slow/risky and ships this off-switch for exactly that reason; setting
+  ;; it nil skips the probe (and the mode-line lighter) entirely.
+  (pdf-view-use-unicode-ligther nil)
   :config
   ;; Homebrew's zlib/poppler are "keg-only" and won't be found by
   ;; pkg-config without this, which pdf-tools-install needs the first
@@ -241,7 +311,7 @@ copy). Previously this was reimplemented four separate times across
 four files with two different naming conventions; see the audit,
 §11C/§25.
 
-#+srcname: ljs-config-appearance-split-right-resize
+#+name: ljs-config-appearance-split-right-resize
 #+begin_src emacs-lisp
 (defvar ljs/original-frame-width nil
   "Variable to store the original frame width.")
@@ -284,20 +354,53 @@ A `display-buffer-alist' action function -- registered below for
 both PDF buffers and the Markdown live-preview's eww buffer, so
 there's one canonical place for this rather than a copy per
 consumer. Originally lived in ljs-config-org.org as
-`ljs/display-pdf-to-right', PDF-only."
+`ljs/display-pdf-to-right', PDF-only.
+
+The window this creates is tagged with the `ljs/doubled-frame'
+window parameter, so the `quit-window'/`delete-window' advice below
+can notice when it goes away and restore the frame -- see the audit,
+§30, on why a plain `kill-buffer-hook' (as used for PDF/R elsewhere
+in this config) only catches half the ways this window can close."
   (ljs/frame-remember-and-double (window-frame (selected-window)))
-  (display-buffer-in-direction
-   buffer
-   (append alist '((direction . right) (window-width . 0.5)))))
+  (let ((window (display-buffer-in-direction
+                 buffer
+                 (append alist '((direction . right) (window-width . 0.5))))))
+    (when window
+      (set-window-parameter window 'ljs/doubled-frame t))
+    window))
 
 (add-to-list 'display-buffer-alist '("\\.pdf\\'" . (ljs/display-buffer-doubled-right)))
 (add-to-list 'display-buffer-alist '("\\`\\*eww\\*\\'" . (ljs/display-buffer-doubled-right)))
 
 (global-set-key (kbd "C-x 3") 'ljs/split-right-and-resize-frame)
 (global-set-key (kbd "C-x 1") 'ljs/frame-restore-original-dimensions)
+
+;; Closing the *window* `ljs/display-buffer-doubled-right' created --
+;; `q' (pdf-tools' and eww's own binding, `quit-window') or `C-x 0'
+;; (`delete-window') -- without killing its buffer used to leave the
+;; frame stuck doubled, since only a `kill-buffer-hook' was wired up
+;; (PDF: ljs-config-latex.org; R: ljs-config-stats.org). Advising
+;; both functions, rather than adding a third bespoke hook, covers
+;; PDF and eww uniformly with the same mechanism. See the audit, §30.
+(defun ljs/window-tagged-doubled-p (window)
+  "Non-nil if WINDOW carries the `ljs/doubled-frame' parameter."
+  (and (window-live-p window)
+       (window-parameter window 'ljs/doubled-frame)))
+
+(define-advice quit-window (:around (orig-fn &optional kill window) ljs/restore-on-doubled-window-close)
+  "Restore the frame if the window `quit-window' is closing is a doubled one."
+  (let ((tagged (ljs/window-tagged-doubled-p (or window (selected-window)))))
+    (prog1 (funcall orig-fn kill window)
+      (when tagged (ljs/frame-restore-original-dimensions)))))
+
+(define-advice delete-window (:around (orig-fn &optional window) ljs/restore-on-doubled-window-close)
+  "Restore the frame if the window `delete-window' is closing is a doubled one."
+  (let ((tagged (ljs/window-tagged-doubled-p (or window (selected-window)))))
+    (prog1 (funcall orig-fn window)
+      (when tagged (ljs/frame-restore-original-dimensions)))))
 #+end_src
 
-#+source: message-line
+#+name: message-line
 #+begin_src emacs-lisp
        (message "LJS Config Appearance.")
 #+end_src

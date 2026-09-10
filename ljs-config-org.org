@@ -19,7 +19,7 @@ which is also implemented using Org-mode and [[http://git-scm.com/][git]].
 
 ** Org-Mode
 
-#+srcname: lexical-binding-cookie
+#+name: lexical-binding-cookie
 #+begin_src emacs-lisp
 ;;; -*- lexical-binding: t; -*-
 #+end_src
@@ -86,14 +86,42 @@ Make yasnippet work properly with org-mode.
 (org-babel-do-load-languages
  'org-babel-load-languages
  '((emacs-lisp . t)
-   (shell . t)))
+   (shell . t)
+   (R . t)))
+;; Stan deliberately isn't listed above: org-babel-do-load-languages
+;; requires (require 'ob-stan) for any entry it's given, and no such
+;; loadable library exists (that's the whole reason ob-stan had to be
+;; written from scratch -- see ljs-config-stats.org's "Org-babel
+;; execution (ob-stan)" section, and the audit, §59). Confirmed by
+;; reading org-babel-execute-src-block's own dispatch code directly:
+;; it only checks (fboundp 'org-babel-execute:stan), never consults
+;; org-babel-load-languages at all -- so defining that function
+;; ourselves (which ljs-config-stats.org does, unconditionally, at
+;; startup) is already sufficient on its own. Adding a (stan . t)
+;; entry here would only break startup by trying to require a file
+;; that doesn't exist.
 #+end_src
 
 #+begin_src emacs-lisp
+;; org-src-get-lang-mode (Org's own function that resolves a source
+;; block's language to a real major mode) *always* appends "-mode"
+;; itself to whatever this alist maps to -- so the value here has to
+;; be the bare stem (ess-r, stan), not the already-complete mode name
+;; (ess-r-mode, stan-mode). Getting this wrong doesn't error -- it
+;; silently resolves to a nonexistent symbol (ess-r-mode-mode,
+;; stan-mode-mode) and falls back to fundamental-mode, which is why
+;; blocks were highlighting only partially (R) or not at all (Stan)
+;; even though the mapping looked reasonable -- see the audit, §60.
+;;
+;; "r" maps (via the bare stem "ess-r") to ess-r-mode, not the generic
+;; ess-mode -- ess-mode is ESS's shared parent across all its
+;; languages and only carries base font-lock; the real R-specific
+;; keyword/function fontification lives in ess-r-mode itself (R-mode
+;; is just an alias to it).
 (add-to-list 'org-src-lang-modes
-             '("r" . ess-mode))
+             '("r" . ess-r))
 (add-to-list 'org-src-lang-modes
-             '("stan" . stan-mode))
+             '("stan" . stan))
 #+end_src
 
 ** Code block fontification
@@ -212,6 +240,133 @@ ljs-config-appearance.org's "Splitting frames" section
 buffers and the Markdown live-preview's eww buffer, so there's one
 canonical place for this logic instead of a PDF-only copy here.
 Formerly =ljs/display-pdf-to-right=; see the audit, §11C/§25.
+
+** Org-Capture (Inbox)
+
+Deliberately minimal, by design (not a first pass at something
+bigger): one binding to capture a flat TODO into a single
+=inbox.org=, and one binding to open that file directly. No
+categorisation prompt, no org-agenda configuration, no per-role
+files -- those are explicitly out of scope for now (see the audit).
+=org-directory= itself is already set per-machine in your per-user
+file (=ljs46.org=/=ljs.org=), so this just points a notes file at
+it.
+
+#+name: ljs-config-org-capture
+#+begin_src emacs-lisp
+(setq org-default-notes-file (expand-file-name "inbox.org" org-directory))
+
+(defun ljs/open-inbox ()
+  "Open the inbox file directly, without going through org-capture."
+  (interactive)
+  (find-file org-default-notes-file))
+
+(use-package org-capture
+  :straight nil
+  :custom
+  ;; Exactly one template on purpose: org-capture skips its template
+  ;; selection prompt entirely when org-capture-templates has just
+  ;; one entry, which is what makes C-c c go straight to a blank
+  ;; capture buffer with no categorisation step at all. Adding a
+  ;; second template later brings that prompt back.
+  (org-capture-templates
+   '(("t" "Task" entry (file org-default-notes-file)
+      "* TODO %?\n")))
+  :bind (("C-c c" . org-capture)
+         ("C-c o" . ljs/open-inbox)))
+#+end_src
+
+** Org-Attach (email/file attachments on inbox.org items)
+
+Real friction, not a speculative feature: reading email outside
+Emacs (Outlook web -- mu4e for BIEN is still a toe-dip, not built;
+see the workflow doc) and wanting to save an attachment and link it
+onto an inbox.org item, whether that's the item just captured or one
+already sitting there. Deliberately answered without touching the
+capture template above -- the whole point of that template being a
+single flat entry was removing any decision point between C-c c and
+typing, and "attach a file?" is exactly that kind of decision point.
+
+Attaching is a separate, later step instead: =org-capture= only ever
+makes a /new/ item; to attach to an /existing/ one, skip capture,
+open the inbox with C-c o, move point to that heading, and run
+=org-attach= there. Same command either way, so "new vs existing" is
+just a question of which heading point is on, not something the
+capture flow needs to ask.
+
+Checked first, the same way C-c c/C-c o were checked against the
+whole repo before binding (see the audit, §64): C-c C-a is free in
+=org-mode-map= specifically. It's taken twice over elsewhere --
+AUCTeX's own =TeX-command-run-all= in LaTeX-mode, and
+=csv-align-fields= in csv-mode -- but keymaps are per-major-mode, so
+neither reaches an Org buffer. Bound explicitly below rather than
+relied on as an assumed Org default, on the same "check, don't
+assume" principle as the rest of this config.
+
+Two settings changed from org-attach's own defaults, deliberately:
+the attachment store is pointed inside =org-directory= itself
+(=~/Dropbox/Org/attachments/=) rather than wherever org-attach would
+otherwise put it, so attachments sync via Dropbox alongside
+=inbox.org= instead of living somewhere unsynced; and the method is
+=mv= rather than the default =cp=, so the copy org-attach picks up
+from =~/Downloads= is moved into place rather than left behind as a
+stale duplicate.
+
+On first real use, tried on a real heading, org-attach did exactly
+what its own source says it does and nothing more: tagged the
+heading =:ATTACH:=, added the =:ID:= property that maps it to its
+attachment folder -- and inserted no link at all. That surprised
+Lindsay's intuition (a natural expectation that attaching a file
+would leave something to click), so rather than leave the tag as the
+only visible trace, a link is now inserted automatically too --
+trading a little efficiency (one extra line written every time) for
+something that reads as obviously correct at a glance, which matters
+more here.
+
+#+name: ljs-config-org-attach
+#+begin_src emacs-lisp
+(use-package org-attach
+  :straight nil
+  :after org
+  :custom
+  ;; Keep attachments inside org-directory so they travel with
+  ;; inbox.org under Dropbox, rather than org-attach's own default
+  ;; location (outside the synced tree).
+  (org-attach-id-dir (expand-file-name "attachments/" org-directory))
+  ;; Move rather than copy: once a file is attached to a heading, the
+  ;; copy in ~/Downloads is just clutter, not a second source of truth.
+  (org-attach-method 'mv)
+  :bind (:map org-mode-map
+         ("C-c C-a" . org-attach))
+  :config
+  ;; `org-attach-attach' always computes an attachment link -- (LINK
+  ;; DESCRIPTION) -- as its return value, but by design never writes
+  ;; it into the buffer itself; ordinarily that link only becomes
+  ;; visible if `org-attach-store-link-p' is set and you separately
+  ;; run `C-c C-l' to pull it in. Confirmed directly (Lindsay's first
+  ;; real attach left only the :ATTACH: tag, no link) that the bare
+  ;; tag alone isn't intuitive, so this inserts the link
+  ;; automatically instead, right after the heading's properties
+  ;; drawer. Deliberately scoped to `org-attach-attach' itself, which
+  ;; is what every dispatcher key for attaching an actual file (a/c/
+  ;; m/l/y) funnels through -- org-attach-url/-new/-buffer are separate
+  ;; entry points, not part of the email-attachment workflow this was
+  ;; built for, so left alone for now rather than guessed at.
+  (defun ljs/org-attach-insert-link (result)
+    "Insert the (LINK DESCRIPTION) RESULT from `org-attach-attach'
+into the entry body, right after its properties drawer, since
+`org-attach-attach' computes this link but never writes it anywhere
+itself."
+    (when result
+      (let ((link (nth 0 result))
+            (desc (nth 1 result)))
+        (save-excursion
+          (org-back-to-heading t)
+          (org-end-of-meta-data t)
+          (insert (format "[[%s][%s]]\n" link desc)))))
+    result)
+  (advice-add 'org-attach-attach :filter-return #'ljs/org-attach-insert-link))
+#+end_src
 
 ** Confirmation Message
 #+begin_src emacs-lisp

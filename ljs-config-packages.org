@@ -16,8 +16,8 @@ package installation and package configuration. This provides a
 modular and consistent approach to package management, making it
 easier to manage and update your Emacs configuration.
 
-#+srcname: ljs-config-packages-download-packages
-#+srcname: lexical-binding-cookie
+#+name: ljs-config-packages-download-packages
+#+name: lexical-binding-cookie
 #+begin_src emacs-lisp
 ;;; -*- lexical-binding: t; -*-
 #+end_src
@@ -50,7 +50,6 @@ easier to manage and update your Emacs configuration.
   (use-package ess)
   (use-package exec-path-from-shell)
   (use-package flycheck)
-  (use-package flyspell :straight nil)
   (use-package forge)
   (use-package imenu :straight nil)
   (use-package latex-pretty-symbols)
@@ -58,28 +57,18 @@ easier to manage and update your Emacs configuration.
   (use-package modus-themes)
   (use-package nov)
   (use-package org-bullets)
+  (use-package pandoc-mode)
   (use-package rainbow-delimiters)
   (use-package reftex :straight nil)
   (use-package smartparens)
+  (use-package stripe-buffer)
   (use-package thingatpt :straight nil)
   (use-package corfu)
   (use-package cape)
 #+end_src
 
 
-#+srcname: ljs-config-packages-install-packages
-#+begin_src emacs-lisp
-  (defun ljs-config-packages-install ()
-    "Install all ljs-config packages that aren't installed."
-    (interactive)
-    (dolist (package ljs-config-packages)
-      (unless (or (member package package-activated-list)
-                  (functionp package))
-        (message "Installing %s" (symbol-name package))
-        (package-install package))))
-  #+end_src
-
-  #+srcname: ljs-config-esk-online
+#+name: ljs-config-esk-online
   #+begin_src emacs-lisp
   ;; NOTE: this block was silently dead for a long time (see the
   ;; #+end-src typo fix elsewhere in this file) -- fixing that typo

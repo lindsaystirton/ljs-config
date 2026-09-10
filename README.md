@@ -6,9 +6,13 @@ R/ESS/Stan, Python, Org-mode, and reference management, all wired
 together with [`use-package`](https://github.com/jwiegley/use-package)
 and [`straight.el`](https://github.com/radian-software/straight.el).
 
-Draws heavily -- to the point of shameless plagiarism -- on
+Early versions of this were -- to the point of shameless
+plagiarism -- a fork of
 [Kieran Healy's Emacs Starter Kit for the Social Sciences](https://kieranhealy.org/resources/emacs-starter-kit/)
-(ESKSS), which is where this file's structure comes from too. If
+(ESKSS), and this file's structure still comes from there. It's since
+evolved well past that origin in its own direction (a different
+package manager, GPG-backed security, forge, org-capture, and more,
+none of it from ESKSS), but the debt is worth acknowledging. If
 you're a social scientist looking for a more actively maintained
 starting point than the now-archived ESKSS, you could do worse than
 fork this instead of starting from scratch.
@@ -63,6 +67,34 @@ Git, and the rest -- you'll need them installed on your Mac first:
 xcode-select --install
 ```
 
+**If you're on a Homebrew-built native Emacs (e.g. `emacs-plus`) with
+native-compilation enabled**, make sure `gcc` and `libgccjit` are the
+*same* version (`brew list --versions gcc libgccjit`) -- they're
+built together and a mismatch produces bizarre, hard-to-place native
+compiler errors (`ld: library '...' not found`) on every startup,
+not just when installing something new. `brew upgrade gcc` if
+they've drifted apart. `early-init.el` below also has a Homebrew/Xcode
+linker-path fix that's needed alongside this -- see the audit, §44 and
+§50, for the full story if you hit this (§50 covers a third missing
+library, `emutls_w`, that can turn up even when `gcc`/`libgccjit`
+already match).
+
+**`pkg-config` and `enchant`, for spell-checking.** This config uses
+[jinx](https://github.com/minad/jinx) rather than the older
+flyspell/aspell combination, which builds a small native module
+against `libenchant` the first time it loads. Install both via
+Homebrew (`brew install pkg-config enchant`) before first launch --
+`exec-path-from-shell` (loaded first, specifically so tools like this
+are visible to GUI Emacs at all) takes care of the rest automatically
+once they're installed.
+
+**`cmake` and `libtool`, for the terminal (`vterm`).** `vterm` also
+builds a small native module locally the first time it loads (this
+one against `libvterm`, for real terminal emulation -- see
+`ljs-config-shell.org`). Install both via Homebrew (`brew install
+cmake libtool`) before first launch, same as the jinx prerequisites
+above.
+
 **A modern TeX distribution and a PDF reader with SyncTeX support.**
 [MacTeX](https://www.tug.org/mactex/) and the built-in
 [pdf-tools](https://github.com/vedang/pdf-tools) (which this config
@@ -78,6 +110,29 @@ your `PATH`, or findable via Homebrew).
 the config assumes you're using [Magit](https://magit.vc/) day to day
 rather than the command line.
 
+**`gnupg`, `pinentry-mac`, and `pass`, for encryption/signing/password
+management.** Install via Homebrew (`brew install gnupg pinentry-mac
+pass`), then point `gpg-agent` at `pinentry-mac` so it can actually
+prompt for your passphrase:
+
+```
+mkdir -p ~/.gnupg && chmod 700 ~/.gnupg
+echo "pinentry-program $(brew --prefix)/bin/pinentry-mac" >> ~/.gnupg/gpg-agent.conf
+gpgconf --kill gpg-agent
+```
+
+Generate a real key with `gpg --full-generate-key` (RSA and RSA,
+4096 bits is a sensible default) if you don't already have one --
+this is interactive and asks for a passphrase via the `pinentry-mac`
+dialog above, not the terminal. Leave the optional Comment field
+blank; it adds nothing useful to the key's user ID. Once you have a
+key, `pass init <your-email-or-key-id>` creates the password store
+`password-store.el` actually reads and writes. `ljs-config-security.org`
+covers what this buys you inside Emacs (EasyPG file encryption,
+`password-store.el`); commit signing and the forge/GitHub token are
+both `git config`/`~/.authinfo.gpg` steps outside this config
+entirely -- see the audit for the exact commands.
+
 **Zotero, with the [Better BibTeX](https://retorque.re/zotero-better-bibtex/)
 plugin, for bibliography management.** This config doesn't manage
 your reference database itself -- see `ljs-config-bibliography.org`.
@@ -85,10 +140,9 @@ Zotero is the shared library (so co-authors who don't use Emacs or
 LaTeX can still add references), Better BibTeX exports it to a `.bib`
 file on disk, and Emacs just reads that file via `citar`.
 
-**Note your username and hostname.** Open Terminal and run `whoami`
-and `hostname`. You'll want these for the per-user customisation step
-below -- see the caveat in [Known limitations](#known-limitations-if-youre-not-lindsay)
-about the current state of that mechanism.
+**Note your username.** Open Terminal and run `whoami`. You'll want
+this for the per-user customisation step below -- see [What's
+Inside](#whats-inside).
 
 ## Getting the Config
 
@@ -137,6 +191,31 @@ files and paste these in verbatim:
 ;; selection used to live here too, to avoid a startup flicker, but
 ;; moved to ljs-config-appearance.org once the early font-availability
 ;; check proved unreliable this soon on macOS.
+
+;; Native-comp toolchain fix, needed on a Homebrew-built native
+;; Emacs (e.g. emacs-plus): gcc's native-comp driver can't link
+;; without help finding three things -- its own top-level runtime
+;; libraries, its version/target-triple-specific internal runtime
+;; libraries (where things like `libemutls_w.a' actually live), and
+;; macOS's own `-lSystem' (which lives in the Xcode SDK, not in
+;; Homebrew's gcc at all). Without this you'll see native-comp
+;; errors like "ld: library 'System' not found" or "ld: library
+;; 'emutls_w' not found" on every startup. All three computed rather
+;; than hardcoded, since none of them are stable across a machine,
+;; Homebrew prefix, Xcode SDK version, or gcc version bump -- the
+;; internal runtime directory is found with `find' rather than
+;; assembled from a guessed version/target-triple path, so this
+;; survives the next `gcc' bump the same way `lib/gcc/current'
+;; (Homebrew's own stable symlink) already does.
+(let* ((brew (or (getenv "HOMEBREW_PREFIX") "/opt/homebrew"))
+       (sdk (string-trim (shell-command-to-string "xcrun --show-sdk-path")))
+       (gcc-lib (concat brew "/opt/gcc/lib/gcc/current"))
+       (gcc-internal (string-trim
+                      (shell-command-to-string
+                       (concat "dirname \"$(find " gcc-lib
+                               " -name libemutls_w.a 2>/dev/null | head -1)\"")))))
+  (setenv "LIBRARY_PATH"
+          (concat gcc-lib ":" gcc-internal ":" sdk "/usr/lib")))
 
 ;; straight.el is the only package manager this config uses, so
 ;; package.el's own startup activation is disabled.
@@ -195,11 +274,14 @@ after that just loads from your local `~/.emacs.d/straight/` cache.
 If a package fails to build on the first attempt, quit and relaunch
 Emacs and it will usually pick up where it left off.
 
-**4. (Optional) Add your own customisations.** Once the per-user
-override mechanism described below is rebuilt, this is where you'll
-be able to drop in your own bibliography paths, Python environment
-paths, and other personal settings without editing the shared config
-files directly.
+**4. (Optional) Add your own customisations.** Create a file named
+after your own `user-login-name` (the `whoami` step above) -- e.g.
+`ljs-config/yourname.org` -- and it'll be loaded automatically on
+every startup. This is where your own bibliography paths,
+`org-directory`, and any other personal, machine-specific settings
+go, rather than into the shared config files. `ljs46.org` and
+`ljs.org` in this repo are Lindsay's own, real examples of what one
+looks like.
 
 ## What's Inside
 
@@ -212,63 +294,59 @@ assuming it's a bug.
 | File | What it configures |
 |---|---|
 | `ljs-config-packages.org` | Package declarations -- what to install, fetched and pinned by straight.el |
-| `ljs-config-aspell.org` | Spell-checking (`flyspell`, `ispell`/`aspell`) |
+| `ljs-config-spelling.org` | Spell-checking via [jinx](https://github.com/minad/jinx) |
 | `ljs-config-defuns.org` | Small utility functions used elsewhere in the config |
 | `ljs-config-appearance.org` | Theme, modeline, fonts, frame behaviour |
 | `ljs-config-completion.org` | Vertico + Consult + Orderless + Marginalia + Embark (minibuffer completion) and Corfu + Cape (in-buffer completion) |
+| `ljs-config-discoverability.org` | which-key (keybinding hints), casual (Transient menus for Calc/Info/isearch), and avy (jump-to-visible-text navigation) |
 | `ljs-config-bibliography.org` | Zotero + Better BibTeX as the shared reference library, `citar` for citation completion/insertion in AUCTeX (works alongside RefTeX, which still handles labels and cross-references) |
 | `ljs-config-latex.org` | AUCTeX, RefTeX, Biber, and the SyncTeX/PDF-pane workflow |
 | `ljs-config-stats.org` | R, ESS, and Stan (`stan-mode`, `company-stan`, `flycheck-stan`) |
-| `ljs-config-text.org` | Markdown, CSV, and general text-file handling |
+| `ljs-config-text.org` | Markdown, Pandoc, CSV, and general text-file handling |
+| `ljs-config-security.org` | GPG-backed file encryption (EasyPG), password-store.el (`pass`), and (documented, not configured) commit signing |
+| `ljs-config-dired.org` | Dired extras, iBuffer's saved filter groups, and casual-dired's Transient menu |
 | `ljs-config-git.org` | Magit and Forge |
 | `ljs-config-org.org` | Org-mode, Org-roam, and the shared PDF/frame-splitting logic used by both Org and LaTeX |
-| `ljs-config-eshell.org` | Eshell configuration |
+| `ljs-config-shell.org` | Shell/terminal: eshell for everyday use, vterm (+ vterm-toggle) for anything needing a real terminal |
 | `ljs-config-python.org` | Python via Elpy/ESS and Jupyter |
 | `ljs-config-lisp.org` | Emacs Lisp editing conveniences |
 
-Two further `.org` files exist in the repo but aren't currently
-loaded by anything -- `ljs46.org` (a per-user override file) and
-`ljs-config-bindings.org` (custom keybindings, including
-`expand-region`, `multiple-cursors`, and the silver-searcher search
-integration). Reviving these properly, rather than re-enabling them
-as-is, is on the to-do list -- see the audit notes.
+**Personal, per-user overrides** live outside this list, in a file
+named after your `user-login-name` -- `ljs46.org` and `ljs.org` in
+this repo, one per machine Lindsay actually uses (see the audit,
+§41). `ljs-config.org` loads whichever one matches automatically, and
+silently loads nothing if none matches -- so on a fresh clone, or
+someone else's machine, create `<your-username>.org` next to these
+and put your own destination paths there (a bibliography location,
+an `org-directory`) rather than editing any of the files above.
+
+One further `.org` file exists in the repo but isn't currently loaded
+by anything -- `ljs-config-bindings.org` (custom keybindings,
+including `expand-region`, `multiple-cursors`, and the
+silver-searcher search integration). Reviving it properly, rather
+than re-enabling it as-is, is on the to-do list -- see the audit
+notes.
 
 ## Known limitations (if you're not Lindsay)
 
 This config is further along than a typical personal dotfiles repo --
 every package is declared once, installs cleanly via `straight.el`,
-and the whole thing restarts without errors -- but it hasn't yet had
-the specific things done to it that would make it a true drop-in kit
-for someone else, the way ESKSS was. Concretely, as of this writing:
+the whole thing restarts without errors, and the per-user override
+mechanism actually works -- but it hasn't yet had every last thing
+done to it that would make it a true drop-in kit for someone else,
+the way ESKSS was. Concretely, as of this writing:
 
-- **There's no working per-user override file.** ESKSS solved this by
-  having you rename a template file to `%your-username%.org`; this
-  config has the beginnings of the same idea (`ljs46.org`), but it
-  isn't actually wired up to load. Personal absolute paths (a
-  bibliography location, a Python virtualenv) have been kept out of
-  the shared files rather than hardcoded, which just moves the gap
-  rather than closing it: `citar-bibliography`
-  (`ljs-config-bibliography.org`) starts out empty and won't find any
-  references until you set it yourself, the same way Elpy's Python
-  interpreter (`ljs-config-python.org`) falls back to whatever
-  `python3`/`jupyter` resolve to on `PATH` rather than a specific
-  virtualenv. Both belong in the per-user override file once that
-  mechanism is rebuilt.
 - **A couple of custom keybindings described in the code aren't
   actually active** -- `ljs-config-bindings.org` looks fully
   configured but is never loaded, so don't be surprised if a binding
   mentioned in a comment somewhere doesn't do anything yet.
-- **The startup frame size is hardcoded to Lindsay's own screen.**
-  `ljs-config-appearance.org`'s `initial-frame-alist` pins every new
-  frame to 85 columns by 54 rows at the screen's top-left corner --
-  numbers tuned by eye to fill Lindsay's 13.3-inch MacBook display
-  exactly, not computed from the actual screen. On a differently
-  sized or positioned display this will either leave a lot of unused
-  screen or not fit at all. `ljs/frame-double-width`, defined just
-  below it in the same file, already does this properly -- it reads
-  the real monitor size via `frame-monitor-workarea` rather than
-  assuming one -- and doing the same for the initial frame size is on
-  the to-do list rather than something to copy as-is.
+- **Elpy's Python interpreter has no per-user override yet**
+  (`ljs-config-python.org`) -- it falls back to whatever
+  `python3`/`jupyter` resolve to on `PATH`. That's a deliberate
+  choice for now (nothing forces a specific virtualenv), not a gap
+  like the bibliography path used to be -- but if you need a specific
+  interpreter, that's exactly the kind of thing your own
+  `<your-username>.org` is for.
 
 None of this affects day-to-day use on Lindsay's own machine, but if
 you're setting this up fresh, expect a bit of manual path-fixing

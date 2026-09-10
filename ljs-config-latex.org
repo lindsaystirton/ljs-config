@@ -12,7 +12,7 @@ the social sciences]]. I have made some effort to implement use-package. Impleme
 *** Prettify Math in Buffers
 
 #+name: latex-pretty-symbols
-#+srcname: lexical-binding-cookie
+#+name: lexical-binding-cookie
 #+begin_src emacs-lisp
 ;;; -*- lexical-binding: t; -*-
 #+end_src
@@ -143,8 +143,8 @@ always did.
                        "Run LaTeX again to get citations right."))))
     (setq TeX-command-next TeX-command-default))
 
-  (eval-after-load "tex"
-    '(add-to-list 'TeX-command-list '("Biber" "biber %s" TeX-run-Biber nil t :help "Run Biber"))
+  (with-eval-after-load 'tex
+    (add-to-list 'TeX-command-list '("Biber" "biber %s" TeX-run-Biber nil t :help "Run Biber"))
   )
 )
 #+end_src
@@ -171,11 +171,11 @@ always did.
 #+begin_src emacs-lisp
 (use-package tex :straight nil
   :config
-  (eval-after-load "tex"
-    '(add-to-list 'TeX-command-list '("latexmk" "latexmk -synctex=1 -shell-escape -pdf %s" TeX-run-TeX nil t :help "Process file with latexmk")))
-  (eval-after-load "tex"
-    '(add-to-list 'TeX-command-list '("xelatexmk" "latexmk -synctex=1 -shell-escape -xelatex %s" TeX-run-TeX nil t :help "Process file with xelatexmk")))
-  (add-hook 'TeX-mode-hook '(lambda () (setq TeX-command-default "latexmk"))))
+  (with-eval-after-load 'tex
+    (add-to-list 'TeX-command-list '("latexmk" "latexmk -synctex=1 -shell-escape -pdf %s" TeX-run-TeX nil t :help "Process file with latexmk")))
+  (with-eval-after-load 'tex
+    (add-to-list 'TeX-command-list '("xelatexmk" "latexmk -synctex=1 -shell-escape -xelatex %s" TeX-run-TeX nil t :help "Process file with xelatexmk")))
+  (add-hook 'TeX-mode-hook (lambda () (setq TeX-command-default "latexmk"))))
 #+end_src
 
 ** Set a Path to Executables (optional)
@@ -207,6 +207,23 @@ Enables pdf-tools with AUCTeX.
 
 #+begin_src emacs-lisp
 (add-hook 'latex-mode-hook 'turn-off-auto-fill)
+#+end_src
+
+** XeTeX defaults and in-text smart quotes
+
+Folded in from the old, never-loaded ljs46.org (see the audit, §41)
+-- universal preferences, not personal settings, so they belong here
+rather than in the per-user override file. XeLaTeX is the default
+engine; `LaTeX-XeTeX-command' matches the `latexmk'/`xelatexmk'
+commands registered above. The smart-quote substitution is XeLaTeX-only
+(it relies on Unicode quote characters passing through untouched) --
+drop it if you ever compile with pdfLaTeX instead.
+
+#+begin_src emacs-lisp
+(setq TeX-engine 'xetex)
+(setq LaTeX-XeTeX-command "xelatex -synctex=1")
+(setq TeX-open-quote "“")
+(setq TeX-close-quote "”")
 #+end_src
 
 

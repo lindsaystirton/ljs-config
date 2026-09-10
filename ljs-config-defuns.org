@@ -35,7 +35,7 @@ lives here now instead.
 
 ** Network
 
-#+srcname: ljs-config-view-url
+#+name: ljs-config-view-url
 #+begin_src emacs-lisp 
   (defun view-url ()
     "Open a new buffer containing the contents of URL."
@@ -55,7 +55,7 @@ functions not go in hooks. Repeatedly evaling an add-to-list with a
 hook value will repeatedly add it since there's no way to ensure that
 a lambda doesn't already exist in the list.
 
-#+srcname: starter-kit-hook-functions
+#+name: starter-kit-hook-functions
 #+begin_src emacs-lisp 
   (defun local-column-number-mode ()
     (make-local-variable 'column-number-mode)
@@ -86,22 +86,22 @@ a lambda doesn't already exist in the list.
                     nil))))))
 #+end_src
 
-#+srcname: ljs-config-add-local-column-number-mode
+#+name: ljs-config-add-local-column-number-mode
 #+begin_src emacs-lisp 
 (add-hook 'ljs-config-coding-hook 'local-column-number-mode)
 #+end_src
 
-#+srcname: ljs-config-add-local-comment-auto-fill
+#+name: ljs-config-add-local-comment-auto-fill
 #+begin_src emacs-lisp 
 (add-hook 'ljs-config-coding-hook 'local-comment-auto-fill)
 #+end_src
 
-#+srcname: ljs-config-add-pretty-lambdas
+#+name: ljs-config-add-pretty-lambdas
 #+begin_src emacs-lisp
 (add-hook 'ljs-config-coding-hook 'ljs-config-pretty-lambdas)
 #+end_src
   
-#+srcname: run-ljs-config-coding-hook
+#+name: run-ljs-config-coding-hook
 #+begin_src emacs-lisp 
 (defun run-ljs-config-coding-hook ()
   "Enable things that are convenient across all coding buffers."
@@ -109,21 +109,21 @@ a lambda doesn't already exist in the list.
 #+end_src
 \
 
-#+srcname: ljs-config-untabify-buffer
+#+name: ljs-config-untabify-buffer
 #+begin_src emacs-lisp 
 (defun untabify-buffer ()
   (interactive)
   (untabify (point-min) (point-max)))
 #+end_src
 
-#+srcname: ljs-config-indent-buffer
+#+name: ljs-config-indent-buffer
 #+begin_src emacs-lisp 
 (defun indent-buffer ()
   (interactive)
   (indent-region (point-min) (point-max)))
 #+end_src
 
-#+srcname: ljs-config-cleanup-buffer
+#+name: ljs-config-cleanup-buffer
 #+begin_src emacs-lisp 
 (defun cleanup-buffer ()
   "Perform a bunch of operations on the whitespace content of a buffer."
@@ -133,7 +133,7 @@ a lambda doesn't already exist in the list.
   (delete-trailing-whitespace))
 #+end_src
 
-#+source: cleanup-buffer-on-save
+#+name: cleanup-buffer-on-save
 #+begin_src emacs-lisp
   ;; Credit: Alex Ott
   (defun cleanup-buffer-hook ()
@@ -147,7 +147,7 @@ a lambda doesn't already exist in the list.
   
 #+end_src
 
-#+source: cleanup-buffer-when
+#+name: cleanup-buffer-when
 #+begin_src emacs-lisp
   (setq cleanup-buffer-modes 
         '(haskell-mode emacs-lisp-mode lisp-mode scheme-mode
@@ -155,7 +155,7 @@ a lambda doesn't already exist in the list.
 #+end_src
 
 
-#+srcname: ljs-config-recentf-ido-find-file
+#+name: ljs-config-recentf-ido-find-file
 #+begin_src emacs-lisp 
   (defun recentf-ido-find-file () 
     "Find a recent file using Ido." 
@@ -179,7 +179,7 @@ a lambda doesn't already exist in the list.
 
 ** Other
 Useful when a large block of text is required (e.g. for testing)
-#+srcname: ljs-config-lorem
+#+name: ljs-config-lorem
 #+begin_src emacs-lisp 
 (defun lorem ()
   "Insert a lorem ipsum."
@@ -194,7 +194,7 @@ Useful when a large block of text is required (e.g. for testing)
 #+end_src
 
 
-#+source: message-line
+#+name: message-line
 #+begin_src emacs-lisp
   (message "LJS Config Defuns loaded.")
 #+end_src

@@ -1,0 +1,104 @@
+#+TITLE: LJS Config Discoverability
+#+OPTIONS: toc:nil num:nil ^:nil
+
+This file is part of the [[file:ljs-config.org][Lindsay Stirton's Emacs Configurations]].
+Three picks, all chosen for the same reason: they make Emacs's own
+huge surface area easier to find your way around, rather than adding
+a new capability outright -- which-key for keybindings in general,
+casual for a handful of built-in modes (Dired, Calc, Info,
+incremental search) that are otherwise all single-letter commands to
+memorise, and avy for getting the cursor somewhere on screen without
+walking it there one line/character at a time.
+
+#+name: lexical-binding-cookie
+#+begin_src emacs-lisp
+;;; -*- lexical-binding: t; -*-
+#+end_src
+
+* Which-key
+
+Pops up a hint window listing what a key prefix can lead to, after a
+short idle delay -- press =C-x= and wait, rather than needing to
+already know or guess what comes next. Directly relevant given how
+large this config's own keybinding surface already is (§11A/§11C).
+
+#+name: ljs-config-which-key
+#+begin_src emacs-lisp
+(use-package which-key
+  :init (which-key-mode)
+  :custom
+  (which-key-idle-delay 0.5))
+#+end_src
+
+* Casual
+
+A family of discoverable, Transient-based (pop-up menu) front ends
+for built-in Emacs modes -- Dired, Calc, Info, and incremental
+search here -- each bound to =C-o= in its own mode, following the
+package's own documented convention (chosen there because
+=C-o=/=open-line= isn't something these particular modes need).
+=casual-dired='s binding lives in ljs-config-dired.org instead of
+here, alongside the rest of that mode's config -- noted there with a
+pointer back to this file.
+
+CONFIDENCE CAVEAT, same shape as jinx's in the audit (§42): written
+from casual's documented interface, not verified against the
+installed source. This caveat already earned its keep once -- the
+first version of this file declared each menu as if it were its own
+installable package (=casual-dired=, =casual-calc=, etc.), which
+failed on Lindsay's actual restart with "Could not find package
+casual-dired": all of these menus live inside one consolidated
+package, =casual=, as separate features rather than separate
+packages. Fixed the same way =tex=/=auctex= is already handled in
+=ljs-config-latex.org= -- =:straight casual= on each =use-package=
+form tells straight which package to fetch for a feature name that
+doesn't match it. If anything else here still turns out wrong, read
+the installed source directly (=~/.emacs.d/straight/repos/casual/=)
+rather than guess a third time.
+
+#+name: ljs-config-casual
+#+begin_src emacs-lisp
+(use-package casual-calc
+  :straight casual
+  :after calc
+  :bind (:map calc-mode-map ("C-o" . casual-calc-tmenu)))
+
+(use-package casual-info
+  :straight casual
+  :after info
+  :bind (:map Info-mode-map ("C-o" . casual-info-tmenu)))
+
+(use-package casual-isearch
+  :straight casual
+  :after isearch
+  :bind (:map isearch-mode-map ("C-o" . casual-isearch-tmenu)))
+#+end_src
+
+* Avy
+
+Jump the cursor to any visible text in a handful of keystrokes,
+instead of walking it there with repeated search or arrow keys.
+=avy-goto-char-timer= is the general-purpose one: start typing the
+characters at the target, pause briefly, and avy overlays a letter
+on every match for you to pick. =avy-goto-word-1= is a narrower
+variant keyed on a word's first letter, useful when you can see the
+word but don't want to type several characters of it.
+
+Bound to =C-'= and =M-g w= rather than avy's own commonly-documented
+defaults (=C-;=, =M-g g=) -- both of those are already live in this
+config, for =embark-dwim= and =consult-goto-line= respectively (see
+ljs-config-completion.org) -- checked directly against the actual
+bindings in this repo before choosing these, rather than assumed
+free.
+
+#+name: ljs-config-avy
+#+begin_src emacs-lisp
+(use-package avy
+  :bind (("C-'" . avy-goto-char-timer)
+         ("M-g w" . avy-goto-word-1)))
+#+end_src
+
+#+name: message-line
+#+begin_src emacs-lisp
+  (message "LJS Config Discoverability loaded.")
+#+end_src
