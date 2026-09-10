@@ -642,6 +642,17 @@ Located in [[file:ljs-config-git.org][ljs-config-git]]
   (ljs-config-load "./ljs-config/ljs-config-git.org")
 #+end_src
 
+*** LJS Config Email
+mu4e/mbsync, currently just the BIEN mailbox pilot -- located in
+[[file:ljs-config-email.org][ljs-config-email]]. Safe to load even
+before the Terminal-side setup (Homebrew, mbsyncrc, the first sync)
+is done -- it quietly no-ops until =mu= is actually installed.
+
+#+name: ljs-config-load-email
+#+begin_src emacs-lisp
+  (ljs-config-load "./ljs-config/ljs-config-email.org")
+#+end_src
+
 
 *** LJS Config Org
 Located in [[file:ljs-config-org.org][ljs-config-org]]

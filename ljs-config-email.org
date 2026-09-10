@@ -1,0 +1,110 @@
+#+TITLE: LJS Config Email
+#+OPTIONS: toc:nil num:nil ^:nil
+
+This file is part of the [[file:ljs-config.org][Lindsay Stirton's Emacs Configurations]].
+
+The mu4e/mbsync pilot discussed in the workflow doc -- one BIEN
+mailbox (=Lindsay@basicincome.org=, hosted by Migadu) as a
+deliberately small test before any decision about going further with
+email in Emacs. Everything here assumes the real-machine half is
+already done -- Homebrew's =mu= and =isync= installed, =~/.mbsyncrc=
+written, the mailbox password added to =~/.authinfo.gpg=, an initial
+=mbsync= sync run, and =mu index= run at least once -- none of which
+this file, or anything else in this repo, can do for you.
+
+#+name: lexical-binding-cookie
+#+begin_src emacs-lisp
+;;; -*- lexical-binding: t; -*-
+#+end_src
+
+* mu4e
+
+mu4e isn't declared via straight.el like everything else in this
+config -- deliberately. mu4e's elisp has to be the exact version
+that shipped with the =mu= binary it talks to (a well-known mu4e
+gotcha: a mismatched elisp/binary pair fails in confusing ways), so
+rather than let straight pull an independent copy from its own
+source, this loads whatever elisp Homebrew installed alongside the
+=mu= binary itself, located dynamically via =brew --prefix mu=
+rather than a hardcoded path -- the exact kind of hardcoded-personal-
+path mistake already flagged elsewhere in this config (the audit,
+item 2) is easy to avoid here for free.
+
+#+name: ljs-config-email-load-path
+#+begin_src emacs-lisp
+(let ((mu-prefix (ignore-errors
+                    (string-trim
+                     (shell-command-to-string "brew --prefix mu 2>/dev/null")))))
+  (when (and mu-prefix (not (string-empty-p mu-prefix))
+             (file-directory-p mu-prefix))
+    (add-to-list 'load-path
+                 (expand-file-name "share/emacs/site-lisp/mu/mu4e" mu-prefix))))
+#+end_src
+
+Gated on =mu= actually being installed (=executable-find=), so
+tangling and loading this file is harmless even before the
+Terminal-side setup is done -- it just quietly declines to load
+mu4e rather than erroring, the same defensive pattern this config
+already uses for things that depend on real-machine setup outside
+Emacs's own control.
+
+Deliberately minimal for a first pilot -- manual refresh only (no
+background sync timer, so nothing runs, prompts for a GPG
+passphrase, or touches the network until Lindsay actually asks for
+it), one mailbox, no per-folder tuning beyond the basics. The four
+folder names below are sensible guesses, not yet confirmed against
+what this mailbox actually calls them -- flagged inline, to be
+checked and corrected after the first real sync rather than assumed.
+
+#+name: ljs-config-email-mu4e
+#+begin_src emacs-lisp
+(use-package mu4e
+  :straight nil
+  :if (executable-find "mu")
+  :defer t
+  :bind (("C-c m" . mu4e))
+  :custom
+  ;; One mailbox for now (the BIEN pilot); its own subdirectory under
+  ;; ~/Maildir so adding a second account later (Treasurer@, or any
+  ;; of the other four identities -- see the workflow doc) is just
+  ;; another sibling directory and Channel, not a restructure.
+  (mu4e-maildir "~/Maildir")
+  (mu4e-get-mail-command "mbsync bien-lindsay")
+  (mu4e-update-interval nil)
+  ;; FIXME: verify these four against the real mailbox after the
+  ;; first sync (browse the maildir list in mu4e) -- likely
+  ;; candidates if wrong: "Sent Items"/"Deleted Items" rather than
+  ;; "Sent"/"Trash", which is what some hosts/prior Outlook use
+  ;; default to instead.
+  (mu4e-drafts-folder "/bien-lindsay/Drafts")
+  (mu4e-sent-folder   "/bien-lindsay/Sent")
+  (mu4e-trash-folder  "/bien-lindsay/Trash")
+  (mu4e-refile-folder "/bien-lindsay/Archive")
+  :config
+  (setq user-mail-address "Lindsay@basicincome.org"
+        user-full-name "Lindsay Stirton")
+  ;; Sending, via Migadu's SMTP -- same mailbox password as IMAP, in
+  ;; a separate ~/.authinfo.gpg line (auth-source matches by host,
+  ;; so imap.migadu.com and smtp.migadu.com each need their own
+  ;; entry even though the password is identical). Port 465 with
+  ;; direct TLS rather than 587 + STARTTLS, for the same reason IMAP
+  ;; uses 993 -- one less negotiation step; Migadu supports both.
+  ;; Composing stays plain text by default (message-mode's own
+  ;; default, nothing to configure) -- deliberately not adding
+  ;; org-mime for HTML replies yet, per Lindsay's own call.
+  (setq message-send-mail-function 'smtpmail-send-it
+        smtpmail-smtp-server "smtp.migadu.com"
+        smtpmail-smtp-service 465
+        smtpmail-stream-type 'ssl
+        smtpmail-smtp-user "Lindsay@basicincome.org")
+  ;; Migadu doesn't auto-file a Sent copy the way some providers'
+  ;; SMTP does -- mu4e saves its own copy into mu4e-sent-folder
+  ;; after sending, which mbsync then carries back up to the server
+  ;; on the next sync.
+  (setq mu4e-sent-messages-behavior 'sent))
+#+end_src
+
+** Confirmation Message
+#+begin_src emacs-lisp
+(message "LJS Config Email loaded.")
+#+end_src
