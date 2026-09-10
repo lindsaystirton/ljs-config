@@ -6,9 +6,13 @@ R/ESS/Stan, Python, Org-mode, and reference management, all wired
 together with [`use-package`](https://github.com/jwiegley/use-package)
 and [`straight.el`](https://github.com/radian-software/straight.el).
 
-Draws heavily -- to the point of shameless plagiarism -- on
+Early versions of this were -- to the point of shameless
+plagiarism -- a fork of
 [Kieran Healy's Emacs Starter Kit for the Social Sciences](https://kieranhealy.org/resources/emacs-starter-kit/)
-(ESKSS), which is where this file's structure comes from too. If
+(ESKSS), and this file's structure still comes from there. It's since
+evolved well past that origin in its own direction (a different
+package manager, GPG-backed security, forge, org-capture, and more,
+none of it from ESKSS), but the debt is worth acknowledging. If
 you're a social scientist looking for a more actively maintained
 starting point than the now-archived ESKSS, you could do worse than
 fork this instead of starting from scratch.
