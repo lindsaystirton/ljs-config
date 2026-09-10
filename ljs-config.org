@@ -405,7 +405,7 @@ since they are likely to be used in every session
     ;; ljs-config-latex.org instead, alongside the rest of AUCTeX's
     ;; configuration.)
     (setq blink-cursor-mode nil)
-    (setq text-mode-hook '(text-mode-hook-identify))
+    (add-hook 'text-mode-hook 'text-mode-hook-identify)
 #+end_src
 
 *** Function for loading/compiling ljs-config-*
@@ -422,6 +422,12 @@ since they are likely to be used in every session
   (defun ljs-config-compile (&optional arg)
     "Tangle and Byte compile all ljs-config files."
     (interactive "P")
+    ;; `age' is seconds-elapsed-since-modified, so a *larger* number
+    ;; means *older* -- `(> (age file) (age el-file))' below reads as
+    ;; "the .org source is older than the .el", i.e. the .el is already
+    ;; up to date, which is the correct condition to *skip* recompiling.
+    ;; (Double-checked after an external review misread this comparison
+    ;; as backwards -- it isn't.)
     (cl-flet ((age (file)
                 (float-time
                  (time-subtract (current-time)
@@ -487,7 +493,6 @@ Fast, syntax-aware spell-checking via jinx -- located in [[file:ljs-config-spell
 
  #+results: ljs-config-packages
 : loaded ljs-config-packages.el
-#+end_src
 
 
 *** hash keybinding
