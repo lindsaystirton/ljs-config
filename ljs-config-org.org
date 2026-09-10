@@ -35,6 +35,12 @@ which is also implemented using Org-mode and [[http://git-scm.com/][git]].
                           '(("^ *\\([-]\\) "
                              (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
 
+  ;; `org-mode-setup' below turns on variable-pitch-mode for prose, but
+  ;; that also makes tables proportional-width and visually misaligned.
+  ;; Keep tables themselves in a fixed-pitch (monospace) face so columns
+  ;; stay rectangular regardless.
+  (set-face-attribute 'org-table nil :inherit 'fixed-pitch)
+
   (defun org-mode-setup ()
     (org-indent-mode 1)
     (variable-pitch-mode 1)
