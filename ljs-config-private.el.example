@@ -1,0 +1,16 @@
+;;; ljs-config-private.el.example --- template for personal, untracked config -*- lexical-binding: t; -*-
+
+;; Copy this file to ~/.emacs.d/ljs-config-private.el (NOT inside
+;; this repo directory) and fill in your own values. That copy is
+;; deliberately not tracked by git -- it lives one level up from
+;; this repo, the same place ~/.mbsyncrc and ~/.authinfo.gpg already
+;; live, so personal identity never ends up in version control.
+;;
+;; ljs-config-email.org loads this file defensively: if it's
+;; missing, the mu4e module simply won't have real addresses to work
+;; with, but nothing errors.
+
+(setq ljs-bien-lindsay-address   "your-address@example.com"
+      ljs-bien-treasurer-address "your-other-address@example.com")
+
+(provide 'ljs-config-private)
