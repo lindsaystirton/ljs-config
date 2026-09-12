@@ -259,6 +259,7 @@ it.
 (defun ljs/open-inbox ()
   "Open the inbox file directly, without going through org-capture."
   (interactive)
+  (ljs/frame-remember-and-widen)
   (find-file org-default-notes-file))
 
 (use-package org-capture

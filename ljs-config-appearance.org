@@ -331,6 +331,40 @@ ljs-config-stats.org, and `ljs/display-buffer-doubled-right' below."
   (setq ljs/original-frame-width (frame-pixel-width frame))
   (ljs/frame-double-width frame))
 
+(defun ljs/frame-set-width-fraction (fraction &optional frame)
+  "Set FRAME's width to FRACTION of its monitor's workarea width."
+  (let* ((frame (or frame (selected-frame)))
+         (monitor-width (nth 2 (frame-monitor-workarea frame))))
+    (set-frame-width frame (floor (* fraction monitor-width)) nil t)))
+
+(defun ljs/frame-remember-and-widen (&optional frame)
+  "Remember FRAME's current width, then widen it to 80% of the monitor.
+A second \"about to do some focused work\" step, sibling to
+`ljs/frame-remember-and-double' above but different in kind: this
+sets an absolute target width (80% of the monitor) rather than
+doubling whatever width the frame already happens to be, since it's
+meant for opening Matrix, mail, or the inbox from ordinary daily
+use, not for a split-right pane next to the current buffer. Shares
+`ljs/original-frame-width' and the `C-x 1'-bound
+`ljs/frame-restore-original-dimensions' restore step with the
+doubling mechanism above -- there's only one remembered width at a
+time, so restore before switching to a different focused task (or
+before opening a PDF/R/eww split) if the two are ever used back to
+back, rather than assuming the very first original width is still
+there to go back to. See the call sites in
+ljs-config-communications.org, ljs-config-email.org, and
+ljs-config-org.org.
+
+Deliberately widen-only for now: closing Matrix/mail/the inbox
+doesn't auto-shrink the frame back the way a doubled split-right
+PDF/R/eww pane does on `q'/`C-x 0' (see the audit, §30/§46) --
+those all create a specific new *window* to tag and watch for;
+these three don't. Use `C-x 1' to shrink back manually until/unless
+that's worth designing properly."
+  (let ((frame (or frame (selected-frame))))
+    (setq ljs/original-frame-width (frame-pixel-width frame))
+    (ljs/frame-set-width-fraction 0.8 frame)))
+
 (defun ljs/frame-restore-original-dimensions (&optional keep-current-window)
   "Restore the frame to its width from before the last doubling.
 Also closes any extra windows the split created, unless

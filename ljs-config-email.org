@@ -91,6 +91,15 @@ so unlike the original pilot these aren't guesses.
   :straight nil
   :if (executable-find "mu")
   :defer t
+  :init
+  ;; Widen the frame before mu4e opens -- via advice rather than a
+  ;; wrapper bound to the key, so this fires for `C-c m', `M-x
+  ;; mu4e', or any other call site. `:init' (not `:config') so this
+  ;; attaches immediately at startup rather than only after mu4e's
+  ;; own deferred load -- otherwise the very first `C-c m' of a
+  ;; session would open mu4e without widening, since the advice
+  ;; wouldn't exist yet.
+  (advice-add 'mu4e :before #'ljs/frame-remember-and-widen)
   :bind (("C-c m" . mu4e))
   :custom
   (mu4e-maildir "~/Maildir")

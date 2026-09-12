@@ -695,3 +695,14 @@ Located in [[ljs-config-lisp.org][ljs-config-lisp]]
 #+end_src
 
 
+
+*** LJS Config Communications
+Matrix via ement.el -- located in
+[[file:ljs-config-communications.org][ljs-config-communications]]. Safe to load even before your Matrix
+password is in =~/.authinfo.gpg= -- it quietly no-ops until
+=ljs-matrix-user-id= is set in =ljs-config-private.el=.
+
+#+name: ljs-config-load-communications
+#+begin_src emacs-lisp
+  (ljs-config-load "./ljs-config/ljs-config-communications.org")
+#+end_src

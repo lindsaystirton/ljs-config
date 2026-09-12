@@ -14,3 +14,4 @@
       ljs-bien-treasurer-address "your-other-address@example.com")
 
 (provide 'ljs-config-private)
+(setq ljs-matrix-user-id "@yourname:example.org")

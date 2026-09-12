@@ -1,0 +1,33 @@
+#+TITLE: LJS Config Communications
+
+* Matrix (ement.el)
+
+Loads the Matrix identity from =ljs-config-private.el= (see
+=ljs-config-private.el.example= for the placeholder) and connects via
+ement.el. Defensive like the email module: if the private variable
+isn't set, this loads harmlessly and just says why =C-c M= won't do
+anything yet, rather than erroring.
+
+Encrypted rooms are not readable through this yet -- that needs
+Pantalaimon running alongside Emacs, added as a deliberate next step
+once plain connectivity here is confirmed working.
+
+#+begin_src emacs-lisp :lexical yes
+;; -*- lexical-binding: t; -*-
+(use-package ement
+  :straight (ement :type git :host github :repo "alphapapa/ement.el")
+  :config
+  (defun ljs/matrix-connect ()
+    "Connect to Matrix using the identity in `ljs-config-private.el'."
+    (interactive)
+    (if (not (bound-and-true-p ljs-matrix-user-id))
+        (message "ljs-config: ljs-matrix-user-id not set -- see ljs-config-private.el.example.")
+      (ljs/frame-remember-and-widen)
+      (ement-connect
+       :user-id ljs-matrix-user-id
+       :password (auth-source-pick-first-password
+                  :host (cadr (split-string ljs-matrix-user-id ":"))
+                  :user ljs-matrix-user-id))))
+  :bind
+  ("C-c M" . ljs/matrix-connect))
+#+end_src
