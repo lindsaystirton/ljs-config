@@ -53,6 +53,18 @@ it.
 #+end_src
 
 
+* Templates
+
+Where document skeletons (articles, and eventually lecture handouts)
+live -- read by =ljs/new-article= in ljs-config-latex.org. Kept in
+Dropbox, per the same file-location logic as everything else in this
+file, so both machines see the same templates without a git pull.
+
+#+name: ljs46-templates
+#+begin_src emacs-lisp
+(setq ljs/templates-directory (expand-file-name "templates/" "~/Dropbox/"))
+#+end_src
+
 * Security (GPG)
 
 Real key, generated 2026-09-09 (RSA4096, expires 2027-09-09 --

@@ -18,3 +18,4 @@ ljs.el
 /#ljs-config-org.org#
 .#*.*
 *.html
+*.bak-*

@@ -93,10 +93,17 @@ just with fuzzy completion for finding the reference itself.
 #+begin_src emacs-lisp
 (use-package citar
   :custom
-  ;; Matches the default already set for RefTeX's cite-format (RET)
-  ;; in ljs-config-latex.org -- change either if you settle on a
-  ;; different everyday default.
-  (citar-latex-default-cite-command "cite")
+  ;; Set to footcite rather than plain cite: this config's citation
+  ;; style is footnotes-only (oscola), and the LaTeX template audit
+  ;; found \footcite and hand-wrapped \footnote{\cite{}} mixed
+  ;; through real documents inconsistently -- \footcite handles the
+  ;; footnote punctuation itself and plays properly with
+  ;; ibidtracker, so it's the one to default to. This now diverges
+  ;; from RefTeX's own cite-format RET key in ljs-config-latex.org,
+  ;; which still defaults to plain cite -- worth reconciling if that
+  ;; RefTeX picker is still actually used day to day, but not done
+  ;; here since it wasn't asked for.
+  (citar-latex-default-cite-command "footcite")
   :hook
   ;; Wires citar into Corfu/Cape's in-buffer completion (see
   ;; ljs-config-completion.org): typing inside \cite{...} now offers

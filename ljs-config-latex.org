@@ -339,6 +339,60 @@ instead, which closes this collision for good.
 #+end_src
 
 
+** Start a new article from the template
+
+Manual, on purpose -- see the LaTeX template audit
+(=latex-article-template-audit.md=, project doc) for why this isn't
+auto-insert: nothing in a filename reliably says "article" vs
+"handout" apart, so a command you run on purpose beats a guess.
+Reads the blank skeleton from =ljs/templates-directory=, which is
+set per-machine in the per-user override file (ljs46.org/ljs.org),
+not hardcoded here.
+
+#+name: new-article-template
+#+begin_src emacs-lisp
+(defvar ljs/templates-directory nil
+  "Directory holding Lindsay's document skeletons (articles, handouts, ...).
+Set in the per-user override file.")
+
+(defun ljs/new-article ()
+  "Insert the blank LaTeX article skeleton into the current buffer,
+then select the title placeholder so you can type straight over it.
+Use this in a fresh, empty buffer -- name and save the file first."
+  (interactive)
+  (unless ljs/templates-directory
+    (user-error "ljs/templates-directory isn't set -- add it to your per-user file"))
+  (unless (zerop (buffer-size))
+    (user-error "This buffer isn't empty -- ljs/new-article is for a fresh file only"))
+  (insert-file-contents (expand-file-name "article-template.tex" ljs/templates-directory))
+  (goto-char (point-min))
+  (when (search-forward "TITLE HERE" nil t)
+    (set-mark (match-beginning 0))
+    (goto-char (match-end 0))
+    (activate-mark)))
+
+(defun ljs/latex-template-keys ()
+  (define-key LaTeX-mode-map (kbd "C-c t a") #'ljs/new-article))
+(add-hook 'LaTeX-mode-hook #'ljs/latex-template-keys)
+#+end_src
+
+** Start a new seminar sheet from the template
+
+Unlike articles, this one wanted genuine interactive fields (Module
+code, Seminar number/title, and drop-in points for the varying prose
+sections) -- see the Lecture Handout audit (=latex-article-template-audit.md=,
+project doc) for why. Built as a real YASnippet instead of a second
+manual command: it already does "insert the skeleton" and "tab through
+the fields" in one step, so a =ljs/new-seminar= command alongside it
+would just be a second way to do half the job.
+
+Usage: in a fresh, empty =.tex= buffer, type =seminar= then =TAB= (or
+your usual yasnippet-expand key) and tab through the fields. Snippet
+lives in =~/.emacs.d/snippets/LaTeX-mode/seminar=; the skeleton it
+expands is also kept, as a static reference copy, at
+=seminar-template.tex= in =ljs/templates-directory=, alongside
+article-template.tex.
+
 * Message
 #+name: message-config
 #+begin_src emacs-lisp

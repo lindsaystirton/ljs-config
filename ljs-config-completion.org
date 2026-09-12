@@ -153,18 +153,39 @@ Yasnippet is a snippet expansion system for Emacs. It uses short phrases and the
   ;; Tab, indent, or complete function
   (defun tab-indent-or-complete ()
     (interactive)
-    (if (minibufferp)
-        (minibuffer-complete)
-      (if (or (not yas-minor-mode)
-              (null (do-yas-expand)))
-          (if (check-expansion)
-              (completion-at-point)
-            (indent-for-tab-command)))))
+    (cond
+     ((minibufferp) (minibuffer-complete))
+     ;; Org and vterm each give TAB a more important job of their own
+     ;; (visibility cycling; sending TAB through to the shell) -- this
+     ;; function is for programming/completion buffers and shouldn't
+     ;; override either one.
+     ((derived-mode-p 'org-mode) (org-cycle))
+     ((derived-mode-p 'vterm-mode) (vterm-send-tab))
+     ((or (not yas-minor-mode)
+          (null (do-yas-expand)))
+      (if (check-expansion)
+          (completion-at-point)
+        (indent-for-tab-command)))))
 
-  ;; Bind tab to tab-indent-or-complete
+  ;; Bind tab to tab-indent-or-complete.
+  ;;
+  ;; Deliberately bound as the string "TAB" (-> (kbd "TAB"), the ASCII
+  ;; control-character form), NOT the vector [tab] (the GUI function-key
+  ;; symbol form). These are two different key representations to Emacs's
+  ;; keymap lookup, and yasnippet's own field-navigation keymap
+  ;; (yas-keymap) binds yas-next-field-or-maybe-expand using the (kbd
+  ;; "TAB") form too -- its [tab] binding is commented out in yasnippet's
+  ;; own source, on purpose. Binding [tab] here (as this used to) let our
+  ;; form win over yasnippet's own TAB binding even while a snippet field
+  ;; was genuinely active, so pressing Tab inside an expanded snippet
+  ;; never advanced to the next field -- found by testing the seminar
+  ;; snippet for real, confirmed by comparing against yasnippet.el's own
+  ;; source on disk. Matching yasnippet's own key form here lets its
+  ;; higher-priority field-overlay keymap actually take over Tab while a
+  ;; field is live, while this binding still governs Tab everywhere else.
   :bind
   (:map yas-minor-mode-map
-        ([tab] . tab-indent-or-complete)))  
+        ("TAB" . tab-indent-or-complete)))  
 #+end_src
 
 ** Corfu, Cape, and in-buffer completion (replaces Company)
@@ -183,6 +204,33 @@ not dropped: Cape's =cape-company-to-capf= wraps a Company backend so
 it can still be used as a capf source under Corfu.
 
 #+name: corfu-mode
+
+Corrected (12 Sept 2026): the previous note here said removing our own
+TAB->corfu-complete entry from this :bind block was enough to stop Corfu
+stealing Tab from yasnippet. That was wrong, and testing the `seminar`
+snippet for real caught it (typing "seminar" made Corfu offer to
+complete to an unrelated word instead of expanding the snippet, needing
+a manual C-g first). Checked against corfu.el's own source: corfu-map
+is defined with TAB bound to corfu-complete as one of ITS OWN built-in
+defaults (`defvar-keymap corfu-map ... "TAB" #'corfu-complete`), not
+something our own :bind block ever added -- so removing our own
+(redundant) mention of it left Corfu's built-in default binding fully
+in place. Corfu also installs corfu-map into
+`minor-mode-overriding-map-alist' while its popup is showing (see
+corfu--setup), which outranks yas-minor-mode-map's ordinary
+minor-mode-map-alist entry -- so with corfu-auto-delay 0/corfu-auto-prefix
+1 popping the completion up almost the instant you finish typing a
+snippet key, Tab reliably went to corfu-complete, not
+tab-indent-or-complete/yas-expand. The actual fix is the explicit
+`(define-key corfu-map (kbd "TAB") nil)' below: binding a key to nil in
+one keymap makes Emacs treat it as undefined THERE and keep searching
+the rest of the active keymaps, rather than removing the binding
+outright -- so Tab now correctly falls through to yas-minor-mode-map
+(or yasnippet's own field-navigation keymap, once a snippet field is
+actually live) even while Corfu's popup is showing. RET (Corfu's own
+default) plus C-n/C-p/<backtab> below still accept and cycle
+candidates.
+
 #+begin_src emacs-lisp
 (use-package corfu
   :custom
@@ -196,9 +244,14 @@ it can still be used as a capf source under Corfu.
    :map corfu-map
    ("C-n" . corfu-next)
    ("C-p" . corfu-previous)
-   ("TAB" . corfu-complete)
-   ("<tab>" . corfu-complete)
    ("<backtab>" . corfu-previous))
+  :config
+  ;; Explicitly un-bind TAB in corfu-map itself (see the note above --
+  ;; this is different from simply never adding our own TAB binding,
+  ;; since corfu-map ships with one already). nil here means "undefined
+  ;; in this keymap", so lookup falls through to yas-minor-mode-map (or
+  ;; an active snippet field's own keymap) instead of stopping here.
+  (define-key corfu-map (kbd "TAB") nil)
   :init
   (global-corfu-mode))
 #+end_src
