@@ -29,8 +29,9 @@ with for a while.
 =claude-code.el= defaults to =eat= (a pure-Elisp terminal emulator,
 zero native compilation required) unless told otherwise. Overridden
 to =vterm= here instead, because =vterm= is already installed,
-already configured (=ljs-config-shell.org=), and already confirmed
-working end to end in this config (§56/§61 of the audit) -- reusing
+already configured (=ljs-config-shell.org=), and already in
+everyday use in this config (§56/§61 of the audit -- vterm itself
+reported working, not exhaustively tested) -- reusing
 it costs nothing, and adds no new native module to a config that has
 already hit real native-comp toolchain failures more than once
 (the audit, §44/§50). Bringing in =eat= as a second terminal
