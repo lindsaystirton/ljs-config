@@ -21,8 +21,8 @@ fork this instead of starting from scratch.
 > a polished drop-in kit yet. It runs cleanly end to end on Lindsay's
 > own machine. If you're cloning this to use yourself (rather than
 > just to read it), see [Known limitations](#known-limitations-if-youre-not-lindsay)
-> below before you start -- a couple of things that ESKSS handled for
-> every user aren't wired up here yet.
+> below before you start -- one thing ESKSS handled for every user
+> isn't wired up here yet.
 
 ## Motivation
 
@@ -99,12 +99,33 @@ above.
 [MacTeX](https://www.tug.org/mactex/) and the built-in
 [pdf-tools](https://github.com/vedang/pdf-tools) (which this config
 installs and configures for you) are what this config is built and
-tested against.
+tested against. A full MacTeX install also gives you `bibexport`,
+which `ljs-config-bibliography.org`'s optional shared-`.bib`-for-
+collaborators feature uses if you opt a document into it -- nothing
+breaks if it's missing, that feature just won't do anything.
 
 **R and Stan**, if you're doing statistical work: [R](https://www.r-project.org/)
 itself, plus `stanc`/`cmdstan` if you want Stan model checking and
 compilation to work (`ljs-config-stats.org` expects `stanc` to be on
 your `PATH`, or findable via Homebrew).
+
+**Python tooling, if you want more than the bare interpreter.**
+`python-ts-mode` needs its tree-sitter grammar installed once per
+machine -- run `M-x ljs/install-python-treesitter-grammar` the first
+time you open a `.py` file (it falls back to plain `python-mode`
+harmlessly until you do). For real completions/diagnostics via
+`eglot`, install a language server -- `basedpyright` is the one this
+config looks for first (`pip install basedpyright` or `brew install
+basedpyright`), falling back to plain `pyright` or `pylsp` if that's
+what you have instead. None of this is required just to run Python
+code -- `M-x run-python` and org-babel Python blocks both work with
+nothing beyond `python3` on `PATH`.
+
+**The [Claude Code](https://claude.com/claude-code) CLI, if you want
+`ljs-config-claude-code.org`.** Install it separately (see Anthropic's
+own docs) and make sure `claude` is on your `PATH` -- this config just
+wires an existing install into Emacs, it doesn't install Claude Code
+itself.
 
 **Git.** You'll need it to clone this repo in the first place, and
 the config assumes you're using [Magit](https://magit.vc/) day to day
@@ -192,21 +213,24 @@ files and paste these in verbatim:
 ;; moved to ljs-config-appearance.org once the early font-availability
 ;; check proved unreliable this soon on macOS.
 
-;; Native-comp toolchain fix, needed on a Homebrew-built native
-;; Emacs (e.g. emacs-plus): gcc's native-comp driver can't link
-;; without help finding three things -- its own top-level runtime
-;; libraries, its version/target-triple-specific internal runtime
-;; libraries (where things like `libemutls_w.a' actually live), and
-;; macOS's own `-lSystem' (which lives in the Xcode SDK, not in
-;; Homebrew's gcc at all). Without this you'll see native-comp
-;; errors like "ld: library 'System' not found" or "ld: library
-;; 'emutls_w' not found" on every startup. All three computed rather
+;; Native-comp toolchain fix, needed after switching to a
+;; Homebrew-built native Emacs (see the audit, §44, extended
+;; §50): gcc's native-comp driver can't link without help finding
+;; three things -- its own top-level runtime libraries, its
+;; version/target-triple-specific internal runtime libraries (where
+;; things like `libemutls_w.a' actually live -- §50: a third
+;; gcc-toolchain library, distinct from the two §44 already fixed,
+;; that turned up missing even with gcc/libgccjit both at the same
+;; version), and macOS's own `-lSystem' (which lives in the Xcode
+;; SDK, not in Homebrew's gcc at all). All three computed here rather
 ;; than hardcoded, since none of them are stable across a machine,
 ;; Homebrew prefix, Xcode SDK version, or gcc version bump -- the
-;; internal runtime directory is found with `find' rather than
-;; assembled from a guessed version/target-triple path, so this
-;; survives the next `gcc' bump the same way `lib/gcc/current'
-;; (Homebrew's own stable symlink) already does.
+;; internal runtime directory in particular is found with `find'
+;; rather than assembled from a guessed version/target-triple path,
+;; so this survives the next `gcc' bump the same way `lib/gcc/current'
+;; (Homebrew's own stable symlink) already does. Same
+;; compute-don't-hardcode principle as the dynamic frame sizing in
+;; ljs-config-appearance.org and the PKG_CONFIG_PATH pdf-tools needs.
 (let* ((brew (or (getenv "HOMEBREW_PREFIX") "/opt/homebrew"))
        (sdk (string-trim (shell-command-to-string "xcrun --show-sdk-path")))
        (gcc-lib (concat brew "/opt/gcc/lib/gcc/current"))
@@ -283,6 +307,17 @@ go, rather than into the shared config files. `ljs46.org` and
 `ljs.org` in this repo are Lindsay's own, real examples of what one
 looks like.
 
+**5. (Optional) Add your own identity, if you want email or Matrix.**
+A second, separate personal file -- `~/.emacs.d/ljs-config-private.el`
+(note: outside the `ljs-config/` repo directory entirely, one level
+up, the same place `~/.mbsyncrc` and `~/.authinfo.gpg` live) -- holds
+things like your own email addresses and Matrix user ID, so they
+never end up tracked in a public git repo. Copy
+`ljs-config/ljs-config-private.el.example` to that path and fill in
+your own values; `ljs-config-email.org`/`ljs-config-communications.org`
+both load it defensively, so skipping this step just means those two
+modules quietly do nothing rather than erroring.
+
 ## What's Inside
 
 `ljs-config.org` is the entry point: it bootstraps `straight.el`, then
@@ -308,8 +343,11 @@ assuming it's a bug.
 | `ljs-config-git.org` | Magit and Forge |
 | `ljs-config-org.org` | Org-mode, Org-roam, and the shared PDF/frame-splitting logic used by both Org and LaTeX |
 | `ljs-config-shell.org` | Shell/terminal: eshell for everyday use, vterm (+ vterm-toggle) for anything needing a real terminal |
-| `ljs-config-python.org` | Python via Elpy/ESS and Jupyter |
+| `ljs-config-python.org` | Python via `eglot` (LSP) and `python-ts-mode` (tree-sitter), plus org-babel execution -- elpy was retired outright, not patched (there was no live Python workflow to preserve when this was rebuilt) |
 | `ljs-config-lisp.org` | Emacs Lisp editing conveniences |
+| `ljs-config-communications.org` | Matrix chat via [`ement.el`](https://github.com/alphapapa/ement.el) -- loads harmlessly and tells you why if you haven't configured a Matrix account yet |
+| `ljs-config-email.org` | Email via `mu4e`/`mbsync`, with per-mailbox contexts so composing or reading mail picks the right identity automatically -- same defensive loading, no-ops cleanly if `mu`/`mbsync` aren't installed yet |
+| `ljs-config-claude-code.org` | The [Claude Code](https://claude.com/claude-code) CLI, wrapped via [`claude-code.el`](https://github.com/stevemolitor/claude-code.el) in a `vterm`-backed terminal session -- reuses the same doubled-frame-to-the-right window behaviour as PDF/eww, not a bespoke one |
 
 **Personal, per-user overrides** live outside this list, in a file
 named after your `user-login-name` -- `ljs46.org` and `ljs.org` in
@@ -340,17 +378,10 @@ the way ESKSS was. Concretely, as of this writing:
   actually active** -- `ljs-config-bindings.org` looks fully
   configured but is never loaded, so don't be surprised if a binding
   mentioned in a comment somewhere doesn't do anything yet.
-- **Elpy's Python interpreter has no per-user override yet**
-  (`ljs-config-python.org`) -- it falls back to whatever
-  `python3`/`jupyter` resolve to on `PATH`. That's a deliberate
-  choice for now (nothing forces a specific virtualenv), not a gap
-  like the bibliography path used to be -- but if you need a specific
-  interpreter, that's exactly the kind of thing your own
-  `<your-username>.org` is for.
 
-None of this affects day-to-day use on Lindsay's own machine, but if
-you're setting this up fresh, expect a bit of manual path-fixing
-until these are addressed.
+None of this affects day-to-day use on Lindsay's own machine, and
+reviving `ljs-config-bindings.org` properly is on the to-do list --
+see the audit notes above.
 
 ## License
 
