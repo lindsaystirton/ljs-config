@@ -41,17 +41,23 @@ ask `frame-monitor-workarea' about until the first one exists.
 
 #+name: ljs-config-appearance-dynamic-initial-size
 #+begin_src emacs-lisp
+(defvar ljs/frame-default-width-fraction 0.47
+  "Fraction of the monitor's workarea width the frame sits at
+normally -- at startup, and whenever a doubled or widened pane
+closes back down. Just under half: comfortably fits an 80-column
+buffer with room to spare on any screen size, while leaving room
+for `ljs/frame-double-width' to double it without the result
+running flush against the monitor's physical edge (exactly half
+would do that). One named constant rather than the same literal
+0.47 sitting in both `ljs/frame-set-initial-size' below and
+`ljs/frame-restore-original-dimensions' further down -- see the
+audit's Claude Code frame-doubling discussion for why the latter
+needed it too.")
+
 (defun ljs/frame-set-initial-size (&optional frame)
   "Size the initial frame from the real screen, once it exists.
-Just under half the available screen width -- comfortably fits an
-80-column buffer with room to spare on any screen size, unlike a
-number tuned to one specific laptop, while leaving room to view
-another window/app alongside it. `ljs/frame-double-width' below
-clamps a doubled frame to the monitor's full workarea width, so
-starting from exactly half would put the doubled frame's right
-edge, scrollbar included, flush against the physical screen edge;
-starting a little under half leaves it some breathing room instead.
-90% of the available screen height: `frame-monitor-workarea'
+See `ljs/frame-default-width-fraction' for why the width fraction is
+what it is. 90% of the available screen height: `frame-monitor-workarea'
 already excludes the menu bar and Dock on macOS, so this fills most
 of the screen vertically with a little headroom to spare, well
 short of ever overlapping the Dock."
@@ -60,7 +66,7 @@ short of ever overlapping the Dock."
       (let* ((workarea (frame-monitor-workarea frame))
              (mon-width-px (nth 2 workarea))
              (mon-height-px (nth 3 workarea))
-             (cols (max 80 (floor (* 0.47 mon-width-px) (frame-char-width frame))))
+             (cols (max 80 (floor (* ljs/frame-default-width-fraction mon-width-px) (frame-char-width frame))))
              (rows (max 40 (floor (* 0.9 mon-height-px) (frame-char-height frame)))))
         (set-frame-size frame cols rows)))))
 
@@ -305,11 +311,14 @@ frame vertically. The problem with the original code is that if you closed the r
 This is also the single canonical home for frame-doubling/restoring
 logic used everywhere else in the config -- LaTeX compilation
 (=ljs-config-latex.org=), starting R (=ljs-config-stats.org=), and
-opening a PDF or a Markdown live-preview in eww (both registered
-below, via =display-buffer-alist=, rather than each having its own
-copy). Previously this was reimplemented four separate times across
-four files with two different naming conventions; see the audit,
-§11C/§25.
+opening a PDF, a Markdown live-preview in eww, or a Claude Code
+session (all three registered below, via =display-buffer-alist=,
+rather than each having its own copy). Previously this was
+reimplemented four separate times across four files with two
+different naming conventions; see the audit, §11C/§25. Claude Code
+(=ljs-config-claude-code.org=) reuses this deliberately, on
+Lindsay's own explicit instruction -- same behaviour as PDF/eww, not
+a new one built to match.
 
 #+name: ljs-config-appearance-split-right-resize
 #+begin_src emacs-lisp
@@ -366,16 +375,35 @@ that's worth designing properly."
     (ljs/frame-set-width-fraction 0.8 frame)))
 
 (defun ljs/frame-restore-original-dimensions (&optional keep-current-window)
-  "Restore the frame to its width from before the last doubling.
+  "Restore the frame to its normal working width.
 Also closes any extra windows the split created, unless
 KEEP-CURRENT-WINDOW is non-nil (interactively, with a prefix
-argument). This is the shared restore step used by the PDF, R, and
-Markdown/eww call sites."
+argument). This is the shared restore step used by the PDF, R,
+Markdown/eww, and Claude Code call sites.
+
+Recomputes `ljs/frame-default-width-fraction' fresh from the real
+screen every time, via `ljs/frame-set-width-fraction', the same way
+`ljs/frame-set-initial-size' does at startup -- rather than replaying
+whatever `ljs/original-frame-width' happened to record just before
+the last doubling/widening, which is only correct if nothing else
+touched the frame's width in between. That assumption breaks in a
+real, reachable way: only one width is ever remembered at a time
+(this file's own long-standing note on the Matrix/mail/inbox widen
+case), so opening a second doubled or widened pane on top of one
+that's still open overwrites the first pane's remembered value with
+the (already doubled/widened) current one -- closing either
+afterward then restores to that wrong intermediate width, not the
+frame's actual normal size. Found via Lindsay reporting exactly this
+after closing a Claude Code session -- recomputing the target
+fraction directly is immune to that whole class of drift, whereas
+replaying a remembered number never was. `ljs/original-frame-width'
+and the two `ljs/frame-remember-and-*' functions that set it are
+left in place (harmless bookkeeping, not read by anything else) --
+this function simply no longer reads it."
   (interactive "P")
   (unless keep-current-window
     (delete-other-windows))
-  (when ljs/original-frame-width
-    (set-frame-width (selected-frame) ljs/original-frame-width nil t)))
+  (ljs/frame-set-width-fraction ljs/frame-default-width-fraction (selected-frame)))
 
 (defun ljs/split-right-and-resize-frame ()
   (interactive)
@@ -385,9 +413,9 @@ Markdown/eww call sites."
 (defun ljs/display-buffer-doubled-right (buffer alist)
   "Show BUFFER in a new window to the right, after doubling the frame.
 A `display-buffer-alist' action function -- registered below for
-both PDF buffers and the Markdown live-preview's eww buffer, so
-there's one canonical place for this rather than a copy per
-consumer. Originally lived in ljs-config-org.org as
+PDF buffers, the Markdown live-preview's eww buffer, and Claude Code
+session buffers, so there's one canonical place for this rather
+than a copy per consumer. Originally lived in ljs-config-org.org as
 `ljs/display-pdf-to-right', PDF-only.
 
 The window this creates is tagged with the `ljs/doubled-frame'
@@ -405,6 +433,11 @@ in this config) only catches half the ways this window can close."
 
 (add-to-list 'display-buffer-alist '("\\.pdf\\'" . (ljs/display-buffer-doubled-right)))
 (add-to-list 'display-buffer-alist '("\\`\\*eww\\*\\'" . (ljs/display-buffer-doubled-right)))
+;; Claude Code (claude-code.el, ljs-config-claude-code.org) names its
+;; vterm buffers "*claude:/path:instance-name*" -- one instance per
+;; project/directory, so this matches on the fixed "*claude:" prefix
+;; only, not a full buffer-name match like eww's (which never varies).
+(add-to-list 'display-buffer-alist '("\\`\\*claude:" . (ljs/display-buffer-doubled-right)))
 
 (global-set-key (kbd "C-x 3") 'ljs/split-right-and-resize-frame)
 (global-set-key (kbd "C-x 1") 'ljs/frame-restore-original-dimensions)
