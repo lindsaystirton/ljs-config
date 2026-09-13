@@ -1,0 +1,98 @@
+#+TITLE: LJS Config Claude Code
+#+OPTIONS: toc:nil num:nil ^:nil
+Part of [[file:ljs-config.org][LJS-Config]].
+
+Wires the Claude Code CLI into Emacs via =claude-code.el=
+(stevemolitor) -- a terminal wrapper, not the deeper MCP-based
+=claude-code-ide.el= alternative. Chosen deliberately, not by
+default: =claude-code-ide.el= gives Claude direct access to Emacs's
+own semantic state (xref, project structure, diagnostics) and
+reviews edits via =ediff= before they land, which is genuinely more
+capable, but it describes itself as still in early development, with
+documented rough edges (a flicker-free rendering mode that disables
+normal buffer scrolling and search; workarounds for upstream bugs
+still awaiting a real fix). =claude-code.el= is the mature, simpler
+option -- a real terminal buffer running the actual =claude= CLI,
+with Emacs-native conveniences layered on top (send region/buffer,
+a discoverable menu, multi-session support, automatic buffer
+reverting when Claude edits a file on disk). Worth revisiting
+=claude-code-ide.el= later, once this simpler version has been lived
+with for a while.
+
+#+name: lexical-binding-cookie
+#+begin_src emacs-lisp
+;;; -*- lexical-binding: t; -*-
+#+end_src
+
+** Terminal backend: vterm, not the default eat
+
+=claude-code.el= defaults to =eat= (a pure-Elisp terminal emulator,
+zero native compilation required) unless told otherwise. Overridden
+to =vterm= here instead, because =vterm= is already installed,
+already configured (=ljs-config-shell.org=), and already confirmed
+working end to end in this config (§56/§61 of the audit) -- reusing
+it costs nothing, and adds no new native module to a config that has
+already hit real native-comp toolchain failures more than once
+(the audit, §44/§50). Bringing in =eat= as a second terminal
+emulator alongside a working =vterm= would be pure duplication for no
+benefit.
+
+#+begin_src emacs-lisp :tangle yes
+(setq claude-code-terminal-backend 'vterm)
+#+end_src
+
+** A keybinding conflict caught before it happened
+
+=claude-code.el='s own documented default binds its whole command
+keymap to =C-c c=. That key is already taken in this config --
+=org-capture= (=ljs-config-org.org=, "A pivot from wiring to
+workflow", the audit §64) -- and a plain command and a prefix keymap
+can't coexist on the same key sequence; binding this one as
+documented would have silently broken =org-capture= instead of
+adding anything new. Checked every =C-c <letter>= already in use
+across the whole live config before picking a replacement (=C-c a=
+was the only one free that also reads naturally -- "AI" -- among the
+untaken single letters); the same discipline org-capture's own
+binding was chosen with in the first place.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package claude-code
+  :straight (:type git :host github :repo "stevemolitor/claude-code.el"
+                    :branch "main" :depth 1
+                    :files ("*.el" (:exclude "images/*")))
+  :bind-keymap ("C-c a" . claude-code-command-map)
+  :config
+  (claude-code-mode 1))
+#+end_src
+
+** Opens in a doubled frame to the right, like PDF/eww
+
+Deliberately reused, not reimplemented: Claude Code's vterm buffer
+is registered with the same shared =ljs/display-buffer-doubled-right=
+=display-buffer-alist= action already used for PDF buffers and the
+Markdown live-preview's eww buffer (ljs-config-appearance.org,
+"Splitting frames") -- the actual registration line lives there,
+alongside its two siblings, rather than a copy here. Opening a
+session doubles the frame and splits right, exactly like opening a
+PDF; closing that window (=C-x 0=) restores the frame back, via the
+same =quit-window=/=delete-window= advice already covering PDF/eww,
+with no Claude-Code-specific code needed for either half.
+
+One real gap worth knowing, not fixed here since it wasn't asked
+for: that restore-on-close advice fires when the *window* closes,
+not when the buffer dies some other way. =vterm-kill-buffer-on-exit=
+is =t= (ljs-config-shell.org), so typing =/exit= inside a Claude Code
+session kills its buffer directly when the =claude= process exits --
+a third path, alongside =quit-window=/=delete-window=, that this
+mechanism doesn't cover (the same shape of gap the audit's §30
+already found and left open for the widen-only Matrix/mail/inbox
+case). =C-x 0= to close the window first, rather than =/exit=-ing
+from inside it, is the reliable way to get the frame back to size
+until/unless that's worth designing properly.
+
+** Message
+
+#+name: message-config
+#+begin_src emacs-lisp
+(message "LJS Config Claude Code loaded.")
+#+end_src

@@ -50,6 +50,12 @@ easier to manage and update your Emacs configuration.
   (use-package ess)
   (use-package exec-path-from-shell)
   (use-package flycheck)
+  ;; transient/inheritenv: dependencies of claude-code.el
+  ;; (ljs-config-claude-code.org) -- declared explicitly here rather
+  ;; than left to install transitively via straight, matching this
+  ;; file's own "every dependency explicit" convention.
+  (use-package transient)
+  (use-package inheritenv)
   (use-package forge)
   (use-package imenu :straight nil)
   (use-package latex-pretty-symbols)
