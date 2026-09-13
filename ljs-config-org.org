@@ -87,7 +87,8 @@ Make yasnippet work properly with org-mode.
  'org-babel-load-languages
  '((emacs-lisp . t)
    (shell . t)
-   (R . t)))
+   (R . t)
+   (python . t)))
 ;; Stan deliberately isn't listed above: org-babel-do-load-languages
 ;; requires (require 'ob-stan) for any entry it's given, and no such
 ;; loadable library exists (that's the whole reason ob-stan had to be

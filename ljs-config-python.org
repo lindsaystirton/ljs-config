@@ -2,76 +2,176 @@
 #+OPTIONS: toc:nil num:nil ^:nil
 Part of [[file:ljs-config.org][LJS-Config]].
 
-Support for the Python programming language.
+Support for the Python programming language -- rebuilt from scratch
+(13 Sept 2026) rather than patched, since Lindsay doesn't currently
+use Python and there was no live workflow here to preserve.
+Previously this ran on elpy, inherited from this config's original
+Emacs Social Sciences Starter Kit ancestry: elpy's own completion
+backend was never bridged into Corfu the way company-stan/
+company-math were (so Python completions would have looked and
+behaved differently from every other language in this config), and
+there was no org-babel Python support at all despite =ob-python.el=
+shipping bundled with Org, exactly like =ob-R.el= (the audit, §55).
 
-* Python Development Setup with Elpy
+Retired elpy outright rather than fix it in place -- the same call
+as replacing ebib with Zotero rather than patching ebib (the audit,
+§34) -- in favour of Emacs's own native modern stack: =eglot= (a
+real LSP client, built into Emacs 29+) and =python-ts-mode=
+(tree-sitter, also built in). Both are zero-extra-package on the
+Emacs side, and eglot's completions flow through the standard
+=completion-at-point-functions= mechanism, so they show up in Corfu
+automatically -- no bridging needed, unlike the Company-only
+backends elsewhere in this config.
 
-** Syncing PATH Variable
-
-Ensure Emacs knows about your PATH settings, especially if your Python environment is set up in a shell configuration file.
-
-Handled once, centrally, in =ljs-config-appearance.org= now -- three
-separate copies of this (python, eshell, appearance) were each paying
-the cost of spawning a login shell to read your PATH on every startup,
-adding several seconds combined for no benefit over doing it once.
-
-** Install Elpy and Configure
+This is necessarily generic groundwork, not tuned to a real Python
+workflow: nothing here assumes a particular project layout, virtual
+environment, or linting preference, since there isn't one yet to
+build around. A stale =~/myenv= virtualenv (last touched August
+2025) was found sitting in the home directory from some earlier,
+apparently abandoned attempt -- not referenced anywhere below;
+worth deciding whether to keep or delete once there's an actual
+project that wants a virtualenv, rather than assumed still good.
 
 #+name: lexical-binding-cookie
 #+begin_src emacs-lisp
 ;;; -*- lexical-binding: t; -*-
 #+end_src
 
+** Tree-sitter grammar
+
+=python-ts-mode= needs the actual tree-sitter Python grammar
+installed once per machine -- a compiled shared library, not an
+Elisp package, so straight.el can't fetch it. Rather than fetch it
+silently over the network the first time a =.py= file is opened,
+this just checks and tells you what to run -- the same "loads
+harmlessly and says why" pattern as the Matrix and mail modules'
+defensive loading (ljs-config-communications.org,
+ljs-config-email.org).
+
 #+begin_src emacs-lisp :tangle yes
-(use-package elpy
-  :init
-  ;; Enable Elpy
-  (elpy-enable)
+(defun ljs/install-python-treesitter-grammar ()
+  "Install the tree-sitter grammar for Python, if it isn't already."
+  (interactive)
+  (if (treesit-language-available-p 'python)
+      (message "Python tree-sitter grammar already installed.")
+    (add-to-list 'treesit-language-source-alist
+                 '(python "https://github.com/tree-sitter/tree-sitter-python"))
+    (treesit-install-language-grammar 'python)
+    (message "Python tree-sitter grammar installed.")))
+
+(if (treesit-language-available-p 'python)
+    (add-to-list 'major-mode-remap-alist '(python-mode . python-ts-mode))
+  (message "ljs-config: Python tree-sitter grammar not installed -- run M-x ljs/install-python-treesitter-grammar once, then restart. Falling back to python-mode until then."))
+#+end_src
+
+** Eglot (LSP)
+
+Wired up defensively, the same shape as mu4e's =:if
+(executable-find "mu")= and Matrix's "loads harmlessly if
+unconfigured" message: eglot only actually starts for a Python
+buffer if a real language server is found on PATH, checked in this
+preference order -- =basedpyright= (an actively-maintained fork of
+Microsoft's pyright, drop-in compatible) first, plain =pyright=
+second, =pylsp= (python-lsp-server) last. None of the three is
+installed on this machine yet -- =basedpyright= is the recommended
+one to add (=pip install basedpyright= or =brew install
+basedpyright=, whichever Lindsay prefers) once there's an actual
+Python project to point it at.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package eglot
+  :straight nil
+  :hook ((python-ts-mode python-mode) . ljs/eglot-ensure-if-server-found)
   :config
-  ;; Set Jupyter as the Python interpreter. Previously hardcoded to
-  ;; Lindsay's own virtualenv (/Users/ljs46/myenv/bin/jupyter), which
-  ;; broke on any other username or machine. Falls back to whatever
-  ;; `jupyter' resolves to on PATH; a specific virtualenv belongs in
-  ;; the per-user override file once that mechanism is rebuilt.
-  (setq python-shell-interpreter (or (executable-find "jupyter") "jupyter")
-        python-shell-interpreter-args "console --simple-prompt"
-        python-shell-prompt-detect-failure-warning nil)
-
-  ;; Disable native completion for Jupyter
-  (add-to-list 'python-shell-completion-native-disabled-interpreters
-               "jupyter")
-
-  ;; Use Flycheck instead of Flymake for better syntax checking
-  (when (require 'flycheck nil t)
-    (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
-    (add-hook 'elpy-mode-hook 'flycheck-mode)))
+  (defun ljs/eglot-ensure-if-server-found ()
+    "Start eglot for this buffer only if a Python language server is installed."
+    (if (or (executable-find "basedpyright-langserver")
+            (executable-find "pyright-langserver")
+            (executable-find "pylsp"))
+        (eglot-ensure)
+      (message "ljs-config: no Python language server found (basedpyright/pyright/pylsp) -- eglot not started for this buffer.")))
+  (let ((server (cond
+                 ((executable-find "basedpyright-langserver") '("basedpyright-langserver" "--stdio"))
+                 ((executable-find "pyright-langserver") '("pyright-langserver" "--stdio"))
+                 ((executable-find "pylsp") '("pylsp")))))
+    (when server
+      (add-to-list 'eglot-server-programs
+                    (cons '(python-ts-mode python-mode) server)))))
 #+end_src
 
-** Setting the Python Interpreter from a Virtual Environment
+** Running Python
 
-Ensure Elpy uses the Python interpreter from your virtual environment. As
-above, this now falls back to whatever `python3' resolves to on PATH
-rather than a hardcoded personal virtualenv -- point this at a specific
-virtual environment via the per-user override file once it exists.
+=M-x run-python= still works with no LSP or tree-sitter involved --
+a plain interactive interpreter, now pointed at whatever =python3=
+resolves to on PATH rather than a hardcoded personal virtualenv or a
+Jupyter console (elpy's old default required a working =jupyter= on
+PATH, which isn't installed here). =C-c C-p= is kept as the habit
+binding from the old elpy setup, moved onto =python-ts-mode-map=/
+=python-mode-map= directly since =elpy-mode-map= no longer exists.
 
 #+begin_src emacs-lisp :tangle yes
-(setq elpy-rpc-python-command (or (executable-find "python3") "python3"))
+(setq python-shell-interpreter (or (executable-find "python3") "python3"))
+
+(with-eval-after-load 'python
+  (define-key python-ts-mode-map (kbd "C-c C-p") #'run-python)
+  (define-key python-mode-map (kbd "C-c C-p") #'run-python))
 #+end_src
 
-** Improving Performance
+** Org-babel execution
 
-Set the buffer size threshold for Elpy to improve performance in large projects.
+A real bug caught by actually testing a =#+begin_src python= block
+(rather than assumed working by analogy with R): it failed with
+=command not found: python=. Org's own bundled =ob-python.el= (Org
+9.7, shipping with Emacs 31.1) only reads =python-shell-interpreter=
+for *session*-mode execution (a block with a =:session= header) --
+its own =org-babel-python-command-session= defaults to =auto=,
+meaning "use =python-shell-interpreter='. A plain block with no
+=:session= header, exactly what got tested, runs in *nonsession*
+mode instead, governed by a wholly separate variable,
+=org-babel-python-command-nonsession=, which hardcodes the bare
+string ="python"= as its own default -- completely independent of
+=python-shell-interpreter=. Since this machine only has =python3= on
+PATH (Homebrew), not a bare =python=, every ordinary org-babel Python
+block failed this way.
+
+Fixed via the umbrella variable, =org-babel-python-command=, which
+-- per its own docstring -- overrides both the session and
+nonsession variants once set to anything other than its own
+default, =auto=. One line covers both execution modes:
 
 #+begin_src emacs-lisp :tangle yes
-(setq elpy-rpc-ignored-buffer-size (* 1024 1024)) ;; 1MB
+(setq org-babel-python-command (or (executable-find "python3") "python3"))
 #+end_src
 
-** Custom Key Bindings
+** Org-babel results
 
-Customize key bindings for convenience. Here, we set a key binding to quickly open a Python shell.
+Org-babel's default =:results= mode is =value=: it captures the
+*return value* of a block's last expression, not whatever it printed
+to stdout. In Python, =print(...)= itself returns =None= -- that's
+Python's own behaviour, nothing to do with this config -- so a block
+that only calls =print()= shows =None= as its result even though the
+right text did print during execution. R mostly escapes this
+(=print()= there returns its argument invisibly, so =:results value=
+usually still captures the right thing), which is why R has no
+equivalent default set here; Python's =print()= returning =None= is
+what makes an explicit default worth having.
+
+Since Python blocks here are for exploration and notes rather than a
+tuned existing workflow (see this file's opening note), showing
+printed output is the more useful default in the overwhelming
+majority of cases. =:results value= is still available per-block
+whenever a block's return value -- not its printed output -- is
+actually what's wanted.
 
 #+begin_src emacs-lisp :tangle yes
-(define-key elpy-mode-map (kbd "C-c C-p") 'run-python)
+;; `setq', not `defvar': `ob-python.el' already defines this variable
+;; (as an empty alist) the moment it loads, which
+;; `org-babel-do-load-languages' in ljs-config-org.org triggers before
+;; this file runs. `defvar' only sets a variable's value the first
+;; time it's bound -- against an already-bound variable it's a no-op,
+;; which is exactly why this didn't take effect the first time round.
+(setq org-babel-default-header-args:python
+      '((:results . "output")))
 #+end_src
 
 ** Message

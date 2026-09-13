@@ -175,7 +175,32 @@ always did.
     (add-to-list 'TeX-command-list '("latexmk" "latexmk -synctex=1 -shell-escape -pdf %s" TeX-run-TeX nil t :help "Process file with latexmk")))
   (with-eval-after-load 'tex
     (add-to-list 'TeX-command-list '("xelatexmk" "latexmk -synctex=1 -shell-escape -xelatex %s" TeX-run-TeX nil t :help "Process file with xelatexmk")))
-  (add-hook 'TeX-mode-hook (lambda () (setq TeX-command-default "latexmk"))))
+  (with-eval-after-load 'tex
+    (add-to-list 'TeX-command-list '("lualatexmk" "latexmk -synctex=1 -shell-escape -lualatex %s" TeX-run-TeX nil t :help "Process file with lualatexmk")))
+  (defun ljs/TeX-set-command-default-from-engine ()
+    "Pick the matching latexmk-wrapper command (\"latexmk\",
+\"xelatexmk\", or \"lualatexmk\", registered above) to match this
+buffer's `TeX-engine', so each file's own Local Variables engine
+declaration (e.g. `TeX-engine: luatex') decides its own default
+`C-c C-c' compile command, instead of one hardcoded global default.
+
+Deliberately hung on `hack-local-variables-hook', not
+`TeX-mode-hook': the major mode's hook runs as part of
+`set-auto-mode', which happens BEFORE `hack-local-variables'
+processes the file's own Local Variables block -- reading
+`TeX-engine' from a `TeX-mode-hook' function would only ever see
+whatever value was left over from a previously visited buffer, not
+this file's own declared engine. `hack-local-variables-hook' always
+runs after local variables (file- and dir-local) are applied, for
+every file -- including ones with no Local Variables block at all,
+which fall back to whatever `TeX-engine' defaults to globally."
+    (when (derived-mode-p 'TeX-mode)
+      (setq TeX-command-default
+            (pcase TeX-engine
+              ('luatex "lualatexmk")
+              ('xetex  "xelatexmk")
+              (_       "latexmk")))))
+  (add-hook 'hack-local-variables-hook #'ljs/TeX-set-command-default-from-engine))
 #+end_src
 
 ** Set a Path to Executables (optional)
