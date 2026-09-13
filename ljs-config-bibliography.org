@@ -139,6 +139,107 @@ rather than a bespoke keymap of its own.
   (citar-embark-mode))
 #+end_src
 
+** Shared bibliography export for collaborators (opt-in per document)
+
+The master =Zotero.bib= auto-export (see "Where the =.bib= files
+live" above) is Lindsay's own private working bibliography -- fine
+for her own compiling, but a co-author without access to it can't
+compile the same document independently. Rather than share the
+whole master library, or rely on remembering a manual export step
+before sending a draft round, this regenerates a paper-specific
+=.bib= -- containing only the keys that document actually cites --
+as a side effect of every compile, via =bibexport= (ships with most
+TeX Live installs; checked defensively below, same "loads harmlessly
+and says why" pattern as eglot and Matrix elsewhere in this config).
+Written into the same directory as the document's own master =.tex=
+file -- alongside =/Literature= and everything else already shared
+with a collaborator via Dropbox -- so it just appears where a
+co-author already looks, with nothing extra to send.
+
+A per-document Local Variables toggle, not a hardcoded always-on
+hook -- but as of Lindsay's own deliberate choice (13 Sept 2026),
+=article-template.tex= itself now ships with =ljs-bib-export-shared:
+t= already set, alongside its existing =TeX-engine= line, so this
+runs by default on every new article created via =ljs/new-article=
+(=C-c t a=), not only on papers explicitly flagged as collaborative.
+The original design here had this off by default, opt-in per
+document -- Lindsay considered that trade-off directly and chose
+on-by-default instead, on the reasoning that the cost of running
+=bibexport= against a document with nothing collaborative about it is
+just a harmless regenerated =.bib= nobody needs, not a real problem
+worth guarding against with an extra opt-in step every time. A
+specific document can still turn it off individually, by setting
+=ljs-bib-export-shared: nil= in that document's own Local Variables
+(overriding the template's default the same way a document can pin
+its own =TeX-engine= regardless of the template's):
+
+: %%% Local Variables:
+: %%% TeX-engine: luatex
+: %%% ljs-bib-export-shared: t
+: %%% End:
+
+(single =%= per line in an actual =.tex= file, as AUCTeX itself
+expects and as Lindsay's real templates already use -- the =%%%=
+above is just this documentation's own generic illustration, not a
+literal requirement.) Harmless if a co-author without this config
+opens the same file in a plain Emacs: an unrecognised Local Variable
+is just ignored (or, at most, a one-time "is this safe?" prompt they
+can decline) -- it does nothing on their end either way.
+
+Hooked onto the same =TeX-after-compilation-finished-functions= that
+already refreshes the PDF pane after a recompile
+(ljs-config-latex.org, "SyncTeX and PDF auto-refresh") -- one more
+function added to that hook, not a separate mechanism, so the shared
+=.bib= regenerates every time the document does, with nothing extra
+to remember. Uses AUCTeX's own =TeX-master-file=/=TeX-master-directory=
+to find the =.aux= file and place the output, rather than assuming
+the visited buffer's own file name -- correct for a multi-file
+document (=\input=/=\include=) where the master and the
+currently-open buffer aren't the same file.
+
+*Not yet tested*: =bibexport='s exact invocation for a biblatex-based
+=.aux= (rather than plain BibTeX's) needs confirming against a real
+installed copy (=bibexport --help=) and a real compile with real
+citations before this is trusted -- flagged here rather than
+assumed, per this file's own established practice of marking staged,
+unverified work as such. The flags below (=-b= for biblatex mode,
+=-o= for output) are a best-effort guess, not a confirmed reading of
+bibexport's own documentation; if they're wrong, =bibexport='s own
+exit code and output (captured into a =*bibexport*= buffer) will say
+so immediately rather than fail silently -- that's the first real
+test this needs, on Lindsay's own machine where TeX Live actually is.
+
+#+begin_src emacs-lisp :tangle yes
+(put 'ljs-bib-export-shared 'safe-local-variable #'booleanp)
+
+(defun ljs/export-shared-bib ()
+  "Regenerate a paper-specific .bib for a document that has opted in.
+
+Only runs when the current document's Local Variables set
+`ljs-bib-export-shared' non-nil. Extracts just the entries this
+document actually cites -- via `bibexport', into a .bib file named
+and placed alongside the document's own master .tex file -- so a
+collaborator can compile without needing Lindsay's own master
+Zotero.bib. See this file's \"Shared bibliography export\" section
+for the full design and the caveat on bibexport's exact flags."
+  (when (bound-and-true-p ljs-bib-export-shared)
+    (if (not (executable-find "bibexport"))
+        (message "ljs-config: bibexport not found on PATH -- shared .bib not regenerated for this document.")
+      (let* ((dir (TeX-master-directory))
+             (base (TeX-master-file nil t))
+             (aux-file (expand-file-name (concat base ".aux") dir))
+             (bib-file (expand-file-name (concat base ".bib") dir)))
+        (if (not (file-exists-p aux-file))
+            (message "ljs-config: no .aux file yet for shared .bib export -- compile once first.")
+          (let ((exit-code (call-process "bibexport" nil "*bibexport*" nil
+                                          "-b" "-o" bib-file aux-file)))
+            (if (zerop exit-code)
+                (message "ljs-config: shared .bib regenerated (%s)." bib-file)
+              (message "ljs-config: bibexport failed (exit %d) -- see *bibexport* buffer." exit-code))))))))
+
+(add-hook 'TeX-after-compilation-finished-functions #'ljs/export-shared-bib)
+#+end_src
+
 * Message
 #+name: message-line
 #+begin_src emacs-lisp
