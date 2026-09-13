@@ -26,11 +26,13 @@ backends elsewhere in this config.
 This is necessarily generic groundwork, not tuned to a real Python
 workflow: nothing here assumes a particular project layout, virtual
 environment, or linting preference, since there isn't one yet to
-build around. A stale =~/myenv= virtualenv (last touched August
-2025) was found sitting in the home directory from some earlier,
-apparently abandoned attempt -- not referenced anywhere below;
-worth deciding whether to keep or delete once there's an actual
-project that wants a virtualenv, rather than assumed still good.
+build around. A stale =~/myenv= directory (last touched August 2025,
+left over from playing around with Python with her son -- confirmed
+with Lindsay, not assumed) was found sitting in the home directory;
+turned out to be an empty shell with no actual virtualenv contents
+(no =bin/=, =lib/=, or =pyvenv.cfg= -- likely abandoned before
+=python -m venv= ever finished). Cleared out at Lindsay's request;
+not referenced anywhere below.
 
 #+name: lexical-binding-cookie
 #+begin_src emacs-lisp
