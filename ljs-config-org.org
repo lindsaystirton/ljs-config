@@ -289,8 +289,10 @@ Formerly =ljs/display-pdf-to-right=; see the audit, §11C/§25.
 Deliberately minimal, by design (not a first pass at something
 bigger): one binding to capture a flat TODO into a single
 =inbox.org=, and one binding to open that file directly. No
-categorisation prompt, no org-agenda configuration, no per-role
-files -- those are explicitly out of scope for now (see the audit).
+categorisation prompt, no per-role files -- those are still
+explicitly out of scope for now. Org-agenda itself is no longer
+out of scope, though -- see the next section, added once Lindsay
+decided (19 Sept 2026) it was worth turning on.
 =org-directory= itself is already set per-machine in your per-user
 file (=ljs46.org=/=ljs.org=), so this just points a notes file at
 it.
@@ -317,7 +319,56 @@ it.
    '(("t" "Task" entry (file org-default-notes-file)
       "* TODO %?\n")))
   :bind (("C-c c" . org-capture)
-         ("C-c o" . ljs/open-inbox)))
+         ("C-c o i" . ljs/open-inbox)))
+#+end_src
+
+** Org-Agenda (minimal: just the inbox, nothing else yet)
+
+Deliberately the smallest possible turn-on, not the fuller
+personal-organisation redesign Lindsay wants to think through
+properly later: =org-agenda-files= points at exactly the one file
+=org-capture= already writes into, so the agenda commands have
+something real to read, with zero change to how capture itself
+works. No per-role files, no tags, no SCHEDULED usage, no extra
+TODO keywords -- all deliberately left for later, once the daily
+habit of actually opening the agenda is the thing being tested, not
+the config.
+
+A real collision, caught before it bit: org itself doesn't bind
+=org-agenda= to any key by default (the usual =C-c a= advice
+everyone gives assumes a fresh, unconfigured Emacs), and this
+config's own =C-c a= is already =claude-code-command-map=
+(=ljs-config-claude-code.org=, §72 of the audit -- picked back then
+specifically to avoid colliding with =org-capture='s =C-c c=,
+without anyone anticipating agenda would eventually want the same
+prefix).
+
+First fix tried was =C-c A= (capital) to dodge the collision --
+technically fine, but Lindsay pushed back on it being an odd,
+easy-to-forget shape rather than actually solving anything, and
+proposed grouping org's own destinations under their own prefix
+instead: =C-c o i= for the inbox (moved from its old bare =C-c o=),
+=C-c o a= for the agenda. Better on the merits, not just a
+compromise -- =C-c o= becomes a small, which-key-discoverable
+family of "where in org do I want to go" rather than one
+single-purpose binding, it reads as a clear mnemonic ("o" for org)
+rather than a capitalisation accident, and it leaves
+=claude-code-command-map='s own =C-c a= completely alone, which
+matters since that one already has real muscle memory behind it
+(§72's own =C-c a m= habit) -- moving it again to free up the
+"traditional" =C-c a a= would just relocate this exact problem
+rather than fix it.
+
+#+begin_src emacs-lisp
+(use-package org-agenda
+  :straight nil
+  :custom
+  (org-agenda-files (list org-default-notes-file))
+  ;; Default is 'reorganize-frame, which deliberately splits into
+  ;; two windows (current buffer + agenda) -- 'current-window
+  ;; replaces whatever you were looking at instead, no split.
+  (org-agenda-window-setup 'current-window)
+  :bind (("C-c o a" . org-agenda)))
 #+end_src
 
 ** Org-Attach (email/file attachments on inbox.org items)
@@ -333,12 +384,12 @@ typing, and "attach a file?" is exactly that kind of decision point.
 
 Attaching is a separate, later step instead: =org-capture= only ever
 makes a /new/ item; to attach to an /existing/ one, skip capture,
-open the inbox with C-c o, move point to that heading, and run
+open the inbox with C-c o i, move point to that heading, and run
 =org-attach= there. Same command either way, so "new vs existing" is
 just a question of which heading point is on, not something the
 capture flow needs to ask.
 
-Checked first, the same way C-c c/C-c o were checked against the
+Checked first, the same way C-c c/C-c o i were checked against the
 whole repo before binding (see the audit, §64): C-c C-a is free in
 =org-mode-map= specifically. It's taken twice over elsewhere --
 AUCTeX's own =TeX-command-run-all= in LaTeX-mode, and
