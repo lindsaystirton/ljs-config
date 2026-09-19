@@ -177,6 +177,135 @@ heading levels a matching size progression.
             (set-face-attribute 'org-level-5 nil :height 1.1)))
 #+end_src
 
+** Visual polish
+
+Four small, independently-toggleable upgrades to how editing *feels*
+day to day, batched together after one round of "what's worth
+turning on" discussion rather than spread across four separate
+sessions: smooth pixel scrolling, breathing room around the frame
+edges and mode line, ligatures for common code glyph sequences, and
+a pulse on the current line after scrolling or jumping somewhere, so
+the cursor is easier to find again. A fifth candidate discussed
+alongside these -- a floating completion palette -- was deliberately
+skipped. None of the four touch any keybinding or workflow; each is
+independently toggleable (`M-x <name>-mode`, or just commenting out
+its block here) if it doesn't earn its keep in practice.
+
+*** Smooth scrolling
+
+Built into Emacs 29+ (`pixel-scroll-precision-mode`) -- nothing for
+straight.el to fetch. Replaces the old line-at-a-time mouse-wheel/
+trackpad scroll with pixel-smooth motion that tracks the actual
+scroll gesture.
+
+Deliberately narrow in what it changes: this only touches
+wheel/trackpad scrolling. Everything keyboard-driven -- `C-v`/`M-v`,
+`C-l` to recenter, which is most of what actually gets used day to
+day in Org/AUCTeX/magit -- lands on exactly the same line boundaries
+as before, untouched. The one real rough edge: very large or
+heavily-decorated buffers (a big Org table, a `pdf-tools` buffer)
+can judder slightly at the very top/bottom edge while it settles
+mid-scroll, and it occasionally sits a little oddly with things that
+expect a clean line boundary (`recenter`, `scroll-margin`) --
+cosmetic quirks only, and reversible in one `M-x
+pixel-scroll-precision-mode` with no cleanup if it ever feels wrong.
+
+#+name: ljs-config-appearance-smooth-scrolling
+#+begin_src emacs-lisp
+(use-package emacs
+  :straight nil
+  :config
+  (pixel-scroll-precision-mode 1))
+#+end_src
+
+*** Spacious padding
+
+Prot's `spacious-padding`: pixel-level breathing room around window
+edges, the header/tab line, and the mode-line divider -- purely
+cosmetic, no change to any command or binding. Designed by the same
+author as `modus-themes` and meant to be used alongside it; adds
+padding around the mode line rather than replacing it, so it sits
+fine next to `doom-modeline` too. Widths set explicitly below (Prot's
+own suggested starting values) rather than left at the package
+default, so the actual numbers are visible and adjustable here rather
+than buried in the package's own defcustom.
+
+#+name: ljs-config-appearance-spacious-padding
+#+begin_src emacs-lisp
+(use-package spacious-padding
+  :config
+  (setq spacious-padding-widths
+        '( :internal-border-width 15
+           :header-line-width 4
+           :mode-line-width 6
+           :tab-width 4
+           :right-divider-width 15
+           :scroll-bar-width 8
+           :fringe-width 8))
+  (spacious-padding-mode 1))
+#+end_src
+
+*** Ligatures
+
+`ligature.el` (mickeynp), set up here for `prog-mode` and everything
+derived from it -- so R/ESS, Python, Stan, and Emacs Lisp buffers,
+but not Org or LaTeX prose (`LaTeX-mode` doesn't derive from
+`prog-mode`, deliberately not touched here). Safe regardless of which
+font from the Fonts section above ends up loaded: ligature.el doesn't
+draw its own glyphs, it asks Emacs's font-shaping backend to compose
+each matched character sequence as a unit and let the *font's* own
+OpenType ligature table substitute a glyph if it has one for that
+exact sequence -- if the loaded font has no such glyph (true of most
+of the list in the Fonts section), the sequence just renders as
+plain adjacent characters, exactly as before. No breakage either way.
+Of the fonts checked above, `PragmataPro` is the one genuinely built
+with an extensive ligature set; the others will likely no-op
+silently.
+
+The specific sequence list below is a practical subset (arrows,
+comparisons, comment markers, `::`/`:=`) rather than the full
+upstream example list -- deliberately skipping the handful of
+backslash-heavy entries in that list, since they're not worth the
+risk of a hand-typed escaping mistake for symbols Lindsay's actual
+languages don't use.
+
+#+name: ljs-config-appearance-ligatures
+#+begin_src emacs-lisp
+(use-package ligature
+  :config
+  (ligature-set-ligatures 'prog-mode
+                          '("->" "->>" "-->" "<-" "<--" "<->"
+                            "=>" "==" "===" "!=" "!==" "<=" ">="
+                            "&&" "||" "::" ":=" "|>" "<|" "++" "--"
+                            "**" "..." ".." "//" "///" "/*" "*/"
+                            "<<" ">>" "<<=" ">>=" "~>" "<~"))
+  (global-ligature-mode t))
+#+end_src
+
+*** Pulsar
+
+Prot's `pulsar`: pulses the current line briefly after scrolling,
+switching windows, or otherwise jumping somewhere in the buffer, so
+the cursor doesn't need to be hunted for after the jump. Purely
+visual feedback, no change to any command's behaviour.
+`pulsar-global-mode` covers its own curated list of built-in
+navigation commands; the two `next-error-hook` additions extend that
+to compile/grep/occur-style "jump to the next match" navigation,
+which isn't on that built-in list but comes up constantly in this
+config's LaTeX-compile and R workflows.
+
+#+name: ljs-config-appearance-pulsar
+#+begin_src emacs-lisp
+(use-package pulsar
+  :config
+  (setq pulsar-pulse t)
+  (setq pulsar-delay 0.05)
+  (setq pulsar-iterations 10)
+  (pulsar-global-mode 1)
+  (add-hook 'next-error-hook #'pulsar-pulse-line)
+  (add-hook 'next-error-hook #'pulsar-recenter-top))
+#+end_src
+
 ** All the icons
 
 #+name: ljs-config-appearance-all-the-icons
