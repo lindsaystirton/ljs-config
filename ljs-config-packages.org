@@ -62,7 +62,7 @@ easier to manage and update your Emacs configuration.
   (use-package magit)
   (use-package modus-themes)
   (use-package nov)
-  (use-package org-bullets)
+  (use-package org-modern)
   (use-package pandoc-mode)
   (use-package rainbow-delimiters)
   (use-package reftex :straight nil)
