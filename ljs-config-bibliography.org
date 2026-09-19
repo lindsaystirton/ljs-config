@@ -329,7 +329,7 @@ test this needs, on Lindsay's own machine where TeX Live actually is.
 #+begin_src emacs-lisp :tangle yes
 (put 'ljs-bib-export-shared 'safe-local-variable #'booleanp)
 
-(defun ljs/export-shared-bib ()
+(defun ljs/export-shared-bib (&optional _output-file)
   "Regenerate a paper-specific .bib for a document that has opted in.
 
 Only runs when the current document's Local Variables set
@@ -338,7 +338,15 @@ document actually cites -- via `bibexport', into a .bib file named
 and placed alongside the document's own master .tex file -- so a
 collaborator can compile without needing Lindsay's own master
 Zotero.bib. See this file's \"Shared bibliography export\" section
-for the full design and the caveat on bibexport's exact flags."
+for the full design and the caveat on bibexport's exact flags.
+
+Takes (and ignores) one argument -- the output file name -- because this is
+hung on `TeX-after-compilation-finished-functions', which always calls its
+functions with that argument. A zero-arg version of this function threw a
+real `wrong-number-of-arguments' error on every single compile of every
+document, whether or not `ljs-bib-export-shared' was set -- the crash
+happens at the call site, before the body (and its own opt-in check) ever
+runs."
   (when (bound-and-true-p ljs-bib-export-shared)
     (if (not (executable-find "bibexport"))
         (message "ljs-config: bibexport not found on PATH -- shared .bib not regenerated for this document.")
