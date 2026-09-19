@@ -463,6 +463,53 @@ itself."
   (advice-add 'org-attach-attach :filter-return #'ljs/org-attach-insert-link))
 #+end_src
 
+A second, separate bug found live tonight (19 Sept 2026), reproduced
+and root-caused rather than papered over: attaching to a heading
+that has never been attached to before -- so `org-attach-attach'/
+`org-attach-sync' have to create a fresh =:ID:= property and
+attachment folder as part of the very same command -- reliably
+failed with =org-back-to-heading: Before first headline at position
+N in buffer inbox.org=, even with point genuinely inside a real,
+well-formed heading. Confirmed step by step on Lindsay's actual
+machine: `org-narrow-to-subtree' (pure Org core, no attach involved)
+worked fine, proving Org's own heading recognition was never the
+problem; `(org-attach-dir t)' called on its own -- the exact same
+"resolve or create the ID/folder" step -- also worked fine every
+time; but `org-attach-attach'/`org-attach-sync' calling that same
+step *internally*, as part of their own single command, failed
+every time on a heading with no pre-existing ID. Doing the same work
+as two separate steps (resolve/create the ID first, then attach)
+never failed once. Best-guess mechanism, not fully confirmed since
+Org raises this via `user-error' and Emacs's debugger never triggers
+for those regardless of `debug-on-error': creating the ID inserts a
+whole new =:PROPERTIES:...:END:= drawer into the buffer, shifting
+every line below it, and something downstream in the same command
+keeps using a buffer position computed before that shift rather than
+after it. Fixed by forcing the "resolve or create" step to always
+happen as its own prior step, automatically, rather than leaving it
+bundled inside the command that was tripping over it -- `(org-attach-dir
+t)' is idempotent (returns the existing path with no side effect
+when the ID/folder already exist), so running it unconditionally
+before every attach/sync is free on the common case and fixes the
+first-time case.
+
+#+name: ljs-config-org-attach-id-fix
+#+begin_src emacs-lisp
+(defun ljs/org-attach-ensure-dir (&rest _)
+  "Resolve or create the current heading's attachment ID/directory
+before `org-attach-attach'/`org-attach-sync' run. Works around a
+confirmed bug: either of those, called on a heading with no existing
+=:ID:= property, fails with `org-back-to-heading: Before first
+headline...' even though point is genuinely inside a valid heading --
+see the audit, 19 Sept 2026, for the full diagnosis. `org-attach-dir'
+is idempotent, so this is safe to run unconditionally on every
+attach/sync, not just the first one for a given heading."
+  (org-attach-dir t))
+
+(advice-add 'org-attach-attach :before #'ljs/org-attach-ensure-dir)
+(advice-add 'org-attach-sync :before #'ljs/org-attach-ensure-dir)
+#+end_src
+
 ** Confirmation Message
 #+begin_src emacs-lisp
 (message "LJS Config Org loaded.")
