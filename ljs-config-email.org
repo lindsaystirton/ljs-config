@@ -109,6 +109,19 @@ so unlike the original pilot these aren't guesses.
   (mu4e-update-interval nil)
   (mu4e-context-policy 'pick-first)
   (mu4e-compose-context-policy 'ask-if-none)
+  ;; One-key jumps from the main mu4e screen (each shown there with a
+  ;; live unread/total count), lowercase for the internal Lindsay
+  ;; mailbox and uppercase for the external Treasurer one -- Inbox,
+  ;; Sent, and Archive only, matching the deliberately-minimal
+  ;; philosophy above; Drafts/Trash/Junk can be added the same way
+  ;; later if they turn out to be wanted.
+  (mu4e-maildir-shortcuts
+   '((:maildir "/bien-lindsay/INBOX"     :key ?i)
+     (:maildir "/bien-lindsay/Sent"      :key ?s)
+     (:maildir "/bien-lindsay/Archive"   :key ?a)
+     (:maildir "/bien-treasurer/INBOX"   :key ?I)
+     (:maildir "/bien-treasurer/Sent"    :key ?S)
+     (:maildir "/bien-treasurer/Archive" :key ?A)))
   :config
   (setq user-full-name "Lindsay Stirton")
   (setq mu4e-contexts
