@@ -147,14 +147,56 @@ Make yasnippet work properly with org-mode.
             Info-directory-list))
 #+end_src
 
-** Nice Bulleted Lists
+** Org-Modern (visual facelift: headlines, tables, tags, blocks, checkboxes)
+
+Supersedes the org-bullets section this config used to have here.
+org-modern (minad -- the same author as Corfu/Vertico/Cape/Marginalia,
+already part of this config) styles headline stars, tables, tags,
+checkboxes and block delimiters through one coherent engine rather
+than just prettifying bullets the way org-bullets did on its own --
+running both would have them competing over the same headline
+display, so org-bullets' declaration is removed rather than left
+alongside it. Hooked into both plain Org buffers and the agenda
+(`org-agenda-finalize`), so it also applies once org-agenda is
+actually used.
+
+Default TODO/DONE styling looked garish once actually seen live --
+root-caused rather than just re-coloured blind: org-modern's
+built-in `org-modern-todo` face is `:inverse-video t` layered on
+top of the existing `org-todo` face (confirmed directly in
+org-modern's own source), which takes whatever foreground colour
+`org-todo` has and flips it into a solid, full-intensity background
+fill. Modus-vivendi's `org-todo`/`org-done` colours (`prose-todo`/
+`prose-done` in its palette, confirmed directly in the real,
+installed `modus-themes.el` on this machine) are the vivid, highly
+saturated =red=/=green= entries -- exactly right as *text* colour
+against a dark background, glaring once inverted into a *box*.
+
+Fixed with `org-modern-todo-faces`, pulling colours live from
+modus-themes' own "subtle"/"faint" palette entries via
+`modus-themes-get-color-value` (confirmed to exist in the real,
+installed modus-themes 5.3.0, not assumed from possibly-stale
+documentation) rather than hardcoded hex -- so the TODO/DONE boxes
+stay in sync automatically if the active modus variant ever changes,
+instead of silently going stale.
+
 #+begin_src emacs-lisp
-(use-package org-bullets
-  :init
-  (add-hook 'org-mode-hook (lambda ()
-                             (org-bullets-mode 1)))
+(use-package org-modern
+  :after org
+  :hook ((org-mode . org-modern-mode)
+         (org-agenda-finalize . org-modern-agenda))
   :custom
-  (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
+  (org-modern-star 'replace)
+  (org-modern-hide-stars t)
+  (org-modern-table t)
+  (org-modern-block-fringe t)
+  (org-modern-todo t)
+  (org-modern-todo-faces
+   `(("TODO" :background ,(modus-themes-get-color-value 'bg-red-subtle)
+             :foreground ,(modus-themes-get-color-value 'red-faint))
+     ("DONE" :background ,(modus-themes-get-color-value 'bg-green-subtle)
+             :foreground ,(modus-themes-get-color-value 'green-faint))))
+  (org-modern-tag t))
 #+end_src
 
 ** Org-Roam
