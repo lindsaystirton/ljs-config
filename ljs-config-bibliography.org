@@ -104,6 +104,27 @@ just with fuzzy completion for finding the reference itself.
   ;; RefTeX picker is still actually used day to day, but not done
   ;; here since it wasn't asked for.
   (citar-latex-default-cite-command "footcite")
+  ;; citar-latex's own default list of citation commands, copied
+  ;; verbatim from citar-latex.el, plus \citenourl (sussex-teaching.sty,
+  ;; 17 Sept 2026) added to the second group -- the one requiring no
+  ;; [Prenote]/[Postnote] prompts, since \citenourl only ever takes a
+  ;; bare key list. Needed so citar's "Cite command:" prompt on C-c [
+  ;; actually offers it (and inserts it with the right, arg-less shape)
+  ;; rather than only accepting it if hand-typed. Overriding the whole
+  ;; list rather than pushing onto it because `:custom' always sets a
+  ;; literal value -- if citar-latex.el's own default list ever changes
+  ;; upstream, this stops tracking it and needs updating by hand.
+  (citar-latex-cite-commands
+   '((("cite" "Cite" "citet" "Citet" "citep" "Citep" "parencite"
+       "Parencite" "footcite" "footcitetext" "textcite" "Textcite"
+       "smartcite" "Smartcite" "cite*" "parencite*" "autocite"
+       "Autocite" "autocite*" "Autocite*" "citeauthor" "Citeauthor"
+       "citeauthor*" "Citeauthor*" "citetitle" "citetitle*" "citeyear"
+       "citeyear*" "citedate" "citedate*" "citeurl" "fullcite"
+       "footfullcite" "notecite" "Notecite" "pnotecite" "Pnotecite"
+       "fnotecite")
+      . (["Prenote"] ["Postnote"] t))
+     (("nocite" "supercite" "citenourl") . nil)))
   :hook
   ;; Wires citar into Corfu/Cape's in-buffer completion (see
   ;; ljs-config-completion.org): typing inside \cite{...} now offers
@@ -123,6 +144,102 @@ just with fuzzy completion for finding the reference itself.
   ;; `reftex-mode-map' itself is what actually shadows it.
   (with-eval-after-load 'reftex
     (define-key reftex-mode-map (kbd "C-c [") #'citar-insert-citation)))
+#+end_src
+
+** Auto-categorizing Essential/Further from how a reading is cited
+
+Agreed with Lindsay 17 Sept 2026, as part of the Essential/Further
+reading-list design in =sussex-teaching.sty= (see the audit's
+seminar-template-build notes): rather than typing a separate
+=\addtocategory{essential|further}{KEY}= by hand after every
+citation, the category is inferred automatically from *how* the
+citation was just inserted, on the discipline Lindsay is committing
+to going forward -- cite Essential readings in the body (=\footcite=
+and friends), and reach for =nocite= (typed at the same "Cite
+command:" prompt citar already shows on every =C-c [=) for
+everything else. A real citation command means Essential; a bare
+=nocite= means Further.
+
+This only fires for a genuinely *new* citation -- the other branch of
+=citar-latex-insert-citation= (adding another key onto an
+already-open =\cite{...}= at point, rather than starting a fresh one)
+never reaches the "Cite command:" prompt at all, so there's no
+command to read there. That narrower case -- appending one more key
+to a citation you already inserted -- still needs its own
+=\addtocategory= added by hand; judged rare enough next to the
+everyday "search and insert one reading" workflow not to be worth
+chasing down a substitute signal for it.
+
+*Correction, 17 Sept 2026, found on Lindsay's first real compile*:
+=\addtocategory= turns out to be a preamble-only biblatex command --
+calling it in the body throws "! LaTeX Error: Can be used only in
+preamble" and aborts the compile (confirmed against biblatex's own
+manual and its shipped example, =14-references-by-category.tex=,
+which declares categories and calls =\addtocategory= together in the
+preamble, never in the body). The first version of this advice
+inserted the =\addtocategory= call right at point, next to the
+citation -- wrong, and it broke Lindsay's very first real citation.
+Fixed below: the call is now written into the document's preamble,
+immediately before =\begin{document}=, while point stays exactly
+where the citation was. `save-excursion' keeps this safe -- it holds
+point as a marker, so inserting text earlier in the buffer doesn't
+leave point in the wrong place afterwards.
+
+#+begin_src emacs-lisp
+(defvar ljs/citar-last-cite-command nil
+  "Command most recently chosen at citar's \"Cite command:\" prompt.
+
+Set as a side effect of advice on `citar-latex--select-command';
+read by advice on `citar-latex-insert-citation' to decide which
+Essential/Further category to auto-assign a citation just inserted.
+Not meant to be set by hand.")
+
+(advice-add 'citar-latex--select-command :filter-return
+            (lambda (command)
+              (setq ljs/citar-last-cite-command command)
+              command))
+
+(defun ljs/citar-insert-addtocategory (category keys)
+  "Insert `\\addtocategory{CATEGORY}{KEYS}' into the preamble.
+
+\\addtocategory is a preamble-only biblatex command, unlike \\cite or
+\\nocite, so it cannot simply be inserted at point alongside a body
+citation -- see this section's own commentary for how that mistake
+was found. Searches for the buffer's own \\begin{document} and
+inserts immediately before it, leaving point (wherever the calling
+advice needs it to stay) untouched. Only handles a single-file
+document with \\begin{document} in the same buffer -- one that
+\\input/\\include's its content from elsewhere would need this called
+from the master file's own buffer instead."
+  (save-excursion
+    (goto-char (point-min))
+    (if (re-search-forward "^\\\\begin{document}" nil t)
+        (progn
+          (beginning-of-line)
+          (insert (format "\\addtocategory{%s}{%s}\n" category keys)))
+      (message "ljs-config: no \\begin{document} found in this buffer -- \\addtocategory{%s}{%s} not inserted, add it to the preamble by hand."
+               category keys))))
+
+(defun ljs/citar-auto-addtocategory (orig-fun keys &optional invert-prompt command)
+  "Call `citar-latex-insert-citation', then auto-tag KEYS by category.
+
+Essential/Further is inferred from how KEYS were just cited: a
+plain \\nocite means Further, any real citation command (\\footcite,
+\\cite, etc.) means Essential -- see this section's own commentary
+for the discipline this assumes and the one case it doesn't cover.
+The actual `\\addtocategory' call goes into the preamble, not next to
+the citation -- see `ljs/citar-insert-addtocategory'."
+  (let ((already-in-citation (citar-latex--macro-bounds)))
+    (setq ljs/citar-last-cite-command nil)
+    (prog1 (funcall orig-fun keys invert-prompt command)
+      (when (and keys (not already-in-citation))
+        (let* ((effective-command (or command
+                                       ljs/citar-last-cite-command
+                                       citar-latex-default-cite-command))
+               (category (if (equal effective-command "nocite") "further" "essential")))
+          (ljs/citar-insert-addtocategory category (string-join keys ",")))))))
+
+(advice-add 'citar-latex-insert-citation :around #'ljs/citar-auto-addtocategory)
 #+end_src
 
 ** citar-embark integration
