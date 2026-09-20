@@ -168,6 +168,76 @@ so unlike the original pilot these aren't guesses.
   (setq mu4e-sent-messages-behavior 'sent))
 #+end_src
 
+** Email capture bridge (mu4e -> inbox.org)
+
+Real friction, now that mu4e is in genuine daily use on both
+mailboxes: capturing a task instruction that arrived by email
+without losing the connection back to the original message.
+Answered the same way org-attach was (see ljs-config-org.org) -- a
+second, explicit command alongside the plain =C-c c=, never a
+change to it. The plain, global =C-c c= (see the Org-Capture
+section in =ljs-config-org.org=) stays exactly as minimal as it's
+always been: one template, no prompt, nothing below touches that.
+
+mu4e ships its own bridge for exactly this, =mu4e-org= --
+=mu4e-org-store-and-capture= stores a link to the message actually
+under point (or the current search, in headers mode) and runs
+=org-capture= against it in one command. The official mu4e manual's
+own example wires this to =C-c c=, but only inside mu4e's own
+keymaps (=mu4e-headers-mode-map=/=mu4e-view-mode-map=) -- a
+buffer-local override, not a global rebind, so =C-c c= keeps
+meaning the flat single-template capture everywhere else and only
+means "capture this email" while actually looking at mu4e. Same
+convention adopted here.
+
+The one real design problem, worked around rather than walked into:
+=mu4e-org-store-and-capture= runs plain =org-capture=, which shows
+its own template-selection menu the moment =org-capture-templates=
+has more than one entry -- and the entire point of the Org-Capture
+section's design was making that prompt never appear. Simply adding
+a second, email-specific template (one using =%a= for the stored
+link) to that same global list would silently break "no prompt" for
+the *plain* =C-c c= too, everywhere, not just in mu4e. Fixed by not
+sharing the list at all: the email capture only ever sees its own
+template, let-bound for the duration of that one call, so the real,
+global =org-capture-templates= Lindsay already has -- and its
+"just one template, no prompt" behaviour -- is never touched.
+
+#+name: ljs-config-email-capture-bridge
+#+begin_src emacs-lisp
+(with-eval-after-load 'mu4e
+  (require 'mu4e-org)
+
+  (defun ljs/mu4e-capture-task ()
+    "Capture the message (or search) at point as a linked task.
+
+Stores a link to the current mu4e message or query -- whichever
+`mu4e-org-store-and-capture' would normally store -- and captures
+it with a dedicated, email-only template: \"* TODO %:fromname:
+%a %?\", i.e. who it is from, a clickable link back to the exact
+message (reopens it later via mu4e's own `mu4e:' link type), and
+the cursor left ready to type the actual task.
+
+Deliberately does NOT add this template to the real, global
+`org-capture-templates' -- that stays exactly the single plain
+entry the Org-Capture section (`ljs-config-org.org') already
+documents, so the plain, global `C-c c' keeps skipping the
+template-selection prompt everywhere else, unaffected by this.
+Instead the template exists only for the length of this one call,
+via a dynamic `let' binding -- `org-capture' (called internally by
+`mu4e-org-store-and-capture') only ever sees the one template
+either way, so it never needs to prompt, and the moment this
+function returns, the global list is back to normal."
+    (interactive)
+    (let ((org-capture-templates
+           '(("e" "Email" entry (file org-default-notes-file)
+              "* TODO %:fromname: %a %?\n"))))
+      (mu4e-org-store-and-capture)))
+
+  (define-key mu4e-headers-mode-map (kbd "C-c c") #'ljs/mu4e-capture-task)
+  (define-key mu4e-view-mode-map    (kbd "C-c c") #'ljs/mu4e-capture-task))
+#+end_src
+
 ** Confirmation Message
 #+begin_src emacs-lisp
 (message "LJS Config Email loaded.")
