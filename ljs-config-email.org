@@ -208,6 +208,12 @@ global =org-capture-templates= Lindsay already has -- and its
 (with-eval-after-load 'mu4e
   (require 'mu4e-org)
 
+  ;; Tells Emacs up front that this symbol is dynamically scoped
+  ;; (it's really defcustom'd in org-capture.el), so the `let' below
+  ;; rebinds the real global variable rather than silently shadowing
+  ;; it with an unrelated lexical one -- see org-capture-templates.
+  (defvar org-capture-templates)
+
   (defun ljs/mu4e-capture-task ()
     "Capture the mu4e message at point as a linked TODO in inbox.org."
     (interactive)
