@@ -371,6 +371,41 @@ rather than fix it.
   :bind (("C-c o a" . org-agenda)))
 #+end_src
 
+** Org-Refile
+
+The other half of keeping capture itself decision-free (see the
+audit, §64): a flat =* TODO %?= entry never asks where it belongs,
+so somewhere has to let it be moved there /later/, once there's
+actually something to decide. =org-refile= is Org's own built-in
+answer for that, already bound to =C-c C-w= by Org itself --
+checked against the whole repo first, same discipline as every
+other binding here, and genuinely free.
+
+Deliberately still no per-role files or new structure: refile
+targets are headings inside =org-agenda-files= (currently just
+=inbox.org= itself) down to two levels deep -- so any of
+=inbox.org='s own existing top-level headings (=Civic Service=,
+=REF Submissions=, =BIEN Accounts Inspection=, and so on) already
+work as ad-hoc categories a flat capture can be filed under, with
+zero new files and nothing to set up first. If nothing existing
+fits yet, the answer is just to type a new heading to refile under
+-- same as inbox.org already works today, nothing new to learn.
+
+#+name: ljs-config-org-refile
+#+begin_src emacs-lisp
+(use-package org-refile
+  :straight nil
+  :after org
+  :custom
+  (org-refile-targets '((org-agenda-files :maxlevel . 2)))
+  ;; Full outline path (Heading > Subheading) when picking a target,
+  ;; completed in one go rather than level-by-level -- friendlier
+  ;; with Vertico's fuzzy completion than Org's own step-by-step
+  ;; default.
+  (org-refile-use-outline-path t)
+  (org-outline-path-complete-in-steps nil))
+#+end_src
+
 ** Org-Attach (email/file attachments on inbox.org items)
 
 Real friction, not a speculative feature: reading email outside
