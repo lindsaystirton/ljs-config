@@ -209,25 +209,7 @@ global =org-capture-templates= Lindsay already has -- and its
   (require 'mu4e-org)
 
   (defun ljs/mu4e-capture-task ()
-    "Capture the message (or search) at point as a linked task.
-
-Stores a link to the current mu4e message or query -- whichever
-`mu4e-org-store-and-capture' would normally store -- and captures
-it with a dedicated, email-only template: \"* TODO %:fromname:
-%a %?\", i.e. who it is from, a clickable link back to the exact
-message (reopens it later via mu4e's own `mu4e:' link type), and
-the cursor left ready to type the actual task.
-
-Deliberately does NOT add this template to the real, global
-`org-capture-templates' -- that stays exactly the single plain
-entry the Org-Capture section (`ljs-config-org.org') already
-documents, so the plain, global `C-c c' keeps skipping the
-template-selection prompt everywhere else, unaffected by this.
-Instead the template exists only for the length of this one call,
-via a dynamic `let' binding -- `org-capture' (called internally by
-`mu4e-org-store-and-capture') only ever sees the one template
-either way, so it never needs to prompt, and the moment this
-function returns, the global list is back to normal."
+    "Capture the mu4e message at point as a linked TODO in inbox.org."
     (interactive)
     (let ((org-capture-templates
            '(("e" "Email" entry (file org-default-notes-file)
