@@ -499,7 +499,16 @@ PDF/R/eww pane does on `q'/`C-x 0' (see the audit, §30/§46) --
 those all create a specific new *window* to tag and watch for;
 these three don't. Use `C-x 1' to shrink back manually until/unless
 that's worth designing properly."
-  (let ((frame (or frame (selected-frame))))
+  ;; `(or frame ...)' isn't enough here: this function is advised
+  ;; onto the `mu4e' command itself (`ljs-config-email.org') so it
+  ;; fires for any call site, and `:before' advice receives the same
+  ;; arguments the advised function was called with. `mu4e' has its
+  ;; own unrelated optional argument in this same first slot (a
+  ;; boolean meaning "start without switching to it"), which
+  ;; `mu4e-org-open' passes as a non-nil, non-frame value when
+  ;; following a captured email link -- `framep' guards against
+  ;; treating that as a real frame.
+  (let ((frame (if (framep frame) frame (selected-frame))))
     (setq ljs/original-frame-width (frame-pixel-width frame))
     (ljs/frame-set-width-fraction 0.8 frame)))
 
