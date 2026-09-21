@@ -203,10 +203,40 @@ template, let-bound for the duration of that one call, so the real,
 global =org-capture-templates= Lindsay already has -- and its
 "just one template, no prompt" behaviour -- is never touched.
 
+A second bug, caught live: clicking a captured =[[mu4e:msgid:...]]=
+link in a fresh Emacs session -- one where mu4e hadn't been started
+yet via =C-c m=/=M-x mu4e= -- didn't open the message at all. Org
+had no idea "mu4e" was a link type, so it fell back to treating the
+whole raw string as plain search text and offered to create it as a
+new heading instead. Root cause: =(require 'mu4e-org)= (the thing
+that actually registers the =mu4e= link type with Org, via
+=org-link-set-parameters=) lived inside =with-eval-after-load
+'mu4e=, which only runs once mu4e itself has already been loaded --
+but the whole point of a clickable link is following it *before*
+you've opened mu4e. Fixed by hoisting just that one line out to
+fire whenever Org loads instead (still gated on the same
+=(executable-find "mu")= check the main =use-package mu4e= block
+uses, so this is a no-op on any machine without mu4e installed) --
+Org loads early in any session, so the link type is registered
+essentially from startup, regardless of whether mu4e has actually
+been opened yet. This doesn't undo mu4e's own deferred loading:
+=mu4e-org.el= pulls in mu4e's elisp definitions a little earlier
+than before, but actually *starting* mu4e (the index, the mbsync
+process) still only happens on first real use, exactly as
+=mu4e-org-open= itself triggers via its own call to =(mu4e
+'background)= -- see ljs-config-appearance.org's
+=ljs/frame-remember-and-widen= fix for the bug that call surfaced.
+
+#+name: ljs-config-email-link-type
+#+begin_src emacs-lisp
+(with-eval-after-load 'org
+  (when (executable-find "mu")
+    (require 'mu4e-org)))
+#+end_src
+
 #+name: ljs-config-email-capture-bridge
 #+begin_src emacs-lisp
 (with-eval-after-load 'mu4e
-  (require 'mu4e-org)
 
   ;; Tells Emacs up front that this symbol is dynamically scoped
   ;; (it's really defcustom'd in org-capture.el), so the `let' below
