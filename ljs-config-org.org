@@ -48,6 +48,54 @@ which is also implemented using Org-mode and [[http://git-scm.com/][git]].
     (visual-line-mode 1)))
 #+end_src
 
+** Native-comp workaround for org-back-to-heading
+
+*This is a workaround for a bug in the compiled artifact Emacs.app
+ships, not in our own config or in Org's own source -- there is
+nothing to "fix properly" here.* Confirmed live, 2026-09-21: a fresh
+Emacs restart loads =org-back-to-heading= as a natively-compiled
+=subr= (from this build's
+=native-lisp/31_1-a090e937/org-d208de9c-ff710099.eln=), and in that
+state it raises spurious "Before first headline" errors -- reproduced
+with =org-modern-mode= on, across org-cycle/TAB, org-attach, and
+org-archive-subtree (see the audit for the full diagnosis:
+=debug-on-error= caught nothing because the error was being demoted
+by an intervening handler; =debug-on-signal= only surfaced unrelated
+noise; edebug-instrumenting the function replaced it with a plain
+interpreted closure -- same upstream source, no logic changes -- and
+the bug vanished; a clean restart with the *same* uninstrumented
+source reproduced it again, confirming it's the compiled form itself,
+not the code).
+
+The fix below just re-installs Org's own upstream definition of
+=org-back-to-heading=, verbatim, as a plain (non-native) function on
+every startup. Safe to delete once Emacs.app ships a rebuilt
+=native-lisp= bundle with a corrected =org.eln= -- check by removing
+this block, restarting, and confirming both that
+=(type-of (symbol-function 'org-back-to-heading))= comes back =subr=
+again *and* that the bug no longer reproduces.
+
+#+name: ljs-config-org-native-comp-workaround
+#+begin_src emacs-lisp
+(with-eval-after-load 'org
+  (defun org-back-to-heading (&optional invisible-ok)
+    "Go back to beginning of heading or inlinetask."
+    (forward-line 0)
+    (or (and (org-at-heading-p (not invisible-ok))
+             (not (and (featurep 'org-inlinetask)
+                       (fboundp 'org-inlinetask-end-p)
+                       (org-inlinetask-end-p))))
+        (unless (org-element-lineage-map
+                 (org-element-at-point)
+                 (lambda (el)
+                   (goto-char (org-element-begin el))
+                   (or invisible-ok (not (org-invisible-p))))
+                 '(headline inlinetask) 'with-self 'first-match)
+          (user-error "Before first headline at position %d in buffer %s"
+                      (point) (current-buffer))))
+    (point)))
+#+end_src
+
 ** Org-Mode Hooks
 Make yasnippet work properly with org-mode.
 
