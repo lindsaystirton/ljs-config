@@ -59,5 +59,11 @@ for GUI Emacs to see it without any extra path configuration here.
 (use-package wasabi
   :straight (wasabi :type git :host github :repo "xenodium/wasabi")
   :bind
-  ("C-c W" . wasabi))
+  ("C-c W" . wasabi)
+  :config
+  ;; macOS Emacs isn't compiled with D-Bus support, so the default
+  ;; notification backend (`notifications-notify', the freedesktop/D-Bus
+  ;; system) errors on every incoming message with "Emacs not compiled
+  ;; with dbus support". Not wanted anyway -- just turn it off.
+  (setq wasabi-message-notification-function nil))
 #+end_src
