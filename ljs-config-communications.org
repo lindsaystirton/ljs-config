@@ -31,3 +31,33 @@ once plain connectivity here is confirmed working.
   :bind
   ("C-c M" . ljs/matrix-connect))
 #+end_src
+
+* WhatsApp (wasabi.el)
+
+A native Emacs client for WhatsApp, from the same author as ement.el
+above. Talks to WhatsApp via a small local bridge process,
+=wuzapi= (a separate Homebrew-installed binary, not an Emacs
+package), which itself wraps the =whatsmeow= Go library. Not on
+MELPA yet, so pulled directly from its git =main= branch like
+=ement= above -- meaning, unlike most of this config's packages, it
+has no pinned release and can change under us on a future
+=straight-pull=.
+
+First run (=M-x wasabi=) creates its own data directory under
+=~/.emacs.d/wasabi/=, starts the =wuzapi= process automatically, and
+prompts for a QR code to link the account -- a one-time,
+interactive, phone-in-hand step, same as linking WhatsApp Web.
+=wuzapi= itself needs to already be on =$PATH= (installed via
+=brew install asternic/wuzapi/wuzapi=); the existing
+=exec-path-from-shell= fix earlier in this config should be enough
+for GUI Emacs to see it without any extra path configuration here.
+
+#+begin_src emacs-lisp :lexical yes
+;; -*- lexical-binding: t; -*-
+(use-package acp)
+
+(use-package wasabi
+  :straight (wasabi :type git :host github :repo "xenodium/wasabi")
+  :bind
+  ("C-c W" . wasabi))
+#+end_src
