@@ -708,7 +708,7 @@ password is in =~/.authinfo.gpg= -- it quietly no-ops until
 #+end_src
 
 *** LJS Config Claude Code
-Claude Code CLI wrapped via claude-code.el (terminal-based, vterm
+Claude Code CLI wrapped via claude-code.el (terminal-based, ghostel
 backend) -- located in [[file:ljs-config-claude-code.org][ljs-config-claude-code]].
 
 #+name: ljs-config-load-claude-code

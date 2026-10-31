@@ -24,22 +24,45 @@ with for a while.
 ;;; -*- lexical-binding: t; -*-
 #+end_src
 
-** Terminal backend: vterm, not the default eat
+** Terminal backend: ghostel (was vterm)
 
-=claude-code.el= defaults to =eat= (a pure-Elisp terminal emulator,
-zero native compilation required) unless told otherwise. Overridden
-to =vterm= here instead, because =vterm= is already installed,
-already configured (=ljs-config-shell.org=), and already in
-everyday use in this config (§56/§61 of the audit -- vterm itself
-reported working, not exhaustively tested) -- reusing
-it costs nothing, and adds no new native module to a config that has
-already hit real native-comp toolchain failures more than once
-(the audit, §44/§50). Bringing in =eat= as a second terminal
-emulator alongside a working =vterm= would be pure duplication for no
-benefit.
+=claude-code.el= supports three terminal backends: =eat= (its
+default, pure Elisp), =vterm=, and =ghostel= (built on libghostty-vt,
+the engine behind the Ghostty terminal). This config originally used
+=vterm=, on the reasoning that it was already installed and configured
+(=ljs-config-shell.org=), so reusing it would cost nothing.
+
+That turned out to be wrong in practice (28 Sept 2026, first real
+use, writing a lecture): Claude Code repaints its screen constantly,
+and under =vterm= the buffer ended up visibly corrupted -- letters
+missing mid-word, the status line printed on top of the text -- and
+scrolling back was unreliable. Switched to =ghostel= because it
+advertises synchronized output (DEC 2026) to Claude Code, which is
+specifically what stops those half-finished redraws; its own docs
+also say it renders the Claude TUI "most faithfully" of the three,
+and it keeps the full scrollback in the buffer as plain text, so
+=C-s=/=consult-line= work on the conversation history.
+
+Native-module caveat, given this config's native-comp history (the
+audit, §44/§50): ghostel needs a native module, but it ships as a
+prebuilt binary downloaded from ghostel's GitHub releases -- nothing
+is compiled locally. =ghostel-module-auto-install= is set to
+=download= below so the first Claude Code session fetches it without
+a prompt (the default, =ask=, would offer to compile from source as
+well). If ghostel ever misbehaves, =eat= is the fallback: install it
+and change the backend symbol to ='eat=.
+
+=vterm= stays installed and configured in =ljs-config-shell.org= for
+ordinary terminal use; only Claude Code moves.
 
 #+begin_src emacs-lisp :tangle yes
-(setq claude-code-terminal-backend 'vterm)
+(use-package ghostel
+  :straight t
+  :defer t
+  :init
+  (setq ghostel-module-auto-install 'download))
+
+(setq claude-code-terminal-backend 'ghostel)
 #+end_src
 
 ** A keybinding conflict caught before it happened
@@ -68,7 +91,7 @@ binding was chosen with in the first place.
 
 ** Opens in a doubled frame to the right, like PDF/eww
 
-Deliberately reused, not reimplemented: Claude Code's vterm buffer
+Deliberately reused, not reimplemented: Claude Code's terminal buffer
 is registered with the same shared =ljs/display-buffer-doubled-right=
 =display-buffer-alist= action already used for PDF buffers and the
 Markdown live-preview's eww buffer (ljs-config-appearance.org,
@@ -81,9 +104,10 @@ with no Claude-Code-specific code needed for either half.
 
 One real gap worth knowing, not fixed here since it wasn't asked
 for: that restore-on-close advice fires when the *window* closes,
-not when the buffer dies some other way. =vterm-kill-buffer-on-exit=
-is =t= (ljs-config-shell.org), so typing =/exit= inside a Claude Code
-session kills its buffer directly when the =claude= process exits --
+not when the buffer dies some other way. =ghostel-kill-buffer-on-exit=
+defaults to =t= (as =vterm-kill-buffer-on-exit= did under the old
+backend), so typing =/exit= inside a Claude Code session kills its
+buffer directly when the =claude= process exits --
 a third path, alongside =quit-window=/=delete-window=, that this
 mechanism doesn't cover (the same shape of gap the audit's §30
 already found and left open for the widen-only Matrix/mail/inbox

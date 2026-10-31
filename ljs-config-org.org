@@ -220,13 +220,13 @@ installed `modus-themes.el` on this machine) are the vivid, highly
 saturated =red=/=green= entries -- exactly right as *text* colour
 against a dark background, glaring once inverted into a *box*.
 
-Fixed with `org-modern-todo-faces`, pulling colours live from
-modus-themes' own "subtle"/"faint" palette entries via
-`modus-themes-get-color-value` (confirmed to exist in the real,
-installed modus-themes 5.3.0, not assumed from possibly-stale
-documentation) rather than hardcoded hex -- so the TODO/DONE boxes
-stay in sync automatically if the active modus variant ever changes,
-instead of silently going stale.
+Fixed with `org-modern-todo-faces`. Originally the colours were pulled
+live from modus-themes' "subtle"/"faint" palette entries via
+`modus-themes-get-color-value`, but that only works while a Modus theme
+is the active theme. Since the default theme became Solarized Light
+(see ljs-config-appearance.org) they are fixed colours instead: soft
+red and green boxes with dark text, set with `:inverse-video nil` so
+the box uses the colours below rather than a flipped `org-todo`.
 
 #+begin_src emacs-lisp
 (use-package org-modern
@@ -239,11 +239,13 @@ instead of silently going stale.
   (org-modern-table t)
   (org-modern-block-fringe t)
   (org-modern-todo t)
+  ;; Fixed colours chosen for the Solarized Light theme (soft red and
+  ;; green boxes with dark text). These used to be read from the active
+  ;; Modus theme's palette via `modus-themes-get-color-value', which
+  ;; only works while a Modus theme is enabled.
   (org-modern-todo-faces
-   `(("TODO" :background ,(modus-themes-get-color-value 'bg-red-subtle)
-             :foreground ,(modus-themes-get-color-value 'red-faint))
-     ("DONE" :background ,(modus-themes-get-color-value 'bg-green-subtle)
-             :foreground ,(modus-themes-get-color-value 'green-faint))))
+   '(("TODO" :inverse-video nil :background "#f4d7cf" :foreground "#b02a28")
+     ("DONE" :inverse-video nil :background "#e6ecc6" :foreground "#5f6e00")))
   (org-modern-tag t))
 #+end_src
 

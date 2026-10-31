@@ -128,26 +128,89 @@ the names of your preferred choices.
 
 ** Themes
 
-Using Prot's ef-themes. Someone on Reddit said, "ef-themes is the
-smiling rainbow chick to modus-theme's serious spectacled chick." The
-following code toggles between `ef-melissa-dark' and
-`ef-melissa-light' depending on Mac OS's System Appearance state. To
-do so, enter M-x ef-themes-toggle.
+The default look is Solarized Light: a warm cream ("hay") background
+with soft grey-brown text and blue and gold accents. Chosen because
+plain white and the dark Modus theme were both hard to read for long
+stretches (Lindsay's own experiment, Oct 2026), and cream was the
+look she remembered and liked from Kieran Healy's original starter
+kit.
 
+To try something else on the fly, `M-x load-theme'. The Modus family
+is still installed, so `M-x modus-themes-select' also works.
 
+Three Solarized settings are switched off below, and they have to be
+set *before* the theme loads. By default solarized-theme turns on its
+own variable-pitch headings and rescales Org and Outline heading
+sizes, which would fight the heading sizes set in the next section and
+the serif prose font set in the Fonts section.
 
- #+name: ljs-config-appearance-themes
+Solarized is deliberately fairly low-contrast. If body text ever feels
+too faint, darken it with something like
+`(set-face-attribute 'default nil :foreground "#4a5a60")' after the
+`load-theme' line below, rather than switching theme.
+
+#+name: ljs-config-appearance-themes
 #+begin_src emacs-lisp
-   ;; NOTE: :ensure t added because Emacs 31 tightened its face-inheritance
-   ;; checks (see Emacs bug#79672) and the modus-themes snapshot bundled
-   ;; inside some Emacs 31 builds predates upstream's fix for exactly this
-   ;; ("Face inheritance results in inheritance cycle: button"). Forcing
-   ;; installation from GNU ELPA pulls the maintained release (5.0.0+),
-   ;; which already contains the fix, instead of relying on whatever
-   ;; modus-themes snapshot happens to be frozen inside the Emacs binary.
+   ;; modus-themes stays installed (straight pulls the maintained GNU ELPA
+   ;; release, which contains the fix for Emacs 31's tightened
+   ;; face-inheritance checks, bug#79672 -- the snapshot bundled inside
+   ;; some Emacs 31 builds does not). :defer t because no Modus theme is
+   ;; loaded at startup any more; it is only here for `M-x load-theme' /
+   ;; `M-x modus-themes-select'.
    (use-package modus-themes
+     :defer t)
+
+   (use-package solarized-theme
      :init
-     (load-theme 'modus-vivendi t))
+     (setq solarized-use-variable-pitch nil
+           solarized-scale-org-headlines nil
+           solarized-scale-outline-headlines nil)
+     :config
+     (load-theme 'solarized-light t))
+#+end_src
+
+*** Serif prose font
+
+Org and LaTeX buffers already turn on `variable-pitch-mode' (see
+`org-mode-setup' in ljs-config-org.org and `my-auctex-mode-setup' in
+ljs-config-latex.org), so setting the `variable-pitch' face to a serif
+gives book-like prose there without touching code buffers, which stay
+in the monospace font chosen in the Fonts section. First font found
+wins; Georgia and Palatino both ship with macOS. Raise or lower
+`:height' if the serif looks small or large next to the monospace.
+
+#+name: ljs-config-appearance-serif-prose
+#+begin_src emacs-lisp
+(cond
+ ((font-existsp "Georgia")
+  (set-face-attribute 'variable-pitch nil :family "Georgia" :height 1.1))
+ ((font-existsp "Palatino")
+  (set-face-attribute 'variable-pitch nil :family "Palatino" :height 1.1))
+ ((font-existsp "Times New Roman")
+  (set-face-attribute 'variable-pitch nil :family "Times New Roman" :height 1.1)))
+#+end_src
+
+*** Writing column (writeroom-mode)
+
+`C-c w' toggles a distraction-free writing view in the current buffer:
+text in a centred 80-column column with wide margins either side, and
+the mode line hidden. Press `C-c w' again to go back.
+
+The package's default global effects (fullscreen, hiding the menu
+bar, deleting all other windows) are turned off, because they fight
+the frame-sizing and pane-doubling code further down this file and
+would close your PDF or Claude Code panes. To get the fullscreen
+effect back, set `writeroom-global-effects' to
+`(writeroom-set-fullscreen)'.
+
+#+name: ljs-config-appearance-writeroom
+#+begin_src emacs-lisp
+(use-package writeroom-mode
+  :bind ("C-c w" . writeroom-mode)
+  :custom
+  (writeroom-width 80)
+  (writeroom-maximize-window nil)
+  (writeroom-global-effects nil))
 #+end_src
 
 *** Heading sizes in Org and LaTeX buffers
@@ -572,7 +635,7 @@ in this config) only catches half the ways this window can close."
 (add-to-list 'display-buffer-alist '("\\.pdf\\'" . (ljs/display-buffer-doubled-right)))
 (add-to-list 'display-buffer-alist '("\\`\\*eww\\*\\'" . (ljs/display-buffer-doubled-right)))
 ;; Claude Code (claude-code.el, ljs-config-claude-code.org) names its
-;; vterm buffers "*claude:/path:instance-name*" -- one instance per
+;; terminal buffers "*claude:/path:instance-name*" -- one instance per
 ;; project/directory, so this matches on the fixed "*claude:" prefix
 ;; only, not a full buffer-name match like eww's (which never varies).
 (add-to-list 'display-buffer-alist '("\\`\\*claude:" . (ljs/display-buffer-doubled-right)))
